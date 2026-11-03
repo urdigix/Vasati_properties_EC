@@ -318,6 +318,7 @@ export default function AdminDashboardPage() {
                       <th className="p-3.5">Lead Type</th>
                       <th className="p-3.5">Statutory Consent</th>
                       <th className="p-3.5">Status</th>
+                      <th className="p-3.5">Feedback / Notes</th>
                       <th className="p-3.5 text-right">Audited Actions</th>
                     </tr>
                   </thead>
@@ -380,6 +381,11 @@ export default function AdminDashboardPage() {
                               }`}
                             >
                               {lead.status}
+                            </span>
+                          </td>
+                          <td className="p-3.5 min-w-[200px]">
+                            <span className="text-slate-400 text-xs italic block">
+                              {lead.feedback || lead.message || 'No notes recorded'}
                             </span>
                           </td>
                           <td className="p-3.5 text-right">

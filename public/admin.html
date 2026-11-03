@@ -108,6 +108,7 @@
 
     .badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
     .badge-new { background: rgba(16, 185, 129, 0.18); color: #34d399; }
+    .badge-ready { background: rgba(56, 189, 248, 0.18); color: #38bdf8; }
     .badge-resale { background: rgba(59, 130, 246, 0.18); color: #60a5fa; }
     .badge-villa { background: rgba(245, 158, 11, 0.18); color: #fbbf24; }
 
@@ -217,7 +218,16 @@
       <div class="card">
         <div class="card-head">
           <h2>All Bengaluru Properties (<span id="propCount">0</span>)</h2>
-          <input type="text" id="propSearchInput" placeholder="Filter by title or area..." style="padding:8px 12px;background:#0c1220;border:1px solid var(--card-border);border-radius:8px;color:white;font-size:13px;width:240px;">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <select id="propCategoryFilter" style="padding:8px 12px;background:#0c1220;border:1px solid var(--card-border);border-radius:8px;color:white;font-size:13px;">
+              <option value="">All Categories</option>
+              <option value="New">New Launch</option>
+              <option value="Ready">Ready to Move</option>
+              <option value="Resale">Resale</option>
+              <option value="Villa">Luxury Villa</option>
+            </select>
+            <input type="text" id="propSearchInput" placeholder="Filter by title or area..." style="padding:8px 12px;background:#0c1220;border:1px solid var(--card-border);border-radius:8px;color:white;font-size:13px;width:220px;">
+          </div>
         </div>
         <div class="table-wrap">
           <table>
@@ -357,11 +367,12 @@
                 <th>Inquiring For</th>
                 <th>Date</th>
                 <th>Status</th>
+                <th>Feedback / Notes</th>
                 <th style="text-align:right">Direct Contact / Action</th>
               </tr>
             </thead>
             <tbody id="enquiriesTableBody">
-              <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">Loading leads...</td></tr>
+              <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">Loading leads...</td></tr>
             </tbody>
           </table>
         </div>
@@ -421,13 +432,42 @@
             <label>Status / Category</label>
             <select id="formStatus">
               <option value="New">New Launch</option>
+              <option value="Ready">Ready to Move</option>
               <option value="Resale">Resale</option>
               <option value="Villa">Luxury Villa</option>
             </select>
           </div>
           <div class="form-group form-full">
-            <label>Image URL *</label>
-            <input type="url" id="formImage" placeholder="https://images.unsplash.com/..." required>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
+              <label style="margin:0;">Property Photos * (Upload 3–4 Photos for Gallery)</label>
+              <span id="galleryCountBadge" style="font-size:12px;font-weight:700;color:#38bdf8;background:rgba(56,189,248,0.12);padding:2px 8px;border-radius:12px;">0 photos</span>
+            </div>
+            <div style="background:#0c1220;border:1px dashed var(--card-border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px;">
+              
+              <!-- Multi-Photo Gallery Preview Grid -->
+              <div id="galleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(110px, 1fr));gap:10px;">
+                <!-- Populated dynamically with uploaded thumbnails -->
+              </div>
+
+              <!-- Upload Buttons & Actions Row -->
+              <div style="display:flex;align-items:center;gap:10px;background:#111827;padding:10px 14px;border-radius:8px;border:1px solid var(--card-border);flex-wrap:wrap;">
+                <label class="btn btn-primary btn-sm" style="cursor:pointer;margin:0;display:inline-flex;align-items:center;gap:6px;font-weight:700;white-space:nowrap;">
+                  📸 Choose Photos to Upload (Select 3–4)
+                  <input type="file" id="formGalleryFiles" accept="image/png,image/jpeg,image/webp,image/avif,image/jpg" multiple style="display:none;">
+                </label>
+                <div style="font-size:12px;color:var(--muted);flex:1;min-width:160px;" id="galleryUploadStatus">
+                  Upload multiple photos at once or one by one. The first photo is your cover image.
+                </div>
+              </div>
+
+              <!-- Manual image URL paste option -->
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="text" id="manualImageUrlInput" placeholder="Or paste an image URL and click Add..." style="flex:1;font-size:12.5px;padding:8px 12px;">
+                <button type="button" class="btn btn-outline btn-sm" id="addManualImageBtn" style="white-space:nowrap;font-size:12px;">➕ Add URL</button>
+              </div>
+
+              <input type="text" id="formImage" style="display:none;" required>
+            </div>
           </div>
           <div class="form-group form-full">
             <label>Video Tour Walkthrough URL (YouTube Embed / Link)</label>
@@ -445,8 +485,83 @@
             <div id="brochureUploadStatus" style="font-size:12px;color:#38bdf8;margin-top:4px;"></div>
           </div>
           <div class="form-group form-full">
-            <label>Description</label>
-            <textarea id="formDescription" rows="3" placeholder="Key highlights, flooring, view, etc..."></textarea>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <label style="margin:0;">Description (Line Breaks, Emojis & *Bold* Formatting Preserved)</label>
+              <span style="font-size:11.5px;color:var(--muted);">Format matches WhatsApp/listing style</span>
+            </div>
+            <textarea id="formDescription" rows="8" placeholder="Paste your property details here with line breaks, emojis, and *bold* headers... (e.g. from WhatsApp)" style="font-family:inherit;line-height:1.6;font-size:13px;white-space:pre-wrap;min-height:160px;"></textarea>
+            <div style="margin-top:6px;display:flex;align-items:center;gap:6px;font-size:12px;color:#38bdf8;">
+              💡 <span>What you type or paste here (spacing, blank lines, bullets &amp; <code>*bold*</code>) will appear in the exact same format on the website.</span>
+            </div>
+          </div>
+
+          <!-- Community Amenities & Features Editor -->
+          <div class="form-group form-full">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
+              <label style="margin:0;">Community Amenities & Features</label>
+              <span id="amenitiesCountBadge" style="font-size:11.5px;color:#38bdf8;font-weight:700;">6 Selected</span>
+            </div>
+            
+            <div style="background:#0c1220;border:1px solid var(--card-border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;">
+              <div style="font-size:12px;color:#38bdf8;display:flex;align-items:center;gap:6px;">
+                ✏️ <span>Directly click and rewrite any amenity name below, or click ✕ to delete:</span>
+              </div>
+
+              <!-- Current Active Amenities Inputs -->
+              <div id="amenitiesChipsContainer" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:8px;min-height:36px;align-items:center;">
+                <!-- Populated dynamically with editable input fields -->
+              </div>
+
+              <!-- Quick-Add Preset Badges -->
+              <div style="font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-top:4px;">
+                ⚡ Quick Add Presets:
+              </div>
+              <div id="amenitiesPresetsContainer" style="display:flex;flex-wrap:wrap;gap:6px;">
+                <!-- Quick clickable presets -->
+              </div>
+
+              <!-- Custom Amenity Input -->
+              <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+                <input type="text" id="customAmenityInput" placeholder="Add custom amenity (e.g. 🏸 Badminton Court, ☕ Sky Lounge)..." style="flex:1;font-size:12.5px;padding:8px 12px;">
+                <button type="button" class="btn btn-outline btn-sm" id="addCustomAmenityBtn" style="white-space:nowrap;font-size:12px;">➕ Add Amenity</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Proximity & Travel Times Editor -->
+          <div class="form-group form-full">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
+              <label style="margin:0;">Proximity & Travel Times</label>
+              <button type="button" class="btn btn-outline btn-sm" id="addProximityRowBtn" style="font-size:11.5px;padding:4px 10px;color:#38bdf8;border-color:#38bdf8;">➕ Add Location</button>
+            </div>
+            
+            <div style="background:#0c1220;border:1px solid var(--card-border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;">
+              <div style="font-size:12px;color:#38bdf8;display:flex;align-items:center;gap:6px;">
+                ✏️ <span>Directly edit or rewrite landmark names and travel times below:</span>
+              </div>
+              <div id="proximityRowsContainer" style="display:flex;flex-direction:column;gap:8px;">
+                <!-- Populated dynamically -->
+              </div>
+              <div style="font-size:11.5px;color:var(--muted);margin-top:2px;">
+                💡 Specify landmark or destination name (e.g. 🚇 Metro Station) and distance or commute duration (e.g. 5 Minutes Walk).
+              </div>
+            </div>
+          </div>
+
+          <!-- Personal / Internal Note (Admin Only - Never Shown on Website) -->
+          <div class="form-group form-full" style="background:rgba(234, 179, 8, 0.05);border:1px solid rgba(234, 179, 8, 0.28);border-radius:10px;padding:14px;margin-top:4px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+              <label style="margin:0;color:#fde047;font-weight:700;display:inline-flex;align-items:center;gap:6px;font-size:13px;">
+                🔒 Personal Note (Private Reference · Never Shown on Website)
+              </label>
+              <span style="font-size:10.5px;font-weight:800;background:rgba(234,179,8,0.18);color:#fde047;padding:3px 9px;border-radius:8px;border:1px solid rgba(234,179,8,0.35);letter-spacing:0.4px;">
+                🔒 PRIVATE ADMIN ONLY
+              </span>
+            </div>
+            <textarea id="formAdminNote" rows="3" placeholder="Write anything for your personal reference (e.g. Owner contact, negotiation limits, internal pricing, follow-up dates). This note is strictly confidential and will NOT be shown on the website." style="font-family:inherit;font-size:12.5px;padding:10px 12px;background:#0c1220;border:1px solid #334155;border-radius:8px;color:#f1f5f9;width:100%;resize:vertical;line-height:1.5;"></textarea>
+            <div style="font-size:11.5px;color:#94a3b8;margin-top:6px;display:flex;align-items:center;gap:6px;">
+              🛡️ <span>Only accessible to you inside this Admin Panel. It will never be rendered anywhere on the live public website.</span>
+            </div>
           </div>
         </div>
       </div>
@@ -496,8 +611,23 @@
             <input type="text" id="slideOfferText" placeholder="E.g. Exclusive Launch Privileges · Zero Floor Rise">
           </div>
           <div class="form-group form-full">
-            <label>Banner Image URL *</label>
-            <input type="url" id="slideImage" placeholder="https://images.unsplash.com/..." required>
+            <label>Banner Image * (Upload Banner Photo or Enter Image URL)</label>
+            <div style="background:#0c1220;border:1px dashed var(--card-border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;align-items:center;gap:14px;background:#111827;padding:10px 14px;border-radius:8px;border:1px solid var(--card-border);flex-wrap:wrap;">
+                <img id="slideImagePreview" src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=78" alt="Slide Preview" style="width:110px;height:60px;object-fit:cover;border-radius:6px;background:#1f2937;border:1px solid var(--card-border);">
+                <div style="flex:1;min-width:180px;">
+                  <div style="font-size:13px;font-weight:700;color:white;" id="slideImageName">Slide Banner Preview</div>
+                  <div id="slideImageUploadStatus" style="font-size:12px;color:#38bdf8;margin-top:2px;">Upload a banner photo directly from your device</div>
+                </div>
+                <label class="btn btn-primary btn-sm" style="cursor:pointer;margin:0;display:inline-flex;align-items:center;gap:6px;font-weight:700;white-space:nowrap;">
+                  📸 Choose Banner Photo
+                  <input type="file" id="slideImageFile" accept="image/png,image/jpeg,image/webp,image/avif,image/jpg" style="display:none;">
+                </label>
+              </div>
+              <div>
+                <input type="text" id="slideImage" placeholder="Upload a banner above or paste image URL..." style="font-size:13px;" required>
+              </div>
+            </div>
           </div>
           <div class="form-group form-full">
             <label>Walkthrough Video Tour URL (YouTube)</label>
@@ -603,7 +733,12 @@
     function renderPropertiesTable() {
       const tbody = document.getElementById('propertiesTableBody');
       const search = document.getElementById('propSearchInput').value.toLowerCase().trim();
-      const filtered = properties.filter(p => !search || p.title.toLowerCase().includes(search) || p.location.toLowerCase().includes(search));
+      const catFilter = document.getElementById('propCategoryFilter')?.value || '';
+      const filtered = properties.filter(p => {
+        const matchesSearch = !search || p.title.toLowerCase().includes(search) || p.location.toLowerCase().includes(search);
+        const matchesCat = !catFilter || (catFilter === 'Ready' ? (p.status === 'Ready' || p.status === 'Ready to Move') : p.status === catFilter);
+        return matchesSearch && matchesCat;
+      });
 
       document.getElementById('propCount').textContent = filtered.length;
 
@@ -620,17 +755,19 @@
               <div>
                 <div class="prop-title">
                   ${p.title}
+                  ${p.images && p.images.length > 1 ? `<span style="color:#38bdf8;font-size:11px;font-weight:700;margin-left:6px;" title="${p.images.length} photos in gallery">🖼️ ${p.images.length} Photos</span>` : ''}
                   ${p.video_url ? '<span style="color:#38bdf8;font-size:11px;font-weight:700;margin-left:6px;" title="Walkthrough video configured">🎥 Video</span>' : ''}
                 </div>
                 <div class="prop-loc">📍 ${p.location}</div>
+                ${p.admin_note ? `<div style="font-size:11px;color:#fde047;margin-top:4px;display:inline-flex;align-items:center;gap:4px;background:rgba(234,179,8,0.12);padding:2px 8px;border-radius:6px;border:1px solid rgba(234,179,8,0.3);" title="Private Personal Note (Visible only in Admin)">🔒 Note: <span style="color:#fef08a;">${(p.admin_note.length > 55 ? p.admin_note.slice(0, 55) + '...' : p.admin_note).replace(/"/g, '&quot;')}</span></div>` : ''}
               </div>
             </div>
           </td>
           <td><strong>${p.priceLabel}</strong></td>
           <td>${p.bhk} BHK · ${p.area}</td>
           <td>
-            <span class="badge ${p.status === 'New' ? 'badge-new' : p.status === 'Villa' ? 'badge-villa' : 'badge-resale'}">
-              ${p.status}
+            <span class="badge ${p.status === 'New' ? 'badge-new' : p.status === 'Villa' ? 'badge-villa' : (p.status === 'Ready' || p.status === 'Ready to Move') ? 'badge-ready' : 'badge-resale'}">
+              ${p.status === 'Ready' ? 'Ready to Move' : p.status}
             </span>
           </td>
           <td>${p.possession || 'Ready'}</td>
@@ -638,7 +775,7 @@
             <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center;">
               ${p.brochure_url ? `<a href="${p.brochure_url}" target="_blank" class="btn btn-sm" style="background:rgba(56,189,248,0.15);color:#38bdf8;" title="View Brochure">📄 PDF</a>` : ''}
               <button class="btn btn-outline btn-sm" onclick="editProperty('${p.id}')">✏ Edit</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteProperty('${p.id}', '${p.title.replace(/'/g, "\\'")}')">🗑</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteProperty('${p.id}')">🗑</button>
             </div>
           </td>
         </tr>
@@ -646,18 +783,220 @@
     }
 
     document.getElementById('propSearchInput').addEventListener('input', renderPropertiesTable);
+    document.getElementById('propCategoryFilter')?.addEventListener('change', renderPropertiesTable);
 
     const propModal = document.getElementById('propertyModal');
     const propForm = document.getElementById('propertyForm');
+
+    let currentGalleryImages = [];
+
+    // Amenities State & Defaults
+    const defaultAmenitiesList = [
+      '🏊 Swimming Pool',
+      '🏋️ High-Tech Gymnasium',
+      '🌳 Landscaped Gardens',
+      '🛡️ 24/7 Gated Security',
+      '⚡ 100% Power Backup',
+      '🚗 Covered Car Parking'
+    ];
+
+    const presetAmenitiesSuggestions = [
+      '🏊 Swimming Pool',
+      '🏋️ Gymnasium',
+      '🌳 Landscaped Gardens',
+      '🛡️ 24/7 Security',
+      '⚡ Power Backup',
+      '🚗 Covered Parking',
+      '🎉 Clubhouse / Party Hall',
+      '🏃 Jogging Track',
+      '🛝 Children\'s Play Area',
+      '🏸 Badminton Court',
+      '📹 CCTV Surveillance',
+      '🌧️ Rainwater Harvesting',
+      '🧘 Yoga & Meditation Deck',
+      '☕ Rooftop Lounge',
+      '🐕 Pet Park'
+    ];
+
+    let currentAmenities = [];
+
+    function renderAmenitiesUI() {
+      const container = document.getElementById('amenitiesChipsContainer');
+      const countBadge = document.getElementById('amenitiesCountBadge');
+      const presetsContainer = document.getElementById('amenitiesPresetsContainer');
+      if (!container) return;
+
+      countBadge.textContent = `${currentAmenities.length} Selected`;
+
+      if (!currentAmenities.length) {
+        container.innerHTML = '<span style="color:var(--muted);font-size:12px;grid-column:1/-1;text-align:center;padding:8px;">No amenities selected. Click presets below or add custom ones.</span>';
+      } else {
+        container.innerHTML = currentAmenities.map((item, idx) => `
+          <div style="display:flex;gap:6px;align-items:center;" class="amenity-edit-row">
+            <input type="text" class="amenity-item-input" value="${(item || '').replace(/"/g, '&quot;')}" oninput="updateAmenityItem(${idx}, this.value)" placeholder="Amenity name" style="flex:1;background:#1e293b;border:1px solid #334155;color:#f1f5f9;font-size:12.5px;padding:6px 10px;border-radius:6px;">
+            <button type="button" class="btn btn-outline btn-sm" onclick="removeAmenity(${idx})" style="color:#f87171;border-color:rgba(239,68,68,0.3);padding:6px 9px;" title="Remove this amenity">✕</button>
+          </div>
+        `).join('');
+      }
+
+      // Render preset buttons
+      presetsContainer.innerHTML = presetAmenitiesSuggestions.map(preset => {
+        const isAdded = currentAmenities.includes(preset);
+        return `
+          <button type="button" onclick="${isAdded ? `removeAmenityByName('${preset.replace(/'/g, "\\'")}')` : `addAmenity('${preset.replace(/'/g, "\\'")}')`}" class="btn btn-sm" style="font-size:11.5px;padding:3px 9px;border-radius:14px;background:${isAdded ? 'rgba(56,189,248,0.2)' : '#0f172a'};color:${isAdded ? '#38bdf8' : '#94a3b8'};border:1px solid ${isAdded ? '#38bdf8' : 'var(--card-border)'};">
+            ${isAdded ? '✓ ' : '+ '} ${preset}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function updateAmenityItem(idx, val) {
+      if (idx >= 0 && idx < currentAmenities.length) {
+        currentAmenities[idx] = val;
+      }
+    }
+
+    function addAmenity(name) {
+      if (name && !currentAmenities.includes(name)) {
+        currentAmenities.push(name);
+        renderAmenitiesUI();
+      }
+    }
+
+    function removeAmenity(idx) {
+      if (idx >= 0 && idx < currentAmenities.length) {
+        currentAmenities.splice(idx, 1);
+        renderAmenitiesUI();
+      }
+    }
+
+    function removeAmenityByName(name) {
+      currentAmenities = currentAmenities.filter(a => a !== name);
+      renderAmenitiesUI();
+    }
+
+    // Proximity State & Defaults
+    const defaultProximityList = [
+      { title: '🚇 Metro Station', time: '5 Minutes Walk' },
+      { title: '🏢 IT Tech Parks', time: '10 Minutes Drive' },
+      { title: '🏥 Multi-Specialty Hospital', time: '8 Minutes Drive' }
+    ];
+
+    let currentProximity = [];
+
+    function renderProximityUI() {
+      const container = document.getElementById('proximityRowsContainer');
+      if (!container) return;
+
+      if (!currentProximity.length) {
+        container.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:8px;">No proximity locations added yet. Click "+ Add Location" above.</div>';
+        return;
+      }
+
+      container.innerHTML = currentProximity.map((item, idx) => `
+        <div style="display:flex;gap:8px;align-items:center;" class="proximity-row">
+          <input type="text" class="prox-title" placeholder="Landmark (e.g. 🚇 Metro Station)" value="${item.title || ''}" oninput="updateProximityItem(${idx}, 'title', this.value)" style="flex:1;font-size:13px;padding:8px 12px;">
+          <input type="text" class="prox-time" placeholder="Commute Time (e.g. 5 Minutes Walk)" value="${item.time || ''}" oninput="updateProximityItem(${idx}, 'time', this.value)" style="flex:1;font-size:13px;padding:8px 12px;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="removeProximityRow(${idx})" style="color:#f87171;border-color:rgba(239,68,68,0.3);padding:8px 12px;" title="Remove this landmark">✕</button>
+        </div>
+      `).join('');
+    }
+
+    function updateProximityItem(idx, key, val) {
+      if (currentProximity[idx]) {
+        currentProximity[idx][key] = val;
+      }
+    }
+
+    function removeProximityRow(idx) {
+      if (idx >= 0 && idx < currentProximity.length) {
+        currentProximity.splice(idx, 1);
+        renderProximityUI();
+      }
+    }
+
+    function addProximityRow(title = '', time = '') {
+      currentProximity.push({ title, time });
+      renderProximityUI();
+    }
+
+    function renderGalleryGrid() {
+      const grid = document.getElementById('galleryGrid');
+      const countBadge = document.getElementById('galleryCountBadge');
+      const formImage = document.getElementById('formImage');
+      if (!grid) return;
+
+      countBadge.textContent = `${currentGalleryImages.length} photo${currentGalleryImages.length === 1 ? '' : 's'}`;
+      if (currentGalleryImages.length >= 3) {
+        countBadge.style.color = '#34d399';
+        countBadge.style.background = 'rgba(16,185,129,0.15)';
+      } else {
+        countBadge.style.color = '#38bdf8';
+        countBadge.style.background = 'rgba(56,189,248,0.12)';
+      }
+
+      formImage.value = currentGalleryImages[0] || '';
+
+      if (!currentGalleryImages.length) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--muted);font-size:12.5px;">No photos uploaded yet. Click below to add 3–4 photos.</div>';
+        return;
+      }
+
+      grid.innerHTML = currentGalleryImages.map((url, idx) => {
+        const isCover = idx === 0;
+        return `
+          <div style="position:relative;border-radius:8px;overflow:hidden;border:2px solid ${isCover ? '#38bdf8' : 'var(--card-border)'};background:#111827;aspect-ratio:4/3;box-shadow:0 4px 10px rgba(0,0,0,0.3);">
+            <img src="${url}" alt="Photo ${idx+1}" style="width:100%;height:100%;object-fit:cover;">
+            ${isCover ? '<span style="position:absolute;top:5px;left:5px;background:#0284c7;color:white;font-size:9.5px;font-weight:800;padding:2px 5px;border-radius:4px;letter-spacing:0.3px;">★ COVER</span>' : ''}
+            <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent, rgba(0,0,0,0.85));padding:4px 6px;display:flex;justify-content:space-between;align-items:center;">
+              ${!isCover ? `<button type="button" onclick="setCoverImage(${idx})" style="background:none;border:none;color:#94a3b8;font-size:10px;font-weight:700;cursor:pointer;padding:2px;" title="Set as primary cover">Set Cover</button>` : '<span></span>'}
+              <button type="button" onclick="removeGalleryImage(${idx})" style="background:rgba(239,68,68,0.85);color:white;border:none;border-radius:4px;width:18px;height:18px;cursor:pointer;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;" title="Delete photo">✕</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setCoverImage(idx) {
+      if (idx > 0 && idx < currentGalleryImages.length) {
+        const item = currentGalleryImages.splice(idx, 1)[0];
+        currentGalleryImages.unshift(item);
+        renderGalleryGrid();
+        showToast('Cover photo updated');
+      }
+    }
+
+    function removeGalleryImage(idx) {
+      if (idx >= 0 && idx < currentGalleryImages.length) {
+        currentGalleryImages.splice(idx, 1);
+        renderGalleryGrid();
+      }
+    }
 
     document.getElementById('openAddModalBtn').addEventListener('click', () => {
       propForm.reset();
       document.getElementById('editPropId').value = '';
       document.getElementById('modalTitle').textContent = 'Add New Property';
-      document.getElementById('formImage').value = 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1000&q=78';
+      currentGalleryImages = [
+        'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1000&q=78',
+        'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=75',
+        'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=800&q=75',
+        'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=800&q=75'
+      ];
+      renderGalleryGrid();
+      document.getElementById('galleryUploadStatus').textContent = 'Upload 3–4 photos from your computer or keep default gallery.';
+      document.getElementById('formGalleryFiles').value = '';
       document.getElementById('formVideoUrl').value = '';
       document.getElementById('formBrochureUrl').value = '';
       document.getElementById('brochureUploadStatus').textContent = '';
+      document.getElementById('formAdminNote').value = '';
+
+      currentAmenities = [...defaultAmenitiesList];
+      renderAmenitiesUI();
+
+      currentProximity = defaultProximityList.map(item => ({ ...item }));
+      renderProximityUI();
+
       propModal.showModal();
     });
 
@@ -677,12 +1016,29 @@
       document.getElementById('formBhk').value = p.bhk;
       document.getElementById('formArea').value = p.area;
       document.getElementById('formBaths').value = p.baths || 2;
-      document.getElementById('formStatus').value = p.status;
-      document.getElementById('formImage').value = p.image;
+      document.getElementById('formStatus').value = (p.status === 'Ready to Move' || p.status === 'Ready') ? 'Ready' : p.status;
+      document.getElementById('formAdminNote').value = p.admin_note || '';
+      
+      currentGalleryImages = (Array.isArray(p.images) && p.images.length) ? [...p.images] : (p.image ? [p.image] : []);
+      renderGalleryGrid();
+      document.getElementById('galleryUploadStatus').textContent = `${currentGalleryImages.length} photo${currentGalleryImages.length === 1 ? '' : 's'} loaded. Click Choose Photos to add more.`;
+      document.getElementById('formGalleryFiles').value = '';
+
       document.getElementById('formVideoUrl').value = p.video_url || '';
       document.getElementById('formBrochureUrl').value = p.brochure_url || '';
       document.getElementById('brochureUploadStatus').textContent = p.brochure_url ? `Attached: ${p.brochure_url}` : '';
       document.getElementById('formDescription').value = p.description || '';
+
+      currentAmenities = (Array.isArray(p.amenities) && p.amenities.length) 
+        ? [...p.amenities] 
+        : [...defaultAmenitiesList];
+      renderAmenitiesUI();
+
+      currentProximity = (Array.isArray(p.proximity) && p.proximity.length)
+        ? p.proximity.map(item => ({ ...item }))
+        : defaultProximityList.map(item => ({ ...item }));
+      renderProximityUI();
+
       propModal.showModal();
     }
 
@@ -692,7 +1048,36 @@
       saveBtn.disabled = true;
       saveBtn.textContent = 'Saving...';
 
+      if (!currentGalleryImages.length) {
+        showToast('Please upload at least 1 photo for this property');
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Property';
+        return;
+      }
+
       const id = document.getElementById('editPropId').value;
+
+      // Collect amenities inputs directly from DOM so any rewritten values are captured
+      const amenityInputs = document.querySelectorAll('.amenity-item-input');
+      const amenitiesData = [];
+      amenityInputs.forEach(inp => {
+        const val = inp.value.trim();
+        if (val) amenitiesData.push(val);
+      });
+      const finalAmenities = amenitiesData.length ? amenitiesData : currentAmenities.filter(Boolean);
+
+      // Collect proximity inputs directly from DOM so any rewritten values are captured
+      const proxRows = document.querySelectorAll('.proximity-row');
+      const proximityData = [];
+      proxRows.forEach(row => {
+        const title = row.querySelector('.prox-title')?.value.trim();
+        const time = row.querySelector('.prox-time')?.value.trim();
+        if (title && time) {
+          proximityData.push({ title, time });
+        }
+      });
+      const finalProximity = proximityData.length ? proximityData : currentProximity.filter(p => p.title && p.time);
+
       const payload = {
         title: document.getElementById('formTitle').value.trim(),
         location: document.getElementById('formLocation').value.trim(),
@@ -703,10 +1088,14 @@
         area: document.getElementById('formArea').value.trim(),
         baths: Number(document.getElementById('formBaths').value),
         status: document.getElementById('formStatus').value,
-        image: document.getElementById('formImage').value.trim(),
+        image: currentGalleryImages[0],
+        images: currentGalleryImages,
+        amenities: finalAmenities,
+        proximity: finalProximity,
         video_url: document.getElementById('formVideoUrl').value.trim(),
         brochure_url: document.getElementById('formBrochureUrl').value.trim(),
-        description: document.getElementById('formDescription').value.trim()
+        description: document.getElementById('formDescription').value.trim(),
+        admin_note: document.getElementById('formAdminNote').value.trim()
       };
 
       try {
@@ -729,6 +1118,86 @@
       } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = 'Save Property';
+      }
+    });
+
+    // Add manual image URL to gallery
+    document.getElementById('addManualImageBtn').addEventListener('click', () => {
+      const input = document.getElementById('manualImageUrlInput');
+      const val = input.value.trim();
+      if (!val) return;
+      currentGalleryImages.push(val);
+      input.value = '';
+      renderGalleryGrid();
+      showToast('Photo added to gallery');
+    });
+
+    // Custom Amenity add button listener
+    document.getElementById('addCustomAmenityBtn')?.addEventListener('click', () => {
+      const input = document.getElementById('customAmenityInput');
+      const val = input.value.trim();
+      if (!val) return;
+      val.split(',').forEach(item => {
+        const clean = item.trim();
+        if (clean) addAmenity(clean);
+      });
+      input.value = '';
+      showToast('Amenity added');
+    });
+
+    // Add Proximity row button listener
+    document.getElementById('addProximityRowBtn')?.addEventListener('click', () => {
+      addProximityRow('', '');
+    });
+
+    // Multi-photo upload for property gallery
+    document.getElementById('formGalleryFiles').addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
+
+      const validFiles = files.filter(f => f.type.startsWith('image/'));
+      if (!validFiles.length) {
+        showToast('Please select valid image files');
+        return;
+      }
+
+      const status = document.getElementById('galleryUploadStatus');
+      status.textContent = `⏳ Uploading ${validFiles.length} photo${validFiles.length > 1 ? 's' : ''}...`;
+
+      let uploadedCount = 0;
+      for (const file of validFiles) {
+        try {
+          const reader = new FileReader();
+          const base64Promise = new Promise((resolve, reject) => {
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+          });
+          reader.readAsDataURL(file);
+          const base64Data = await base64Promise;
+
+          const res = await fetch('/api/upload-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: file.name, fileData: base64Data })
+          });
+          const data = await res.json();
+          if (data.success && data.url) {
+            currentGalleryImages.push(data.url);
+            uploadedCount++;
+            renderGalleryGrid();
+          }
+        } catch (err) {
+          console.error('Error uploading file:', file.name, err);
+        }
+      }
+
+      e.target.value = '';
+      if (uploadedCount > 0) {
+        status.textContent = `✅ Attached ${uploadedCount} photo${uploadedCount > 1 ? 's' : ''}!`;
+        showToast(`Uploaded ${uploadedCount} photo${uploadedCount > 1 ? 's' : ''}!`);
+      } else {
+        status.textContent = '❌ Failed to upload photos.';
+        showToast('Error uploading photos');
       }
     });
 
@@ -768,7 +1237,9 @@
     });
 
     async function deleteProperty(id, title) {
-      if (!confirm(`Delete "${title}"?`)) return;
+      const p = properties.find(x => x.id === id);
+      const name = title || (p ? p.title : 'this property');
+      if (!confirm(`Delete "${name}"?`)) return;
       try {
         const res = await fetch(`/api/properties/${id}`, { method: 'DELETE' });
         const data = await res.json();
@@ -829,7 +1300,7 @@
           <td style="text-align:right">
             <div style="display:flex;gap:6px;justify-content:flex-end;">
               <button class="btn btn-outline btn-sm" onclick="editSlide('${s.id}')">✏ Edit</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteSlide('${s.id}', '${s.name.replace(/'/g, "\\'")}')">🗑</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteSlide('${s.id}')">🗑</button>
             </div>
           </td>
         </tr>
@@ -843,7 +1314,11 @@
       slideForm.reset();
       document.getElementById('editSlideId').value = '';
       document.getElementById('slideModalTitle').textContent = 'Add Hero Slide';
-      document.getElementById('slideImage').value = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=78';
+      const defaultSlideImg = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=78';
+      document.getElementById('slideImage').value = defaultSlideImg;
+      document.getElementById('slideImagePreview').src = defaultSlideImg;
+      document.getElementById('slideImageUploadStatus').textContent = 'Upload a banner photo from your device';
+      document.getElementById('slideImageFile').value = '';
       slideModal.showModal();
     }
 
@@ -865,9 +1340,57 @@
       document.getElementById('slideLocation').value = s.location || '';
       document.getElementById('slideOfferText').value = s.offer_text || '';
       document.getElementById('slideImage').value = s.image;
+      document.getElementById('slideImagePreview').src = s.image || '';
+      document.getElementById('slideImageUploadStatus').textContent = s.image && s.image.startsWith('/uploads') ? '✅ Uploaded local banner' : 'Current banner photo';
+      document.getElementById('slideImageFile').value = '';
       document.getElementById('slideVideoUrl').value = s.video_url || '';
       slideModal.showModal();
     }
+
+    // Live preview when Slide Banner URL is manually typed
+    document.getElementById('slideImage').addEventListener('input', (e) => {
+      if (e.target.value.trim()) {
+        document.getElementById('slideImagePreview').src = e.target.value.trim();
+      }
+    });
+
+    // Auto-upload Slide Banner Photo when file is selected
+    document.getElementById('slideImageFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        showToast('Please select a valid image file');
+        return;
+      }
+      const status = document.getElementById('slideImageUploadStatus');
+      status.textContent = '⏳ Uploading ' + file.name + '...';
+      document.getElementById('slideImagePreview').src = URL.createObjectURL(file);
+
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const res = await fetch('/api/upload-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: file.name, fileData: reader.result })
+          });
+          const data = await res.json();
+          if (data.success) {
+            document.getElementById('slideImage').value = data.url;
+            document.getElementById('slideImagePreview').src = data.url;
+            status.textContent = '✅ Attached: ' + file.name;
+            showToast('Banner photo uploaded successfully!');
+          } else {
+            status.textContent = '❌ Upload failed: ' + (data.message || 'Error');
+            showToast('Failed to upload banner');
+          }
+        } catch (err) {
+          status.textContent = '❌ Upload error';
+          showToast('Error uploading banner file');
+        }
+      };
+      reader.readAsDataURL(file);
+    });
 
     slideForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -912,7 +1435,9 @@
     });
 
     async function deleteSlide(id, name) {
-      if (!confirm(`Delete carousel slide "${name}"?`)) return;
+      const s = slides.find(x => x.id === id);
+      const slideName = name || (s ? s.name : 'this slide');
+      if (!confirm(`Delete carousel slide "${slideName}"?`)) return;
       try {
         const res = await fetch(`/api/featured-projects/${id}`, { method: 'DELETE' });
         const data = await res.json();
@@ -1012,7 +1537,7 @@
       document.getElementById('enquiryCount').textContent = enquiries.length;
 
       if (!enquiries.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">No leads recorded yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">No leads recorded yet.</td></tr>';
         return;
       }
 
@@ -1031,6 +1556,24 @@
               <option value="Contacted" ${e.status === 'Contacted' ? 'selected' : ''}>🔵 Contacted</option>
               <option value="Closed" ${e.status === 'Closed' ? 'selected' : ''}>⚪ Closed</option>
             </select>
+          </td>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px;min-width:220px;max-width:320px;">
+              <input type="text" 
+                     id="feedbackInput_${e.id}" 
+                     value="${(e.feedback || '').replace(/"/g, '&quot;')}" 
+                     placeholder="Add feedback / notes..." 
+                     onchange="updateEnquiryFeedback(${e.id}, this.value)"
+                     onkeydown="if(event.key==='Enter'){updateEnquiryFeedback(${e.id}, this.value);this.blur();}"
+                     style="flex:1;padding:5px 9px;border-radius:6px;background:#0c1220;color:#f1f5f9;border:1px solid var(--card-border);font-size:12px;outline:none;transition:border-color .15s ease;"
+                     onfocus="this.style.borderColor='#38bdf8'"
+                     onblur="this.style.borderColor='var(--card-border)'"
+                     title="Type feedback or call notes and press Enter or click 💾"
+              >
+              <button type="button" class="btn btn-outline btn-sm" onclick="saveEnquiryFeedbackBtn(${e.id})" style="padding:5px 8px;font-size:11px;color:#38bdf8;border-color:rgba(56,189,248,0.3);flex-shrink:0;" title="Save feedback note">
+                💾
+              </button>
+            </div>
           </td>
           <td style="text-align:right">
             <a href="https://wa.me/91${e.phone.replace(/[^0-9]/g,'')}?text=Hello%20${encodeURIComponent(e.name)},%20regarding%20your%20inquiry%20on%20Vasati%20Properties" target="_blank" class="btn btn-outline btn-sm" style="color:#34d399;display:inline-flex;align-items:center;gap:6px;">
@@ -1059,6 +1602,33 @@
         }
       } catch (e) {
         showToast('Error updating status');
+      }
+    }
+
+    async function updateEnquiryFeedback(id, feedback) {
+      try {
+        const res = await fetch(`/api/enquiries/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ feedback: (feedback || '').trim() })
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast('✅ Feedback saved');
+          const found = enquiries.find(item => item.id === id);
+          if (found) found.feedback = (feedback || '').trim();
+        } else {
+          showToast('❌ Failed to save feedback');
+        }
+      } catch (e) {
+        showToast('Error saving feedback');
+      }
+    }
+
+    function saveEnquiryFeedbackBtn(id) {
+      const input = document.getElementById(`feedbackInput_${id}`);
+      if (input) {
+        updateEnquiryFeedback(id, input.value);
       }
     }
 

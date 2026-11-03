@@ -199,7 +199,7 @@ export default function ListingsFilterGrid({
         </div>
 
         {/* Segmented Inputs Row (99acres Filter Strip) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-3 border-t border-slate-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 pt-3 border-t border-slate-100">
           <div>
             <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
               Search Project / Builder
@@ -211,6 +211,23 @@ export default function ListingsFilterGrid({
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 focus:bg-white font-medium"
             />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+              Status / Category
+            </label>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white font-bold text-slate-800"
+            >
+              <option value="any">All Categories</option>
+              <option value="New Launch">New Launch</option>
+              <option value="Ready to Move">Ready to Move</option>
+              <option value="Resale">Resale</option>
+              <option value="Luxury Villa">Luxury Villa</option>
+            </select>
           </div>
 
           <div>

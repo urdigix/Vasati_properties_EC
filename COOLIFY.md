@@ -46,7 +46,7 @@ If you prefer running a separate managed PostgreSQL database in Coolify:
 | `IP_HASH_SALT` | Salt for SHA-256 IP hashing | `openssl rand -hex 16` |
 | `ADMIN_SESSION_SECRET` | Secret for signing admin sessions | `openssl rand -hex 32` |
 | `ADMIN_DEFAULT_EMAIL` | Default administrator email | `admin@example.com` |
-| `ADMIN_DEFAULT_PASSWORD` | Default administrator password | `StrongSecretPass#2026` |
+| `ADMIN_DEFAULT_PASSWORD` | Default administrator password | `VasatiProperties@2026!` |
 | `NEXT_PUBLIC_APP_URL` | Public production website URL | `https://bangalore.yourdomain.com` |
 | `NEXT_PUBLIC_BUSINESS_NAME` | Business trade name | `[BUSINESS_NAME_PLACEHOLDER]` |
 | `NEXT_PUBLIC_BUSINESS_ADDRESS` | Registered Bangalore address | `[BUSINESS_ADDRESS_PLACEHOLDER]` |

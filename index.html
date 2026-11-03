@@ -87,9 +87,26 @@
       font-size: 9.5px; font-weight: 800; letter-spacing: 3px; color: var(--accent); margin-top: 3px;
     }
 
-    .nav-links { display: flex; align-items: center; gap: 26px; list-style: none; font-size: 14px; font-weight: 600; color: var(--ink-muted); }
-    .nav-links a { transition: color .15s ease; }
-    .nav-links a:hover, .nav-links a.active { color: var(--primary); }
+    .nav-links { display: flex; align-items: center; gap: 8px; list-style: none; font-size: 14px; font-weight: 600; color: var(--ink-muted); }
+    .nav-links a {
+      padding: 7px 14px;
+      border-radius: 8px;
+      transition: all .18s ease;
+      display: inline-block;
+      color: var(--ink-muted);
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .nav-links a:hover {
+      color: var(--primary);
+      background: var(--primary-pale);
+    }
+    .nav-links a.active {
+      color: #ffffff !important;
+      background: var(--primary) !important;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.28);
+    }
 
     .nav-actions { display: flex; align-items: center; gap: 12px; }
     .icon-btn {
@@ -211,50 +228,7 @@
     }
     .indicator-dot.active { width: 24px; background: white; }
 
-    /* Luxury Search Engine Bar */
-    .search-card {
-      max-width: 980px; margin: -10px auto 0;
-      background: white; border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 18px 24px 22px;
-      box-shadow: var(--shadow-lg);
-      position: relative; z-index: 20;
-    }
-    .search-tabs {
-      display: flex; gap: 8px; margin-bottom: 16px;
-      border-bottom: 1px solid var(--border); padding-bottom: 12px;
-    }
-    .tab-pill {
-      padding: 8px 18px; border-radius: var(--radius-full);
-      border: 1px solid transparent; background: transparent;
-      font-size: 13.5px; font-weight: 700; color: var(--ink-muted);
-      cursor: pointer; transition: all .15s ease;
-    }
-    .tab-pill:hover { color: var(--ink); background: #f1f5f9; }
-    .tab-pill.active {
-      background: var(--primary-pale); color: var(--primary);
-      border-color: rgba(191, 219, 254, 0.8);
-    }
-    .search-grid {
-      display: grid; grid-template-columns: 1.8fr 1.2fr 1.2fr auto;
-      gap: 12px; align-items: flex-end;
-    }
-    .input-box { display: flex; flex-direction: column; gap: 6px; }
-    .input-box label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-muted); }
-    .input-box input, .input-box select {
-      height: 48px; padding: 0 14px;
-      border: 1px solid var(--border); border-radius: 10px;
-      background: #f8fafc; font-size: 14px; font-weight: 600;
-      transition: all .15s ease;
-    }
-    .input-box input:focus, .input-box select:focus {
-      background: white; border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-    }
-    .search-submit-btn {
-      height: 48px; min-width: 140px;
-      border-radius: 10px; font-size: 14px;
-    }
+
 
     /* Locality Selector / Chips */
     .localities-strip {
@@ -358,31 +332,6 @@
     }
     .card-footer .btn { flex: 1; min-height: 40px; font-size: 13px; }
 
-    /* Interactive Mortgage / EMI Calculator Widget */
-    .calculator-section {
-      background: white; border: 1px solid var(--border);
-      border-radius: var(--radius-lg); padding: 36px;
-      margin: 40px 0; box-shadow: var(--shadow-sm);
-    }
-    .calc-header { margin-bottom: 24px; text-align: center; }
-    .calc-header h2 { font-size: 24px; font-weight: 800; }
-    .calc-header p { font-size: 14px; color: var(--ink-muted); margin-top: 4px; }
-    .calc-layout { display: grid; grid-template-columns: 1.4fr 1fr; gap: 36px; align-items: center; }
-    .calc-controls { display: flex; flex-direction: column; gap: 20px; }
-    .calc-group label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
-    .calc-group input[type="range"] {
-      width: 100%; height: 6px; border-radius: 4px; background: #e2e8f0; accent-color: var(--primary); outline: none; cursor: pointer;
-    }
-    .calc-result-card {
-      background: var(--ink); color: white; border-radius: var(--radius-md);
-      padding: 30px; text-align: center; box-shadow: var(--shadow-md);
-    }
-    .calc-emi-label { font-size: 13px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-    .calc-emi-amount { font-size: 38px; font-weight: 800; color: #38bdf8; margin: 8px 0 16px; letter-spacing: -1px; }
-    .calc-breakdown { display: flex; justify-content: space-around; border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px; font-size: 12px; }
-    .calc-breakdown div span { display: block; color: #94a3b8; margin-bottom: 4px; }
-    .calc-breakdown div strong { font-size: 15px; font-weight: 700; color: white; }
-
     /* Property Detail Page Container */
     #propertyDetailView { display: none; padding: 24px 0 60px; }
     #propertyDetailView.active { display: block; }
@@ -405,6 +354,23 @@
       padding: 26px; margin-bottom: 20px;
     }
     .detail-card h3 { font-size: 19px; font-weight: 800; margin-bottom: 16px; letter-spacing: -0.4px; }
+    
+    .property-description-box {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 14.5px;
+      color: #334155;
+      line-height: 1.85;
+      font-family: inherit;
+    }
+    .property-description-box strong {
+      color: #0f172a;
+      font-weight: 800;
+    }
+    .property-description-box em {
+      color: #475569;
+      font-style: italic;
+    }
     
     .amenities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
     .amenity-item { display: flex; align-items: center; gap: 10px; font-size: 13.5px; font-weight: 600; color: #334155; }
@@ -554,11 +520,6 @@
       .card-footer { gap: 8px; }
       .card-footer .btn { min-height: 40px; font-size: 12.5px; }
 
-      /* Mobile Calculator */
-      .calculator-section { padding: 18px 16px; border-radius: var(--radius-md); margin: 24px 0; }
-      .calc-result-card { padding: 20px 16px; }
-      .calc-emi-amount { font-size: 28px; }
-
       /* Mobile Detail View */
       #propertyDetailView { padding: 12px 0 40px; }
       .detail-gallery-grid { height: 230px; border-radius: var(--radius-md); }
@@ -591,10 +552,11 @@
       </a>
 
       <ul class="nav-links">
-        <li><a href="#propertiesSection" data-tab-filter="Buy">New Developments</a></li>
-        <li><a href="#propertiesSection" data-tab-filter="Resale">Resale Homes</a></li>
-        <li><a href="#propertiesSection" data-tab-filter="Villa">Luxury Villas</a></li>
-        <li><a href="#emiCalculator">EMI Calculator</a></li>
+        <li><a href="#propertiesSection" data-tab-filter="any" class="active">All Properties</a></li>
+        <li><a href="#propertiesSection" data-tab-filter="New">New Launch</a></li>
+        <li><a href="#propertiesSection" data-tab-filter="Ready">Ready to Move</a></li>
+        <li><a href="#propertiesSection" data-tab-filter="Resale">Resale</a></li>
+        <li><a href="#propertiesSection" data-tab-filter="Villa">Luxury Villa</a></li>
       </ul>
 
       <div class="nav-actions">
@@ -627,47 +589,7 @@
           </div>
         </div>
 
-        <!-- Luxury Search Engine Bar -->
-        <div class="search-card">
-          <div class="search-tabs" role="tablist">
-            <button class="tab-pill active" data-kind="Buy">Buy New</button>
-            <button class="tab-pill" data-kind="Resale">Resale</button>
-            <button class="tab-pill" data-kind="Villa">Villas</button>
-            <button class="tab-pill" data-kind="any">All Homes</button>
-          </div>
 
-          <form id="searchForm" class="search-grid">
-            <div class="input-box">
-              <label for="locInput">Location / Locality</label>
-              <input type="text" id="locInput" placeholder="Whitefield, HSR Layout, Sarjapur...">
-            </div>
-            <div class="input-box">
-              <label for="bhkSelect">Bedrooms</label>
-              <select id="bhkSelect">
-                <option value="any">Any BHK</option>
-                <option value="1">1 BHK</option>
-                <option value="2">2 BHK</option>
-                <option value="3">3 BHK</option>
-                <option value="4">4+ BHK</option>
-              </select>
-            </div>
-            <div class="input-box">
-              <label for="budgetSelect">Budget Range</label>
-              <select id="budgetSelect">
-                <option value="any">Any Budget</option>
-                <option value="60">Under ₹60 L</option>
-                <option value="100">Under ₹1 Cr</option>
-                <option value="150">Under ₹1.5 Cr</option>
-                <option value="250">Under ₹2.5 Cr</option>
-                <option value="500">Under ₹5 Cr</option>
-              </select>
-            </div>
-            <button type="submit" class="btn btn-primary search-submit-btn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-              Search
-            </button>
-          </form>
-        </div>
 
       </div>
     </section>
@@ -692,38 +614,6 @@
       <div class="property-grid" id="propertyGrid">
         <!-- Dynamically rendered property cards -->
       </div>
-
-      <!-- Interactive Mortgage / EMI Calculator Widget -->
-      <section class="calculator-section" id="emiCalculator">
-        <div class="calc-header">
-          <h2>📊 Home Loan EMI Estimator</h2>
-          <p>Plan your purchase with real-time monthly instalment calculations for Indian banks (SBI, HDFC, ICICI).</p>
-        </div>
-        <div class="calc-layout">
-          <div class="calc-controls">
-            <div class="calc-group">
-              <label><span>Loan Amount (₹)</span><strong id="calcLoanLabel">₹ 80,00,000</strong></label>
-              <input type="range" id="loanRange" min="1000000" max="30000000" step="500000" value="8000000">
-            </div>
-            <div class="calc-group">
-              <label><span>Interest Rate (% per annum)</span><strong id="calcRateLabel">8.5%</strong></label>
-              <input type="range" id="rateRange" min="7.0" max="13.0" step="0.1" value="8.5">
-            </div>
-            <div class="calc-group">
-              <label><span>Tenure (Years)</span><strong id="calcTenureLabel">20 Years</strong></label>
-              <input type="range" id="tenureRange" min="5" max="30" step="1" value="20">
-            </div>
-          </div>
-          <div class="calc-result-card">
-            <div class="calc-emi-label">Estimated Monthly EMI</div>
-            <div class="calc-emi-amount" id="calcEmiDisplay">₹ 69,426</div>
-            <div class="calc-breakdown">
-              <div><span>Principal Loan</span><strong id="calcPrincipalDisplay">₹ 80 Lakhs</strong></div>
-              <div><span>Total Interest</span><strong id="calcInterestDisplay">₹ 86.6 Lakhs</strong></div>
-            </div>
-          </div>
-        </div>
-      </section>
 
     </main>
 
@@ -1046,8 +936,9 @@
             <div class="card-photo-wrap">
               <img src="${p.image}" alt="${p.title}" loading="lazy">
               <span class="card-status-badge">
-                ${p.status === 'New' ? '✨ New Launch' : p.status === 'Villa' ? '👑 Luxury Villa' : '🔑 Resale Ready'}
+                ${p.status === 'New' ? '✨ New Launch' : p.status === 'Villa' ? '👑 Luxury Villa' : (p.status === 'Ready' || p.status === 'Ready to Move') ? '🏡 Ready to Move' : '🔑 Resale Ready'}
               </span>
+              ${p.images && p.images.length > 1 ? `<span style="position:absolute;bottom:12px;left:12px;background:rgba(15,23,42,0.85);color:white;padding:3px 8px;border-radius:14px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;backdrop-filter:blur(4px);z-index:2;">📷 ${p.images.length} Photos</span>` : ''}
               ${p.video_url ? `<span style="position:absolute;top:12px;left:12px;background:rgba(15,23,42,0.85);color:#38bdf8;padding:4px 9px;border-radius:20px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;backdrop-filter:blur(4px);z-index:2;">▶ Video Tour</span>` : ''}
               <button class="card-heart-btn ${isSaved ? 'saved' : ''}" onclick="toggleSave(event, '${p.id}')" title="Save home">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
@@ -1101,33 +992,70 @@
       state.bhk = "any";
       state.budget = "any";
       state.showingSavedOnly = false;
-      document.getElementById('locInput').value = "";
-      document.getElementById('bhkSelect').value = "any";
-      document.getElementById('budgetSelect').value = "any";
-      document.querySelectorAll('.tab-pill').forEach(t => t.classList.toggle('active', t.dataset.kind === 'any'));
+      document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+      document.querySelector('.nav-links a[data-tab-filter="any"]')?.classList.add('active');
       loadProperties();
     }
 
-    // --- Search Events ---
-    document.querySelectorAll('.tab-pill').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-pill').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        state.kind = btn.dataset.kind;
+    // --- Navigation Category Filter & EMI Buttons ---
+    document.querySelectorAll('[data-tab-filter]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const filterVal = link.getAttribute('data-tab-filter');
+        
+        // Update active class on nav links
+        document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+        link.classList.add('active');
+
+        // Close property detail view if open
+        if (location.hash.startsWith('#property/')) {
+          location.hash = '';
+        }
+        const homeSurface = document.getElementById('homeSurface');
+        if (homeSurface) homeSurface.style.display = 'block';
+        const detailView = document.getElementById('propertyDetailView');
+        if (detailView) detailView.classList.remove('active');
+
+        state.kind = filterVal;
         state.showingSavedOnly = false;
         loadProperties();
+        
+        document.getElementById('propertiesSection')?.scrollIntoView({ behavior: 'smooth' });
       });
     });
 
-    document.getElementById('searchForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      state.locality = document.getElementById('locInput').value.trim();
-      state.bhk = document.getElementById('bhkSelect').value;
-      state.budget = document.getElementById('budgetSelect').value;
-      state.showingSavedOnly = false;
-      loadProperties();
-      document.getElementById('propertiesSection').scrollIntoView({ behavior: 'smooth' });
+    // Popular corridor chip shortcuts
+    document.querySelectorAll('.corridor-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const loc = chip.dataset.loc;
+        const locInput = document.getElementById('locInput');
+        if (locInput) locInput.value = loc;
+        state.locality = loc;
+        state.showingSavedOnly = false;
+        loadProperties();
+        document.getElementById('propertiesSection')?.scrollIntoView({ behavior: 'smooth' });
+      });
     });
+
+    const searchFormEl = document.getElementById('searchForm');
+    if (searchFormEl) {
+      searchFormEl.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const statusSel = document.getElementById('statusSelect');
+        if (statusSel) {
+          state.kind = statusSel.value;
+          document.querySelectorAll('.tab-pill').forEach(b => {
+            b.classList.toggle('active', b.dataset.kind === state.kind);
+          });
+        }
+        state.locality = document.getElementById('locInput')?.value.trim() || '';
+        state.bhk = document.getElementById('bhkSelect')?.value || 'any';
+        state.budget = document.getElementById('budgetSelect')?.value || 'any';
+        state.showingSavedOnly = false;
+        loadProperties();
+        document.getElementById('propertiesSection')?.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
 
     document.getElementById('sortSelect').addEventListener('change', (e) => {
       state.sort = e.target.value;
@@ -1143,6 +1071,27 @@
     });
 
     // --- Single Property Detail Routing & View ---
+    function formatDescription(desc) {
+      if (!desc) {
+        return 'Stunning architectural residence situated in one of Bengaluru’s most coveted tech enclaves. Features expansive natural light, world-class specifications, and landscaped community spaces.';
+      }
+
+      let safe = desc
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+
+      // Convert WhatsApp / Markdown *bold text* to <strong>
+      safe = safe.replace(/\*([^*\n\r]+?)\*/g, '<strong>$1</strong>');
+
+      // Convert _italic text_ to <em>
+      safe = safe.replace(/(^|\s)_([^_\n\r]+?)_(\s|$)/g, '$1<em>$2</em>$3');
+
+      return safe;
+    }
+
     async function openDetail(id) {
       location.hash = `#property/${id}`;
     }
@@ -1167,15 +1116,66 @@
       const detailView = document.getElementById('propertyDetailView');
       detailView.classList.add('active');
 
-      const areaNum = Number(p.area.split(' ')[0].replaceAll(',', '')) || 1200;
+      const areaNum = Number(String(p.area || '').replace(/[^0-9.]/g, '')) || 1200;
       const pricePerSqft = Math.round((p.price * 100000) / areaNum);
+
+      const galleryList = (Array.isArray(p.images) && p.images.length) ? p.images : [p.image];
+      const mainPhoto = galleryList[0];
+      const thumbsList = galleryList.length > 1 ? galleryList.slice(1) : [
+        'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=75',
+        'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=800&q=75'
+      ];
+
+      const thumbsHtml = thumbsList.map((thumbUrl, idx) => `
+        <img src="${thumbUrl}" alt="Photo ${idx+2}" onclick="document.getElementById('mainDetailPhoto').src = '${thumbUrl}'" style="cursor:pointer;" title="Click to view full photo">
+      `).join('');
+
+      // Amenities handling
+      const defaultAmenities = [
+        '🏊 Temperature Controlled Pool',
+        '🏋️ High-Tech Gymnasium',
+        '🌳 3 Acres Landscaped Gardens',
+        '🛡️ 24/7 Gated Multi-tier Security',
+        '⚡ 100% Power Backup',
+        '🚗 Dedicated Covered Parking'
+      ];
+      const amenitiesList = (Array.isArray(p.amenities) && p.amenities.length > 0) ? p.amenities : defaultAmenities;
+      const amenitiesHtml = amenitiesList.map(item => {
+        let text = typeof item === 'string' ? item : (item.name || item.title || '');
+        let icon = '✦';
+        const match = text.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic}|\p{Emoji})\s*(.*)$/u);
+        if (match) {
+          icon = match[1];
+          text = match[2];
+        }
+        return `<div class="amenity-item"><div class="amenity-icon">${icon}</div> <span>${text}</span></div>`;
+      }).join('');
+
+      // Proximity highlights handling
+      const defaultProximity = [
+        { title: '🚇 Metro Station', time: '5 Minutes Walk' },
+        { title: '🏢 IT Tech Parks', time: '10 Minutes Drive' },
+        { title: '🏥 Multi-Specialty Hospital', time: '8 Minutes Drive' }
+      ];
+      const proximityList = (Array.isArray(p.proximity) && p.proximity.length > 0) ? p.proximity : defaultProximity;
+      const proximityColors = ['var(--primary)', 'var(--emerald)', 'var(--accent)', '#8b5cf6', '#ec4899', '#06b6d4'];
+      const proximityHtml = proximityList.map((item, idx) => {
+        const color = proximityColors[idx % proximityColors.length];
+        const title = typeof item === 'object' && item.title ? item.title : (typeof item === 'string' ? item : '');
+        const time = typeof item === 'object' && item.time ? item.time : '';
+        return `
+          <div style="padding:12px 14px;border-left:3.5px solid ${color};background:#f8fafc;border-radius:0 8px 8px 0;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+            <strong style="display:block;font-size:13.5px;color:#0f172a;">${title}</strong>
+            ${time ? `<div style="font-size:12px;color:var(--ink-muted);margin-top:2px;font-weight:600;">${time}</div>` : ''}
+          </div>
+        `;
+      }).join('');
 
       document.getElementById('propertyDetailContent').innerHTML = `
         <div class="detail-gallery-grid">
-          <img src="${p.image}" class="gallery-main" alt="${p.title}">
+          <img src="${mainPhoto}" id="mainDetailPhoto" class="gallery-main" alt="${p.title}">
           <div class="gallery-thumbs">
-            <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=75" alt="Living Room">
-            <img src="https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=800&q=75" alt="Interior">
+            ${thumbsHtml}
           </div>
         </div>
 
@@ -1183,7 +1183,7 @@
           <div>
             <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
               <div>
-                <span class="card-status-badge" style="position:static;margin-bottom:8px;">${p.status} · Verified</span>
+                <span class="card-status-badge" style="position:static;margin-bottom:8px;">${(p.status === 'Ready' || p.status === 'Ready to Move') ? 'Ready to Move' : p.status} · Verified</span>
                 <h1 style="font-size:32px;font-weight:800;letter-spacing:-0.8px;">${p.title}</h1>
                 <div style="display:flex;align-items:center;gap:6px;color:var(--ink-muted);font-size:14px;margin-top:6px;">
                   📍 ${p.location} · ${p.kind || 'Apartment'} · ${p.possession || 'Ready to Move'}
@@ -1237,7 +1237,7 @@
             <!-- Description -->
             <div class="detail-card">
               <h3>About this Property</h3>
-              <p style="font-size:14.5px;color:#334155;line-height:1.7;">${p.description || 'Stunning architectural residence situated in one of Bengaluru’s most coveted tech enclaves. Features expansive natural light, world-class specifications, and landscaped community spaces.'}</p>
+              <div class="property-description-box">${formatDescription(p.description)}</div>
             </div>
 
             ${p.video_url ? `
@@ -1257,12 +1257,7 @@
             <div class="detail-card">
               <h3>Community Amenities & Features</h3>
               <div class="amenities-grid">
-                <div class="amenity-item"><div class="amenity-icon">🏊</div> Temperature Controlled Pool</div>
-                <div class="amenity-item"><div class="amenity-icon">🏋️</div> High-Tech Gymnasium</div>
-                <div class="amenity-item"><div class="amenity-icon">🌳</div> 3 Acres Landscaped Gardens</div>
-                <div class="amenity-item"><div class="amenity-icon">🛡️</div> 24/7 Gated Multi-tier Security</div>
-                <div class="amenity-item"><div class="amenity-icon">⚡</div> 100% Power Backup</div>
-                <div class="amenity-item"><div class="amenity-icon">🚗</div> Dedicated Covered Parking</div>
+                ${amenitiesHtml}
               </div>
             </div>
 
@@ -1270,15 +1265,7 @@
             <div class="detail-card">
               <h3>Proximity & Travel Times</h3>
               <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;">
-                <div style="padding:10px;border-left:3px solid var(--primary);background:#f8fafc;">
-                  <strong>🚇 Metro Station</strong><div style="font-size:12px;color:var(--ink-muted);">5 Minutes Walk</div>
-                </div>
-                <div style="padding:10px;border-left:3px solid var(--emerald);background:#f8fafc;">
-                  <strong>🏢 IT Tech Parks</strong><div style="font-size:12px;color:var(--ink-muted);">10 Minutes Drive</div>
-                </div>
-                <div style="padding:10px;border-left:3px solid var(--accent);background:#f8fafc;">
-                  <strong>🏥 Multi-Specialty Hospital</strong><div style="font-size:12px;color:var(--ink-muted);">8 Minutes Drive</div>
-                </div>
+                ${proximityHtml}
               </div>
             </div>
           </div>
@@ -1367,29 +1354,6 @@
       }
     }
     window.addEventListener('hashchange', handleRoute);
-
-    // --- Interactive EMI Calculator Logic ---
-    function updateEmiCalc() {
-      const P = Number(document.getElementById('loanRange').value);
-      const r = Number(document.getElementById('rateRange').value) / 12 / 100;
-      const n = Number(document.getElementById('tenureRange').value) * 12;
-
-      document.getElementById('calcLoanLabel').textContent = `₹ ${(P/100000).toFixed(1)} Lakhs`;
-      document.getElementById('calcRateLabel').textContent = `${document.getElementById('rateRange').value}%`;
-      document.getElementById('calcTenureLabel').textContent = `${document.getElementById('tenureRange').value} Years`;
-
-      const emi = Math.round((P * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
-      const totalPayment = emi * n;
-      const totalInterest = totalPayment - P;
-
-      document.getElementById('calcEmiDisplay').textContent = `₹ ${emi.toLocaleString('en-IN')}`;
-      document.getElementById('calcPrincipalDisplay').textContent = `₹ ${(P/100000).toFixed(1)} L`;
-      document.getElementById('calcInterestDisplay').textContent = `₹ ${(totalInterest/100000).toFixed(1)} L`;
-    }
-
-    ['loanRange', 'rateRange', 'tenureRange'].forEach(id => {
-      document.getElementById(id).addEventListener('input', updateEmiCalc);
-    });
 
     // --- Brochure Download & Lead-Gate Logic ---
     function initiateBrochureDownload(event, propId) {
@@ -1504,7 +1468,7 @@
     });
     document.getElementById('mobTabSearch').addEventListener('click', () => {
       location.hash = "";
-      document.getElementById('locInput').focus();
+      document.getElementById('propertiesSection')?.scrollIntoView({ behavior: 'smooth' });
     });
     document.getElementById('mobTabSaved').addEventListener('click', () => {
       location.hash = "";
@@ -1518,7 +1482,6 @@
     loadSiteSettings();
     loadFeaturedProjects();
     loadProperties();
-    updateEmiCalc();
     handleRoute();
   </script>
 </body>

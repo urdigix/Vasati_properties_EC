@@ -24,6 +24,7 @@ db.exec(`
     baths INTEGER NOT NULL,
     status TEXT NOT NULL,
     image TEXT NOT NULL,
+    images TEXT,
     video_url TEXT,
     brochure_url TEXT,
     alt TEXT,
@@ -31,6 +32,7 @@ db.exec(`
     kind TEXT,
     possession TEXT,
     description TEXT,
+    admin_note TEXT,
     featured INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
@@ -74,6 +76,19 @@ try { db.exec("ALTER TABLE featured_projects ADD COLUMN video_url TEXT;"); } cat
 // Try adding brochure_url column if database already existed
 try { db.exec("ALTER TABLE properties ADD COLUMN brochure_url TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE featured_projects ADD COLUMN brochure_url TEXT;"); } catch (e) {}
+
+// Try adding images gallery column if database already existed
+try { db.exec("ALTER TABLE properties ADD COLUMN images TEXT;"); } catch (e) {}
+
+// Try adding amenities and proximity columns if database already existed
+try { db.exec("ALTER TABLE properties ADD COLUMN amenities TEXT;"); } catch (e) {}
+try { db.exec("ALTER TABLE properties ADD COLUMN proximity TEXT;"); } catch (e) {}
+
+// Try adding feedback column to enquiries table if it doesn't exist
+try { db.exec("ALTER TABLE enquiries ADD COLUMN feedback TEXT;"); } catch (e) {}
+
+// Try adding admin_note column to properties table if it doesn't exist
+try { db.exec("ALTER TABLE properties ADD COLUMN admin_note TEXT;"); } catch (e) {}
 
 // Populate brochure_url for existing properties if empty
 try {
@@ -305,6 +320,48 @@ if (countProjStmt.get().count === 0) {
   }
 }
 
+function formatProperty(p) {
+  if (!p) return null;
+  let parsedImages = [];
+  if (p.images) {
+    try {
+      parsedImages = typeof p.images === 'string' ? JSON.parse(p.images) : p.images;
+      if (!Array.isArray(parsedImages)) parsedImages = [p.images];
+    } catch (e) {
+      parsedImages = [p.images];
+    }
+  }
+  if (!parsedImages.length && p.image) {
+    parsedImages = [p.image];
+  }
+
+  let parsedAmenities = null;
+  if (p.amenities) {
+    try {
+      parsedAmenities = typeof p.amenities === 'string' ? JSON.parse(p.amenities) : p.amenities;
+    } catch (e) {
+      parsedAmenities = p.amenities.split(',').map(s => s.trim()).filter(Boolean);
+    }
+  }
+
+  let parsedProximity = null;
+  if (p.proximity) {
+    try {
+      parsedProximity = typeof p.proximity === 'string' ? JSON.parse(p.proximity) : p.proximity;
+    } catch (e) {
+      parsedProximity = null;
+    }
+  }
+
+  return {
+    ...p,
+    image: p.image || (parsedImages.length ? parsedImages[0] : ''),
+    images: parsedImages,
+    amenities: parsedAmenities,
+    proximity: parsedProximity
+  };
+}
+
 module.exports = {
   db,
   // Property methods
@@ -325,9 +382,20 @@ module.exports = {
         params.push(bhkNum);
       }
     }
-    if (filters.status && filters.status !== 'any') {
-      sql += ' AND status = ?';
-      params.push(filters.status);
+    if (filters.status && filters.status !== 'any' && filters.status !== 'All' && filters.status !== 'all') {
+      const s = filters.status.trim();
+      if (s === 'Ready' || s === 'Ready to Move') {
+        sql += " AND (status = 'Ready' OR status = 'Ready to Move')";
+      } else if (s === 'New' || s === 'New Launch' || s === 'Buy') {
+        sql += " AND (status = 'New' OR status = 'New Launch')";
+      } else if (s === 'Villa' || s === 'Luxury Villa') {
+        sql += " AND (status = 'Villa' OR status = 'Luxury Villa' OR kind = 'Villa' OR title LIKE '%Villa%')";
+      } else if (s === 'Resale' || s === 'Resale Ready') {
+        sql += " AND (status = 'Resale' OR status = 'Resale Ready')";
+      } else {
+        sql += ' AND status = ?';
+        params.push(s);
+      }
     }
     if (filters.kind && filters.kind !== 'Buy' && filters.kind !== 'any') {
       sql += ' AND kind = ?';
@@ -359,23 +427,44 @@ module.exports = {
     }
 
     const stmt = db.prepare(sql);
-    return stmt.all(...params);
+    const rows = stmt.all(...params);
+    return rows.map(formatProperty);
   },
 
   getPropertyById: (id) => {
     const stmt = db.prepare('SELECT * FROM properties WHERE id = ?');
-    return stmt.get(id);
+    const row = stmt.get(id);
+    return formatProperty(row);
   },
 
   createProperty: (prop) => {
     const id = prop.id || 'prop_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+    let imagesArr = [];
+    if (Array.isArray(prop.images)) {
+      imagesArr = prop.images.filter(Boolean);
+    } else if (typeof prop.images === 'string') {
+      try {
+        imagesArr = JSON.parse(prop.images);
+      } catch (e) {
+        imagesArr = prop.images ? [prop.images] : [];
+      }
+    }
+    if (!imagesArr.length && prop.image) {
+      imagesArr = [prop.image];
+    }
+    const primaryImage = prop.image || (imagesArr.length ? imagesArr[0] : 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1000&q=78');
+    const imagesJson = JSON.stringify(imagesArr);
+    const amenitiesJson = prop.amenities ? (typeof prop.amenities === 'string' ? prop.amenities : JSON.stringify(prop.amenities)) : null;
+    const proximityJson = prop.proximity ? (typeof prop.proximity === 'string' ? prop.proximity : JSON.stringify(prop.proximity)) : null;
+
     const stmt = db.prepare(`
       INSERT INTO properties (
         id, title, location, locality, price, priceLabel, bhk, area, baths, status,
-        image, video_url, brochure_url, alt, listed, kind, possession, description, featured
+        image, images, amenities, proximity, video_url, brochure_url, alt, listed, kind, possession, description, admin_note, featured
       ) VALUES (
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+        ?, ?, ?
       )
     `);
     const price = Number(prop.price);
@@ -391,7 +480,10 @@ module.exports = {
       prop.area,
       Number(prop.baths || 2),
       prop.status || 'New',
-      prop.image || 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1000&q=78',
+      primaryImage,
+      imagesJson,
+      amenitiesJson,
+      proximityJson,
       prop.video_url || '',
       prop.brochure_url || '/uploads/brochures/vasati_project_brochure.pdf',
       prop.alt || prop.title,
@@ -399,12 +491,31 @@ module.exports = {
       prop.kind || 'Apartment',
       prop.possession || 'Ready to move',
       prop.description || '',
+      prop.admin_note || '',
       prop.featured ? 1 : 0
     );
     return id;
   },
 
   updateProperty: (id, prop) => {
+    let imagesArr = [];
+    if (Array.isArray(prop.images)) {
+      imagesArr = prop.images.filter(Boolean);
+    } else if (typeof prop.images === 'string') {
+      try {
+        imagesArr = JSON.parse(prop.images);
+      } catch (e) {
+        imagesArr = prop.images ? [prop.images] : [];
+      }
+    }
+    if (!imagesArr.length && prop.image) {
+      imagesArr = [prop.image];
+    }
+    const primaryImage = prop.image || (imagesArr.length ? imagesArr[0] : '');
+    const imagesJson = JSON.stringify(imagesArr);
+    const amenitiesJson = prop.amenities ? (typeof prop.amenities === 'string' ? prop.amenities : JSON.stringify(prop.amenities)) : null;
+    const proximityJson = prop.proximity ? (typeof prop.proximity === 'string' ? prop.proximity : JSON.stringify(prop.proximity)) : null;
+
     const stmt = db.prepare(`
       UPDATE properties SET
         title = ?,
@@ -417,6 +528,9 @@ module.exports = {
         baths = ?,
         status = ?,
         image = ?,
+        images = ?,
+        amenities = ?,
+        proximity = ?,
         video_url = ?,
         brochure_url = ?,
         alt = ?,
@@ -424,6 +538,7 @@ module.exports = {
         kind = ?,
         possession = ?,
         description = ?,
+        admin_note = ?,
         featured = ?
       WHERE id = ?
     `);
@@ -439,7 +554,10 @@ module.exports = {
       prop.area,
       Number(prop.baths || 2),
       prop.status,
-      prop.image,
+      primaryImage,
+      imagesJson,
+      amenitiesJson,
+      proximityJson,
       prop.video_url || '',
       prop.brochure_url || '',
       prop.alt || prop.title,
@@ -447,6 +565,7 @@ module.exports = {
       prop.kind || 'Apartment',
       prop.possession || 'Ready to move',
       prop.description || '',
+      prop.admin_note !== undefined ? prop.admin_note : '',
       prop.featured ? 1 : 0,
       id
     );
@@ -579,6 +698,12 @@ module.exports = {
     return true;
   },
 
+  updateEnquiryFeedback: (id, feedback) => {
+    const stmt = db.prepare('UPDATE enquiries SET feedback = ? WHERE id = ?');
+    stmt.run(feedback, id);
+    return true;
+  },
+
   deleteEnquiry: (id) => {
     const stmt = db.prepare('DELETE FROM enquiries WHERE id = ?');
     stmt.run(id);
@@ -588,6 +713,7 @@ module.exports = {
   getStats: () => {
     const totalProps = db.prepare('SELECT COUNT(*) as count FROM properties').get().count;
     const newProps = db.prepare("SELECT COUNT(*) as count FROM properties WHERE status = 'New'").get().count;
+    const readyProps = db.prepare("SELECT COUNT(*) as count FROM properties WHERE status = 'Ready' OR status = 'Ready to Move'").get().count;
     const resaleProps = db.prepare("SELECT COUNT(*) as count FROM properties WHERE status = 'Resale'").get().count;
     const villaProps = db.prepare("SELECT COUNT(*) as count FROM properties WHERE status = 'Villa'").get().count;
     const totalSlides = db.prepare('SELECT COUNT(*) as count FROM featured_projects').get().count;
@@ -597,6 +723,7 @@ module.exports = {
     return {
       totalProperties: totalProps,
       newHomes: newProps,
+      readyHomes: readyProps,
       resaleHomes: resaleProps,
       villas: villaProps,
       totalSlides,

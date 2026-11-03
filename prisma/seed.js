@@ -34,12 +34,12 @@ async function main() {
 
   // 2. Seed Default Admin
   const adminEmail = process.env.ADMIN_DEFAULT_EMAIL || 'admin@example.com';
-  const adminPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'ChangeMeInProduction#2026!';
+  const adminPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'VasatiProperties@2026!';
   const passwordHash = await bcrypt.hash(adminPassword, 12);
 
   await prisma.adminUser.upsert({
     where: { email: adminEmail },
-    update: {},
+    update: { passwordHash },
     create: {
       email: adminEmail,
       name: 'Authorized Compliance & Operations Lead',

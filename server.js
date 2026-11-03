@@ -172,6 +172,35 @@ app.delete('/api/featured-projects/:id', (req, res) => {
   }
 });
 
+// ----------------- DIRECT IMAGE / PHOTO UPLOAD API -----------------
+app.post('/api/upload-image', (req, res) => {
+  try {
+    const { filename, fileData } = req.body;
+    if (!fileData) {
+      return res.status(400).json({ success: false, message: 'No image file data provided' });
+    }
+
+    const uploadDir = path.join(__dirname, 'public', 'uploads', 'properties');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const baseName = (filename || 'photo.jpg').replace(/[^a-zA-Z0-9._-]/g, '_');
+    const uniqueFilename = `${Date.now()}_${baseName}`;
+    const filePath = path.join(uploadDir, uniqueFilename);
+
+    const base64Content = fileData.includes('base64,') ? fileData.split('base64,')[1] : fileData;
+    const buffer = Buffer.from(base64Content, 'base64');
+    fs.writeFileSync(filePath, buffer);
+
+    const publicUrl = `/uploads/properties/${uniqueFilename}`;
+    res.json({ success: true, message: 'Photo uploaded successfully', url: publicUrl });
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    res.status(500).json({ success: false, message: 'Failed to upload photo' });
+  }
+});
+
 // ----------------- BROCHURE PDF UPLOAD API -----------------
 app.post('/api/upload-pdf', (req, res) => {
   try {
@@ -243,17 +272,22 @@ app.get('/api/enquiries', (req, res) => {
   }
 });
 
-// Update enquiry status (Admin)
+// Update enquiry status and/or feedback notes (Admin)
 app.patch('/api/enquiries/:id', (req, res) => {
   try {
-    const { status } = req.body;
-    if (!status) {
-      return res.status(400).json({ success: false, message: 'Status is required' });
+    const { status, feedback } = req.body;
+    if (status === undefined && feedback === undefined) {
+      return res.status(400).json({ success: false, message: 'Status or feedback is required' });
     }
-    db.updateEnquiryStatus(req.params.id, status);
-    res.json({ success: true, message: `Enquiry status updated to ${status}` });
+    if (status !== undefined) {
+      db.updateEnquiryStatus(req.params.id, status);
+    }
+    if (feedback !== undefined) {
+      db.updateEnquiryFeedback(req.params.id, feedback);
+    }
+    res.json({ success: true, message: 'Enquiry updated successfully' });
   } catch (error) {
-    console.error('Error updating enquiry status:', error);
+    console.error('Error updating enquiry:', error);
     res.status(500).json({ success: false, message: 'Server error updating enquiry' });
   }
 });

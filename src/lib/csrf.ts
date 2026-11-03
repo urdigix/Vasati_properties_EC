@@ -22,34 +22,36 @@ export function checkCsrfOrigin(request: NextRequest): NextResponse | null {
   const origin = request.headers.get('origin');
   if (!origin) return null;
 
+  // 1. Direct same-origin match from request URL
+  if (request.nextUrl && origin === request.nextUrl.origin) {
+    return null;
+  }
+
+  // 2. Match against configured NEXT_PUBLIC_APP_URL
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
     (process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:3000');
 
-  if (!appUrl) {
-    // Can't verify without a known origin. Fail closed in production.
-    return NextResponse.json(
-      { success: false, message: 'CSRF: NEXT_PUBLIC_APP_URL not configured' },
-      { status: 500 },
-    );
+  if (appUrl) {
+    try {
+      const expectedOrigin = new URL(appUrl).origin;
+      if (origin === expectedOrigin) {
+        return null;
+      }
+    } catch {
+      // Malformed configured URL, fallback to host header check
+    }
   }
 
-  let expectedOrigin: string;
-  try {
-    expectedOrigin = new URL(appUrl).origin; // e.g. "https://vasati.in"
-  } catch {
-    return NextResponse.json(
-      { success: false, message: 'CSRF: NEXT_PUBLIC_APP_URL is malformed' },
-      { status: 500 },
-    );
+  // 3. Match against host / forwarded-host headers from reverse proxy (Coolify/Traefik)
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
+  const proto = request.headers.get('x-forwarded-proto') || (process.env.NODE_ENV === 'production' ? 'https' : 'http');
+  if (host && (origin === `${proto}://${host}` || origin === `https://${host}` || origin === `http://${host}`)) {
+    return null;
   }
 
-  if (origin !== expectedOrigin) {
-    return NextResponse.json(
-      { success: false, message: 'Forbidden: cross-origin request rejected' },
-      { status: 403 },
-    );
-  }
-
-  return null; // origin matches — request is safe to proceed
+  return NextResponse.json(
+    { success: false, message: 'Forbidden: cross-origin request rejected' },
+    { status: 403 },
+  );
 }

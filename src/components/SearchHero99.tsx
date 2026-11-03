@@ -3,22 +3,22 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Search, MapPin, Building2, IndianRupee, BedDouble, ShieldCheck, Sparkles, Layers } from 'lucide-react';
+import { Search, MapPin, Building2, IndianRupee, BedDouble, ShieldCheck, Sparkles } from 'lucide-react';
 import { BANGALORE_LOCALITIES } from '@/lib/properties';
 
-type TabType = 'buy' | 'new-projects' | 'rent' | 'plots' | 'commercial';
+type TabType = 'all' | 'new-launch' | 'ready-to-move' | 'resale' | 'luxury-villa';
 
 const HERO_TABS: { id: TabType; label: string; badge?: string }[] = [
-  { id: 'buy', label: 'Buy' },
-  { id: 'new-projects', label: 'New Projects', badge: 'RERA' },
-  { id: 'rent', label: 'Rent' },
-  { id: 'plots', label: 'Plots / Land' },
-  { id: 'commercial', label: 'Commercial' },
+  { id: 'all', label: 'All Categories' },
+  { id: 'new-launch', label: 'New Launch', badge: 'RERA' },
+  { id: 'ready-to-move', label: 'Ready to Move', badge: 'Ready' },
+  { id: 'resale', label: 'Resale' },
+  { id: 'luxury-villa', label: 'Luxury Villa', badge: 'Elite' },
 ];
 
 export default function SearchHero99() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabType>('buy');
+  const [activeTab, setActiveTab] = useState<TabType>('all');
   const [searchLocation, setSearchLocation] = useState('');
   const [propertyType, setPropertyType] = useState('any');
   const [budget, setBudget] = useState('any');
@@ -46,10 +46,8 @@ export default function SearchHero99() {
     setSearchLocation('');
     setBudget('any');
     setBhk('any');
-    if (tab === 'plots') {
-      setPropertyType('Plot');
-    } else if (tab === 'commercial') {
-      setPropertyType('Commercial');
+    if (tab === 'luxury-villa') {
+      setPropertyType('Villa');
     } else {
       setPropertyType('any');
     }
@@ -70,24 +68,23 @@ export default function SearchHero99() {
       }
     }
 
-    if (activeTab === 'rent') {
-      params.set('purpose', 'rent');
-    } else if (activeTab === 'buy') {
-      params.set('purpose', 'buy');
-    } else if (activeTab === 'new-projects') {
+    if (activeTab === 'new-launch') {
       params.set('status', 'New Launch');
+    } else if (activeTab === 'ready-to-move') {
+      params.set('status', 'Ready to Move');
+    } else if (activeTab === 'resale') {
+      params.set('status', 'Resale');
+    } else if (activeTab === 'luxury-villa') {
+      params.set('status', 'Luxury Villa');
+      params.set('type', 'Villa');
     }
 
-    if (activeTab === 'plots') {
-      params.set('type', 'Plot');
-    } else if (activeTab === 'commercial') {
-      params.set('type', 'Commercial');
-    } else if (propertyType !== 'any') {
+    if (propertyType !== 'any') {
       params.set('type', propertyType);
     }
 
     if (budget !== 'any') params.set('budget', budget);
-    if (bhk !== 'any' && activeTab !== 'plots' && activeTab !== 'commercial') {
+    if (bhk !== 'any') {
       params.set('bhk', bhk);
     }
 
@@ -99,24 +96,23 @@ export default function SearchHero99() {
     setSuggestionsOpen(false);
     const params = new URLSearchParams({ locality: loc });
 
-    if (activeTab === 'rent') {
-      params.set('purpose', 'rent');
-    } else if (activeTab === 'buy') {
-      params.set('purpose', 'buy');
-    } else if (activeTab === 'new-projects') {
+    if (activeTab === 'new-launch') {
       params.set('status', 'New Launch');
+    } else if (activeTab === 'ready-to-move') {
+      params.set('status', 'Ready to Move');
+    } else if (activeTab === 'resale') {
+      params.set('status', 'Resale');
+    } else if (activeTab === 'luxury-villa') {
+      params.set('status', 'Luxury Villa');
+      params.set('type', 'Villa');
     }
 
-    if (activeTab === 'plots') {
-      params.set('type', 'Plot');
-    } else if (activeTab === 'commercial') {
-      params.set('type', 'Commercial');
-    } else if (propertyType !== 'any') {
+    if (propertyType !== 'any') {
       params.set('type', propertyType);
     }
 
     if (budget !== 'any') params.set('budget', budget);
-    if (bhk !== 'any' && activeTab !== 'plots' && activeTab !== 'commercial') {
+    if (bhk !== 'any') {
       params.set('bhk', bhk);
     }
 
@@ -200,15 +196,7 @@ export default function SearchHero99() {
                     </span>
                     <input
                       type="text"
-                      placeholder={
-                        activeTab === 'rent'
-                          ? 'Search Koramangala, Indiranagar, Whitefield...'
-                          : activeTab === 'commercial'
-                          ? 'Search ORR, Whitefield, Bellandur, MG Road...'
-                          : activeTab === 'plots'
-                          ? 'Search Devanahalli, Yelahanka, Sarjapur...'
-                          : 'Search Whitefield, Sarjapur, Sobha, Prestige...'
-                      }
+                      placeholder="Search Whitefield, Sarjapur, HSR Layout, Sobha, Prestige..."
                       value={searchLocation}
                       onChange={(e) => {
                         setSearchLocation(e.target.value);
@@ -256,38 +244,17 @@ export default function SearchHero99() {
                   <Building2 className="w-4 h-4 text-slate-600 shrink-0" />
                   <div className="flex-1">
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600">
-                      {activeTab === 'commercial' ? 'Commercial Type' : activeTab === 'plots' ? 'Plot Type' : 'Property Type'}
+                      Property Type
                     </label>
                     <select
                       value={propertyType}
                       onChange={(e) => setPropertyType(e.target.value)}
                       className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-800 outline-none cursor-pointer"
                     >
-                      {activeTab === 'commercial' ? (
-                        <>
-                          <option value="Commercial">All Commercial</option>
-                          <option value="Commercial">Grade-A Office Space</option>
-                          <option value="Commercial">Retail Showroom / Shop</option>
-                        </>
-                      ) : activeTab === 'plots' ? (
-                        <>
-                          <option value="Plot">All Plotted Enclaves</option>
-                          <option value="Plot">Gated Villa Plots</option>
-                        </>
-                      ) : activeTab === 'rent' ? (
-                        <>
-                          <option value="any">All Rental Homes</option>
-                          <option value="Apartment">Apartment</option>
-                          <option value="Villa">Luxury Villa</option>
-                        </>
-                      ) : (
-                        <>
-                          <option value="any">All Residential</option>
-                          <option value="Apartment">Apartment</option>
-                          <option value="Villa">Villa / Row House</option>
-                          <option value="Penthouse">Penthouse</option>
-                        </>
-                      )}
+                      <option value="any">All Types</option>
+                      <option value="Apartment">Apartment</option>
+                      <option value="Villa">Luxury Villa</option>
+                      <option value="Penthouse">Penthouse</option>
                     </select>
                   </div>
                 </div>
@@ -299,38 +266,19 @@ export default function SearchHero99() {
                   <IndianRupee className="w-4 h-4 text-slate-600 shrink-0" />
                   <div className="flex-1">
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600">
-                      {activeTab === 'rent' ? 'Monthly Rent' : 'Budget'}
+                      Budget
                     </label>
                     <select
                       value={budget}
                       onChange={(e) => setBudget(e.target.value)}
                       className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-800 outline-none cursor-pointer"
                     >
-                      {activeTab === 'rent' ? (
-                        <>
-                          <option value="any">Any Rent</option>
-                          <option value="0.30">Under ₹30,000 / mo</option>
-                          <option value="0.50">Under ₹50,000 / mo</option>
-                          <option value="1.00">Under ₹1.0 Lakh / mo</option>
-                          <option value="2.00">Under ₹2.0 Lakh / mo</option>
-                        </>
-                      ) : activeTab === 'plots' ? (
-                        <>
-                          <option value="any">Any Budget</option>
-                          <option value="80">Under ₹80 Lakh</option>
-                          <option value="120">Under ₹1.20 Cr</option>
-                          <option value="200">Under ₹2.00 Cr</option>
-                        </>
-                      ) : (
-                        <>
-                          <option value="any">Any Budget</option>
-                          <option value="80">Under ₹80 Lakh</option>
-                          <option value="120">Under ₹1.20 Cr</option>
-                          <option value="200">Under ₹2.00 Cr</option>
-                          <option value="350">Under ₹3.50 Cr</option>
-                          <option value="500">Under ₹5.00 Cr</option>
-                        </>
-                      )}
+                      <option value="any">Any Budget</option>
+                      <option value="80">Under ₹80 Lakh</option>
+                      <option value="120">Under ₹1.20 Cr</option>
+                      <option value="200">Under ₹2.00 Cr</option>
+                      <option value="350">Under ₹3.50 Cr</option>
+                      <option value="500">Under ₹5.00 Cr</option>
                     </select>
                   </div>
                 </div>
@@ -339,43 +287,21 @@ export default function SearchHero99() {
               {/* BHK / Area Selector */}
               <div className="min-w-[130px]">
                 <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-white focus-within:bg-white focus-within:border-blue-600 transition">
-                  {activeTab === 'plots' || activeTab === 'commercial' ? (
-                    <Layers className="w-4 h-4 text-slate-600 shrink-0" />
-                  ) : (
-                    <BedDouble className="w-4 h-4 text-slate-600 shrink-0" />
-                  )}
+                  <BedDouble className="w-4 h-4 text-slate-600 shrink-0" />
                   <div className="flex-1">
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600">
-                      {activeTab === 'plots' ? 'Plot Area' : activeTab === 'commercial' ? 'Space' : 'BHK'}
+                      BHK
                     </label>
                     <select
                       value={bhk}
                       onChange={(e) => setBhk(e.target.value)}
                       className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-800 outline-none cursor-pointer"
                     >
-                      {activeTab === 'plots' ? (
-                        <>
-                          <option value="any">Any Dimension</option>
-                          <option value="any">1,200 sq ft (30x40)</option>
-                          <option value="any">1,500 sq ft (30x50)</option>
-                          <option value="any">2,400 sq ft (40x60)</option>
-                        </>
-                      ) : activeTab === 'commercial' ? (
-                        <>
-                          <option value="any">Any Area</option>
-                          <option value="any">Up to 2,000 sq ft</option>
-                          <option value="any">2,000 - 5,000 sq ft</option>
-                          <option value="any">5,000+ sq ft</option>
-                        </>
-                      ) : (
-                        <>
-                          <option value="any">Any BHK</option>
-                          <option value="1">1 BHK</option>
-                          <option value="2">2 BHK</option>
-                          <option value="3">3 BHK</option>
-                          <option value="4">4+ BHK</option>
-                        </>
-                      )}
+                      <option value="any">Any BHK</option>
+                      <option value="1">1 BHK</option>
+                      <option value="2">2 BHK</option>
+                      <option value="3">3 BHK</option>
+                      <option value="4">4+ BHK</option>
                     </select>
                   </div>
                 </div>
@@ -390,14 +316,14 @@ export default function SearchHero99() {
               >
                 <Search className="w-4 h-4" />
                 <span>
-                  {activeTab === 'rent'
-                    ? 'Search Rentals'
-                    : activeTab === 'commercial'
-                    ? 'Search Commercial'
-                    : activeTab === 'plots'
-                    ? 'Search Plots'
-                    : activeTab === 'new-projects'
+                  {activeTab === 'new-launch'
                     ? 'Search Launches'
+                    : activeTab === 'ready-to-move'
+                    ? 'Search Ready Homes'
+                    : activeTab === 'resale'
+                    ? 'Search Resale'
+                    : activeTab === 'luxury-villa'
+                    ? 'Search Luxury Villas'
                     : 'Search Properties'}
                 </span>
               </button>
@@ -409,27 +335,27 @@ export default function SearchHero99() {
             <Link
               id="hero-category-browse-link"
               href={
-                activeTab === 'rent'
-                  ? '/listings?purpose=rent'
-                  : activeTab === 'commercial'
-                  ? '/listings?type=Commercial'
-                  : activeTab === 'plots'
-                  ? '/listings?type=Plot'
-                  : activeTab === 'new-projects'
+                activeTab === 'new-launch'
                   ? '/listings?status=New+Launch'
-                  : '/listings?purpose=buy'
+                  : activeTab === 'ready-to-move'
+                  ? '/listings?status=Ready+to+Move'
+                  : activeTab === 'resale'
+                  ? '/listings?status=Resale'
+                  : activeTab === 'luxury-villa'
+                  ? '/listings?status=Luxury+Villa&type=Villa'
+                  : '/listings'
               }
               className="text-blue-300 hover:text-white font-semibold flex items-center gap-1 transition"
             >
               <span>
-                {activeTab === 'rent'
-                  ? 'Browse all verified Rental Homes in Bengaluru →'
-                  : activeTab === 'commercial'
-                  ? 'Browse all Grade-A Commercial & Office Spaces in Bengaluru →'
-                  : activeTab === 'plots'
-                  ? 'Browse all Gated Plotted Enclaves in Bengaluru →'
-                  : activeTab === 'new-projects'
+                {activeTab === 'new-launch'
                   ? 'Browse all Karnataka RERA Approved New Launches →'
+                  : activeTab === 'ready-to-move'
+                  ? 'Browse all Ready-to-Move Homes in Bengaluru →'
+                  : activeTab === 'resale'
+                  ? 'Browse all Verified Resale Properties in Bengaluru →'
+                  : activeTab === 'luxury-villa'
+                  ? 'Browse all Ultra-Luxury Villas in Bengaluru →'
                   : 'Browse all 50+ Verified Apartments & Villas in Bengaluru →'}
               </span>
             </Link>
