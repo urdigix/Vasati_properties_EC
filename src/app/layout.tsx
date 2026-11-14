@@ -66,6 +66,32 @@ export default function RootLayout({
                     event.preventDefault();
                   }
                 }, true);
+
+                document.addEventListener('click', function(event) {
+                  var target = event.target;
+                  if (!(target instanceof Element)) {
+                    return;
+                  }
+
+                  var link = target.closest('a[href]');
+                  if (!link) {
+                    return;
+                  }
+
+                  var href = link.getAttribute('href') || '';
+                  if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) {
+                    return;
+                  }
+
+                  if (link.hasAttribute('download')) {
+                    return;
+                  }
+
+                  link.setAttribute('target', '_blank');
+                  link.setAttribute('rel', 'noopener noreferrer');
+                  event.preventDefault();
+                  window.open(href, '_blank', 'noopener,noreferrer');
+                }, true);
               })();
             `,
           }}
