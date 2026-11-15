@@ -386,6 +386,11 @@
     .booking-form input, .booking-form select, .booking-form textarea {
       padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13.5px;
     }
+    .booking-form .booking-help { margin: -4px 0 2px; color: #475569; font-size: 12px; line-height: 1.5; }
+    .booking-form .btn:disabled {
+      background: #64748b; border-color: #64748b; color: #fff;
+      box-shadow: none; cursor: not-allowed; transform: none;
+    }
 
     /* Mobile Bottom Navigation Bar */
     .mobile-bar {
@@ -1605,16 +1610,20 @@
               <input type="hidden" name="property_id" value="${p.id}">
               <input type="hidden" name="property_title" value="${p.title}">
               
-              <label style="font-size:12px;font-weight:700;">Your Full Name *</label>
-              <input type="text" name="name" placeholder="E.g. Vikram Sharma" required>
+              <label for="visitName" style="font-size:12px;font-weight:700;">Your Full Name *</label>
+              <input type="text" id="visitName" name="name" placeholder="E.g. Vikram Sharma" autocomplete="name" required>
               
-              <label style="font-size:12px;font-weight:700;">Phone Number *</label>
-              <input type="tel" name="phone" placeholder="E.g. 9876543210" required>
+              <label for="visitPhone" style="font-size:12px;font-weight:700;">Phone Number *</label>
+              <input type="tel" id="visitPhone" name="phone" placeholder="E.g. 9876543210" autocomplete="tel" required>
               
-              <label style="font-size:12px;font-weight:700;">Preferred Inspection Date</label>
-              <input type="date" name="preferred_date">
+              <label for="visitDate" style="font-size:12px;font-weight:700;">Preferred Inspection Date *</label>
+              <input type="date" id="visitDate" name="preferred_date" autocomplete="off" aria-describedby="visitScheduleHelp" required>
+
+              <label for="visitTime" style="font-size:12px;font-weight:700;">Preferred Inspection Time (IST) *</label>
+              <input type="time" id="visitTime" name="preferred_time" autocomplete="off" aria-describedby="visitScheduleHelp" required>
+              <p id="visitScheduleHelp" class="booking-help">Choose a future date and time. The button enables after your contact details and both visit selections are complete.</p>
               
-              <button type="submit" class="btn btn-primary" id="submitLeadBtn" style="width:100%;margin-top:6px;">Schedule Site Visit</button>
+              <button type="submit" class="btn btn-primary" id="submitLeadBtn" style="width:100%;margin-top:6px;" aria-describedby="visitScheduleHelp" disabled>Schedule Site Visit</button>
               
               ${String(siteSettings.whatsapp_number || '').replace(/[^0-9]/g, '') ? `<a href="https://wa.me/${String(siteSettings.whatsapp_number || '').replace(/[^0-9]/g, '')}?text=Hello,%20I%20would%20like%20to%20inquire%20about%20${encodeURIComponent(p.title)}%20(${p.priceLabel})" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:10px;">
                 ${WHATSAPP_ICON_SVG}
@@ -1627,19 +1636,67 @@
 
       // Form handler
       const visitForm = document.getElementById('scheduleVisitForm');
+      const visitNameInput = visitForm.querySelector('[name="name"]');
+      const visitPhoneInput = visitForm.querySelector('[name="phone"]');
+      const visitDateInput = visitForm.querySelector('[name="preferred_date"]');
+      const visitTimeInput = visitForm.querySelector('[name="preferred_time"]');
+      const submitLeadButton = document.getElementById('submitLeadBtn');
+      let isSubmittingVisit = false;
+      const istDateFormatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit'
+      });
+      const istTimeFormatter = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+      });
+      const formatDateParts = (formatter, date) => Object.fromEntries(
+        formatter.formatToParts(date).filter(part => part.type !== 'literal').map(part => [part.type, part.value])
+      );
+      const getISTDate = date => {
+        const parts = formatDateParts(istDateFormatter, date);
+        return `${parts.year}-${parts.month}-${parts.day}`;
+      };
+      const getISTTime = date => {
+        const parts = formatDateParts(istTimeFormatter, date);
+        return `${parts.hour}:${parts.minute}`;
+      };
+      visitDateInput.value = '';
+      visitTimeInput.value = '';
+      const updateVisitSubmitState = () => {
+        const now = new Date();
+        const today = getISTDate(now);
+        visitDateInput.min = today;
+        visitTimeInput.min = visitDateInput.value === today
+          ? getISTTime(new Date(now.getTime() + 60_000))
+          : '';
+        const requiredInputs = [visitNameInput, visitPhoneInput, visitDateInput, visitTimeInput];
+        submitLeadButton.disabled = isSubmittingVisit || !requiredInputs.every(input =>
+          input.value.trim() && input.validity.valid
+        );
+      };
+
+      [visitNameInput, visitPhoneInput, visitDateInput, visitTimeInput].forEach(input => {
+        input.addEventListener('input', updateVisitSubmitState);
+        input.addEventListener('change', updateVisitSubmitState);
+      });
+      updateVisitSubmitState();
+
       visitForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const btn = document.getElementById('submitLeadBtn');
-        btn.disabled = true;
-        btn.textContent = 'Submitting Request...';
+        if (!visitForm.checkValidity()) {
+          visitForm.reportValidity();
+          return;
+        }
+        isSubmittingVisit = true;
+        updateVisitSubmitState();
+        submitLeadButton.textContent = 'Submitting Request...';
 
         try {
           const payload = {
             property_id: p.id,
             property_title: p.title,
-            name: visitForm.name.value.trim(),
-            phone: visitForm.phone.value.trim(),
-            message: visitForm.preferred_date?.value ? `Requested visit date: ${visitForm.preferred_date.value}` : 'Scheduled visit from detail page',
+            name: visitNameInput.value.trim(),
+            phone: visitPhoneInput.value.trim(),
+            message: `Requested visit: ${visitDateInput.value} at ${visitTimeInput.value} IST`,
             analytics_consent: localStorage.getItem('vasati_analytics_consent') === 'accepted'
           };
 
@@ -1659,8 +1716,9 @@
         } catch(err) {
           showToast('❌ Connection error');
         } finally {
-          btn.disabled = false;
-          btn.textContent = 'Schedule Site Visit';
+          isSubmittingVisit = false;
+          submitLeadButton.textContent = 'Schedule Site Visit';
+          updateVisitSubmitState();
         }
       });
     }
