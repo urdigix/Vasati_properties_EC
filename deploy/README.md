@@ -15,6 +15,8 @@ The router uses the deployment's literal temporary sslip.io hostname because Coo
 
 Set `APP_BASE_URL` to the frontend HTTPS origin, `ADMIN_DEFAULT_PASSWORD` to a unique bootstrap secret, `ADMIN_DEFAULT_EMAIL` to the administrator email, and `IP_HASH_SALT` to a random secret. Never commit secrets. Optional GA4/OAuth/Twilio variables are passed only to the backend. Initial sign-in requires a password change.
 
+To explicitly rename an existing administrator account, set `ADMIN_EMAIL_MIGRATE_FROM` to its exact current email and `ADMIN_DEFAULT_EMAIL` to the new email, then redeploy. This updates only the matching admin account, preserves its password, role and ID, and records an audit event. Remove the migration-source value after verifying the change. Changing the bootstrap email alone does not rename existing users.
+
 Health checks: frontend `/healthz`; backend `/api/health` also verifies a database query. Do not publish backend port 3000. Coolify terminates TLS and forwards the original Host and scheme through Nginx, keeping authentication requests on the same origin.
 
 Both volumes survive deployments. Deleting a resource with volume deletion selected destroys their data. Back up both: stop backend writes briefly before copying the SQLite directory (or use SQLite's online backup API) and back up uploaded media alongside it. A redeploy is not a backup. No backup destination is configured by this Compose file.

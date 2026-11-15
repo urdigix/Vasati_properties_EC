@@ -38,6 +38,7 @@ services:
       UPLOADS_DIR: /app/storage/uploads
       APP_BASE_URL: ${APP_BASE_URL:?Set the public origin}
       ADMIN_DEFAULT_EMAIL: ${ADMIN_DEFAULT_EMAIL:-admin@example.com}
+      ADMIN_EMAIL_MIGRATE_FROM: ${ADMIN_EMAIL_MIGRATE_FROM:-}
       ADMIN_DEFAULT_PASSWORD: ${ADMIN_DEFAULT_PASSWORD:?Set a unique bootstrap password}
       IP_HASH_SALT: ${IP_HASH_SALT:?Set a random analytics salt}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}

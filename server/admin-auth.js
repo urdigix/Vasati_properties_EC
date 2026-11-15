@@ -36,6 +36,29 @@ async function initializeAdmin() {
   } else if (isProduction && await bcrypt.compare(DEFAULT_PASSWORD, existing.password_hash)) {
     throw new Error('Production cannot start while the temporary local administrator password is active.');
   }
+
+  // Explicit operator-requested migration; bootstrap configuration alone never renames accounts.
+  const migrateFrom = String(process.env.ADMIN_EMAIL_MIGRATE_FROM || '').trim().toLowerCase();
+  const migrateTo = email.trim().toLowerCase();
+  if (migrateFrom && migrateFrom !== migrateTo) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(migrateTo)) {
+      throw new Error('Administrator email migration requires a valid destination email.');
+    }
+    const source = db.prepare("SELECT id FROM admin_users WHERE email = ? AND role = 'admin'").get(migrateFrom);
+    if (source) {
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        db.prepare('UPDATE admin_users SET email = ? WHERE id = ? AND email = ?')
+          .run(migrateTo, source.id, migrateFrom);
+        logAudit('deployment', 'admin.email_changed', source.id, { from: migrateFrom, to: migrateTo });
+        db.exec('COMMIT');
+        console.log(`Administrator email updated to ${migrateTo}.`);
+      } catch (error) {
+        db.exec('ROLLBACK');
+        throw error;
+      }
+    }
+  }
 }
 
 function currentAdmin(req) {
