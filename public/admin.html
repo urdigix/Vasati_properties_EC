@@ -1372,7 +1372,6 @@
       document.getElementById('formPublished').checked = false;
       document.getElementById('formVideoUrl').value = '';
       document.getElementById('formBrochureUrl').value = '';
-      document.getElementById('imageUploadStatus').textContent = '';
       document.getElementById('videoUploadStatus').textContent = '';
       document.getElementById('brochureUploadStatus').textContent = '';
       document.getElementById('formAdminNote').value = '';
@@ -1413,7 +1412,6 @@
 
       document.getElementById('formVideoUrl').value = p.video_url || '';
       document.getElementById('formBrochureUrl').value = p.brochure_url || '';
-      document.getElementById('imageUploadStatus').textContent = (p.image || '').startsWith('/api/media/') ? `Stored in database: ${p.image}` : '';
       document.getElementById('videoUploadStatus').textContent = (p.video_url || '').startsWith('/api/media/') ? `Stored in database: ${p.video_url}` : '';
       document.getElementById('brochureUploadStatus').textContent = p.brochure_url ? `Attached: ${p.brochure_url}` : '';
       document.getElementById('formDescription').value = p.description || '';

@@ -16,7 +16,8 @@ test('publish control belongs to the property form and uploaded video paths are 
 function loadAdmin(logoutStatus) {
   const listeners = new Map();
   const elements = new Map([...html.matchAll(/\bid=["']([^"']+)["']/g)].map(([, id]) => [id, {
-    value: '', textContent: '', dataset: {},
+    value: '', textContent: '', dataset: {}, style: {},
+    reset() {}, showModal() { this.open = true; }, close() { this.open = false; },
     classList: { add() {}, remove() {}, contains() { return false; } },
     addEventListener(event, handler) { listeners.set(`${id}:${event}`, handler); },
     querySelectorAll() { return []; }
@@ -40,8 +41,19 @@ function loadAdmin(logoutStatus) {
   };
   context.window = context;
   vm.runInNewContext(source, context, { filename: 'admin.html' });
-  return { listeners, elements, calls, navigations };
+  return { listeners, elements, calls, navigations, context };
 }
+
+test('add and edit property actions open their dialogs against actual markup', () => {
+  const page = loadAdmin(200);
+  page.listeners.get('openAddModalBtn:click')();
+  assert.equal(page.elements.get('propertyModal').open, true);
+  page.elements.get('propertyModal').close();
+  vm.runInNewContext(`properties = [{ id: 'edit-test', title: 'Existing home', location: 'Bengaluru', price: 50, priceLabel: '₹50 L', bhk: 2, area: '1000 sqft', images: [], published: true }]; editProperty('edit-test');`, page.context);
+  assert.equal(page.elements.get('propertyModal').open, true);
+  assert.equal(page.elements.get('formTitle').value, 'Existing home');
+  assert.equal(page.elements.get('formPublished').checked, true);
+});
 
 test('admin script initializes against the actual markup and sign-out posts before redirecting', async () => {
   const page = loadAdmin(200);
