@@ -9,6 +9,16 @@ services:
         condition: service_healthy
     expose:
       - "80"
+    # This VPS already has a host-network Traefik using web/websecure.
+    # Route through it rather than starting a second proxy on ports 80/443.
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vasati-ec-public.rule=Host(`${PUBLIC_HOST:-bt68y5vqmfrmy9dtuw3fjluy.200.141.3.5.sslip.io}`)"
+      - "traefik.http.routers.vasati-ec-public.entrypoints=websecure"
+      - "traefik.http.routers.vasati-ec-public.tls=true"
+      - "traefik.http.routers.vasati-ec-public.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.vasati-ec-public.service=vasati-ec-frontend"
+      - "traefik.http.services.vasati-ec-frontend.loadbalancer.server.port=80"
     security_opt:
       - no-new-privileges:true
 
@@ -19,6 +29,8 @@ services:
     restart: unless-stopped
     expose:
       - "3000"
+    labels:
+      - "traefik.enable=false"
     environment:
       NODE_ENV: production
       PORT: 3000
