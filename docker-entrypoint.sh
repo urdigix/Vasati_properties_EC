@@ -1,18 +1,9 @@
 #!/bin/sh
 set -e
 
-echo "============================================================"
-echo " Starting Bangalore Real Estate Portal (DPDP Act 2023)"
-echo " Environment: ${NODE_ENV:-production}"
-echo "============================================================"
-
-if [ -z "$DATABASE_URL" ]; then
-  echo "=> DATABASE_URL is required for the PostgreSQL-backed application."
+if [ "${NODE_ENV:-production}" = "production" ] && [ -z "${ADMIN_DEFAULT_PASSWORD:-}" ]; then
+  echo "ADMIN_DEFAULT_PASSWORD is required in production."
   exit 1
 fi
 
-echo "=> PostgreSQL schema will be initialized by the application."
-
-echo "=> Launching Next.js production server on port ${PORT:-3000}..."
 exec node server.js
-

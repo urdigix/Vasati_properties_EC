@@ -1,63 +1,25 @@
 {
-  "name": "bangalore-real-estate-dpdp",
+  "name": "vasati-properties",
   "version": "1.0.0",
   "private": true,
-  "description": "DPDP Act 2023 & IT Act 2000 compliant real estate platform for Bangalore, Karnataka",
+  "description": "Bengaluru property listings, admin CMS, and customer request platform",
   "scripts": {
-    "dev": "node server.js",
+    "dev": "node --watch server.js",
     "start": "node server.js",
     "server": "node server.js",
-    "dev:server": "node server.js",
-    "next:dev": "next dev",
-    "build": "prisma generate && next build",
-    "next:build": "prisma generate && next build",
-    "next:start": "next start",
-    "lint": "next lint",
-    "prisma:generate": "prisma generate",
-    "prisma:push": "prisma db push",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "node prisma/seed.js"
+    "check": "node --check server.js && node --check server/ga4-analytics.js && node --check server/admin-auth.js && node --check db/database.js",
+    "build": "npm run check",
+    "lint": "npm run check",
+    "test": "node --test",
+    "dev:server": "node --watch server.js"
   },
   "dependencies": {
-    "@prisma/client": "^5.22.0",
     "bcryptjs": "^2.4.3",
-    "clsx": "^2.1.1",
     "cors": "^2.8.6",
+    "d3-geo": "^3.1.2",
     "express": "^5.3.0",
-    "framer-motion": "^14.2.0",
-    "lucide-react": "^0.475.0",
-    "next": "14.2.24",
-    "otplib": "^12.0.1",
-    "pg": "^8.23.1",
-    "qrcode": "^1.5.4",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "tailwind-merge": "^2.6.0",
-    "zod": "^3.24.2"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@prisma/client",
-      "@prisma/engines",
-      "esbuild",
-      "prisma",
-      "unrs-resolver"
-    ]
-  },
-  "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
-    "@types/node": "^20.17.19",
-    "@types/qrcode": "^1.5.5",
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
-    "autoprefixer": "^10.4.20",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.24",
-    "postcss": "^8.5.2",
-    "prisma": "^5.22.0",
-    "tailwindcss": "^3.4.17",
-    "tsx": "^4.23.15",
-    "typescript": "^5.7.3"
-  },
-  "packageManager": "pnpm@12.14.0+sha512.c18ba6d87993d3d164cb5e8948f32b2c06ee854487e06cd8d86781342fb3e5bb4634367034711e86802baa9c37bea906ce1929ad08d70884c97d801df13389a6"
+    "sharp": "^0.35.5",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
+  }
 }

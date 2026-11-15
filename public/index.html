@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#090d16">
-  <meta name="description" content="Discover premier residential properties, luxury villas, and verified resale homes across Bengaluru with Vasati Properties.">
+  <meta id="metaDescription" name="description" content="Discover premier residential properties, luxury villas, and verified resale homes across Bengaluru with Vasati Properties.">
   <title>Vasati Properties — Premium Bengaluru Homes & Luxury Real Estate</title>
 
   <!-- Favicon -->
@@ -405,10 +405,176 @@
 
     /* Footer */
     footer {
-      background: white; border-top: 1px solid var(--border);
-      padding: 40px 0 50px; font-size: 13px; color: var(--ink-muted);
+      --footer-ink: #17283f;
+      --footer-muted: #526071;
+      --footer-gold: #805c27;
+      background: #f6f2e9;
+      border-top: 1px solid #e4dccb;
+      padding: 72px 0 28px;
+      color: var(--footer-ink);
+      font-size: 14px;
     }
-    .footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+    .footer-inner { display: block; }
+    .footer-newsletter {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(340px, .9fr);
+      align-items: center;
+      gap: 56px;
+      padding-bottom: 48px;
+      border-bottom: 1px solid #ded5c4;
+    }
+    .footer-eyebrow {
+      margin-bottom: 10px;
+      color: var(--footer-gold);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    .footer-newsletter h2,
+    .footer-column h3 {
+      font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      color: var(--footer-ink);
+      font-weight: 500;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .footer-newsletter h2 { font-size: clamp(30px, 4vw, 42px); line-height: 1.12; letter-spacing: -.025em; }
+    .footer-newsletter-copy > p:last-child { margin-top: 12px; color: var(--footer-muted); line-height: 1.7; }
+    .footer-form-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+    .footer-email-input {
+      width: 100%;
+      min-width: 0;
+      min-height: 50px;
+      padding: 12px 15px;
+      border: 1px solid #c9c0af;
+      border-radius: 4px;
+      background: #fffefa;
+      color: var(--footer-ink);
+      font-size: 14px;
+    }
+    .footer-email-input::placeholder { color: #647082; opacity: 1; }
+    .footer-submit {
+      display: inline-flex;
+      min-height: 50px;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 0 18px;
+      border: 1px solid var(--footer-ink);
+      border-radius: 4px;
+      background: var(--footer-ink);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .18s ease, border-color .18s ease, transform .18s ease;
+    }
+    .footer-submit:hover:not(:disabled) { background: #263d5a; border-color: #263d5a; transform: translateY(-1px); }
+    .footer-submit:disabled { cursor: wait; opacity: .75; }
+    .footer-submit svg { width: 16px; height: 16px; }
+    .footer-consent {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      margin-top: 14px;
+      color: #39485a;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+    .footer-consent input { width: 16px; height: 16px; margin: 1px 0 0; accent-color: var(--footer-ink); flex: 0 0 auto; }
+    .footer-status { min-height: 22px; margin-top: 8px; color: var(--footer-muted); font-size: 12px; line-height: 1.5; }
+    .footer-status.is-loading { color: var(--footer-muted); }
+    .footer-status.is-success { color: var(--footer-ink); }
+    .footer-status.is-error { color: #9b2929; }
+    .footer-status a { color: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+    .footer-status a:focus-visible,
+    footer a:focus-visible,
+    footer input:focus-visible,
+    footer button:focus-visible {
+      outline: 3px solid #805c27;
+      outline-offset: 3px;
+    }
+    .footer-columns {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr 1fr;
+      gap: 48px;
+      padding: 42px 0 36px;
+    }
+    .footer-column { min-width: 0; }
+    .footer-column h3 { margin-bottom: 17px; font-size: 22px; line-height: 1.2; }
+    .footer-column .footer-brand-name {
+      margin: 0;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: .11em;
+    }
+    .footer-brand-lockup { display: flex; align-items: center; gap: 14px; }
+    .footer-logo { width: 52px; height: 52px; object-fit: contain; border-radius: 8px; }
+    .footer-brand-name { color: var(--footer-ink); font-size: 14px; font-weight: 800; letter-spacing: .11em; }
+    .footer-brand-copy { margin-top: 5px; color: var(--footer-muted); font-size: 12px; line-height: 1.65; }
+    .footer-powered { margin-top: 24px; color: #4b5868; font-size: 12px; }
+    .footer-powered strong { color: var(--footer-gold); font-weight: 700; }
+    .footer-contact-list { display: grid; gap: 15px; list-style: none; }
+    .footer-contact-item { display: flex; min-width: 0; align-items: flex-start; gap: 11px; color: #344357; line-height: 1.55; overflow-wrap: anywhere; }
+    .footer-icon { width: 19px; height: 19px; flex: 0 0 19px; color: var(--footer-gold); }
+    .footer-contact-item a { color: inherit; text-decoration: none; }
+    .footer-contact-item a:hover { color: var(--footer-ink); text-decoration: underline; text-underline-offset: 3px; }
+    .footer-whatsapp-copy { margin: -4px 0 16px; color: var(--footer-muted); line-height: 1.7; }
+    .footer-whatsapp-link {
+      display: inline-flex;
+      min-height: 42px;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 13px;
+      border: 1px solid #23804d;
+      border-radius: 4px;
+      color: #17613e;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: background .18s ease, color .18s ease;
+    }
+    .footer-whatsapp-link:hover { background: #e8f4ec; }
+    .footer-whatsapp-link .footer-icon { color: #16834b; }
+    .footer-whatsapp-link[hidden] { display: none; }
+    .footer-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding-top: 22px;
+      border-top: 1px solid #ded5c4;
+    }
+    .footer-social-links { display: flex; flex-wrap: wrap; gap: 10px; }
+    .footer-social-links a,
+    .footer-social-placeholder {
+      display: grid;
+      width: 40px;
+      height: 40px;
+      place-items: center;
+      border: 1px solid #c9c0af;
+      border-radius: 50%;
+      background: #fffefa;
+      color: #39485a;
+      transition: border-color .18s ease, color .18s ease, background .18s ease;
+    }
+    .footer-social-links a:hover { border-color: var(--footer-gold); color: var(--footer-gold); background: #fff; }
+    .footer-social-links svg { width: 19px; height: 19px; }
+    .footer-social-links .social-whatsapp { color: #16834b; }
+    .footer-social-links a[hidden],
+    .footer-social-placeholder[hidden] { display: none; }
+    .footer-copyright { color: #526071; font-size: 11px; text-align: right; }
 
     /* Floating Toast */
     .toast-box {
@@ -533,8 +699,15 @@
         padding-bottom: env(safe-area-inset-bottom, 0);
       }
       body { padding-bottom: 70px; }
-      footer { padding: 30px 0 40px; }
-      .footer-inner { flex-direction: column; text-align: center; gap: 12px; }
+      footer { padding: 48px 0 24px; }
+      .footer-newsletter { grid-template-columns: 1fr; gap: 24px; padding-bottom: 32px; }
+      .footer-newsletter h2 { font-size: 32px; }
+      .footer-form-row { grid-template-columns: 1fr; }
+      .footer-email-input, .footer-submit { width: 100%; }
+      .footer-columns { grid-template-columns: 1fr; gap: 30px; padding: 32px 0; }
+      .footer-column h3 { margin-bottom: 12px; }
+      .footer-bottom { align-items: flex-start; flex-direction: column; gap: 14px; }
+      .footer-copyright { text-align: left; }
     }
   </style>
 </head>
@@ -552,11 +725,11 @@
       </a>
 
       <ul class="nav-links">
-        <li><a href="#propertiesSection" data-tab-filter="any" class="active">All Properties</a></li>
-        <li><a href="#propertiesSection" data-tab-filter="New">New Launch</a></li>
-        <li><a href="#propertiesSection" data-tab-filter="Ready">Ready to Move</a></li>
-        <li><a href="#propertiesSection" data-tab-filter="Resale">Resale</a></li>
-        <li><a href="#propertiesSection" data-tab-filter="Villa">Luxury Villa</a></li>
+        <li><a id="navAll" href="#propertiesSection" data-tab-filter="any" class="active">All Properties</a></li>
+        <li><a id="navNew" href="#propertiesSection" data-tab-filter="New">New Launch</a></li>
+        <li><a id="navReady" href="#propertiesSection" data-tab-filter="Ready">Ready to Move</a></li>
+        <li><a id="navResale" href="#propertiesSection" data-tab-filter="Resale">Resale</a></li>
+        <li><a id="navVilla" href="#propertiesSection" data-tab-filter="Villa">Luxury Villa</a></li>
       </ul>
 
       <div class="nav-actions">
@@ -577,6 +750,11 @@
     <!-- Hero Section -->
     <section class="hero">
       <div class="wrap">
+        <div class="hero-header">
+          <span class="hero-tag" id="heroTag">✨ Premium Bengaluru Real Estate Portfolio</span>
+          <h1 id="heroTitle">Find Your Dream Space in the Silicon Valley of India</h1>
+          <p id="heroSubtitle">Verified builder developments, luxury gated communities, and prime resale apartments across Bengaluru's top tech corridors.</p>
+        </div>
         <!-- Featured Carousel -->
         <div class="hero-slider-wrap">
           <div class="slider-viewport" id="sliderViewport">
@@ -642,7 +820,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
       <span>Saved</span>
     </button>
-    <a href="https://wa.me/916303420048?text=Hello%20Vasati%20Properties,%20I%20am%20looking%20for%20homes%20in%20Bengaluru" target="_blank" class="mobile-tab" id="mobTabWhatsApp" style="color:#25d366;">
+    <a href="#" hidden target="_blank" rel="noopener noreferrer" class="mobile-tab" id="mobTabWhatsApp" style="color:#25d366;">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="#25d366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
       <span>WhatsApp</span>
     </a>
@@ -651,25 +829,102 @@
   <!-- Footer -->
   <footer>
     <div class="wrap footer-inner">
-      <div style="display:flex;align-items:center;gap:14px;">
-        <img src="/images/logo.png" alt="Vasati Properties" style="height:48px;width:48px;object-fit:contain;border-radius:8px;">
-        <div>
-          <strong style="font-size:16px;letter-spacing:1px;color:#0b192c;">VASATI PROPERTIES</strong>
-          <div style="font-size:12px;color:var(--ink-muted);margin-top:2px;">Bengaluru Luxury Real Estate Portfolio · Powered by Node.js</div>
+      <section class="footer-newsletter" aria-labelledby="footerNewsletterTitle">
+        <div class="footer-newsletter-copy">
+          <p class="footer-eyebrow">The Vasati address book</p>
+          <h2 id="footerNewsletterTitle">Your next address, first.</h2>
+          <p>New listings and property updates, delivered to your inbox.</p>
         </div>
+        <form id="subscriptionForm" class="footer-newsletter-form">
+          <div class="footer-form-row">
+            <label class="sr-only" for="subscriptionEmail">Email address</label>
+            <input id="subscriptionEmail" class="footer-email-input" type="email" autocomplete="email" maxlength="254" required aria-describedby="subscriptionStatus" placeholder="Email address">
+            <button type="submit" class="footer-submit">
+              <span>Join the list</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+            </button>
+          </div>
+          <label class="footer-consent" for="marketingConsent">
+            <input id="marketingConsent" type="checkbox" required>
+            <span>I agree to receive property updates from Vasati Properties.</span>
+          </label>
+          <p id="subscriptionStatus" class="footer-status" role="status" aria-live="polite" aria-atomic="true"></p>
+        </form>
+      </section>
+
+      <div class="footer-columns">
+        <section class="footer-column" aria-labelledby="footerBrandTitle">
+          <div class="footer-brand-lockup">
+            <img src="/images/logo.png" alt="Vasati Properties logo" class="footer-logo">
+            <div>
+              <h3 id="footerBrandTitle" class="footer-brand-name">VASATI PROPERTIES</h3>
+              <p class="footer-brand-copy">A considered collection of homes across Bengaluru.</p>
+            </div>
+          </div>
+          <p class="footer-powered">Bengaluru luxury real estate · Powered by <strong>Urdigix</strong></p>
+        </section>
+
+        <section class="footer-column" aria-labelledby="footerContactTitle">
+          <h3 id="footerContactTitle">Contact</h3>
+          <ul class="footer-contact-list">
+            <li class="footer-contact-item">
+              <svg class="footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 16.5v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 10.2 18a19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 1.9 3.2 2 2 0 0 1 3.9 1h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L7.8 9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.9 2.6Z"/></svg>
+              <a id="footerPhoneLink" href="tel:+916303420048"><span id="footerPhoneValue">+91 6303420048</span></a>
+            </li>
+            <li class="footer-contact-item">
+              <svg class="footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
+              <a id="footerEmailLink" href="mailto:contact@vasatiproperties.com"><span id="footerEmailValue">contact@vasatiproperties.com</span></a>
+            </li>
+          </ul>
+        </section>
+
+        <section class="footer-column" aria-labelledby="footerWhatsappTitle">
+          <h3 id="footerWhatsappTitle">A conversation away</h3>
+          <p class="footer-whatsapp-copy">Tell us what you are looking for. Our team is happy to help.</p>
+          <a href="#" hidden target="_blank" rel="noopener noreferrer" id="footerWhatsAppLink" class="footer-whatsapp-link">
+            <svg class="footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20l1.2-4.7A8.5 8.5 0 1 1 20.5 11.5Z"/><path d="M8.8 8.2c.2-.5.4-.5.7-.5h.5c.2 0 .4.1.5.4l.7 1.6c.1.2.1.4-.1.6l-.5.6c-.2.2-.2.4-.1.6.4.7 1 1.3 1.7 1.7.2.1.4.1.6-.1l.6-.6c.2-.2.4-.2.7-.1l1.5.7c.3.1.4.3.4.5v.5c0 .3-.1.5-.5.7-.4.2-1 .3-1.6.1-1-.3-2.2-.9-3.3-2-1.1-1.1-1.7-2.3-2-3.3-.1-.6 0-1.2.2-1.4Z"/></svg>
+            Direct WhatsApp
+          </a>
+        </section>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-        <span id="footerPhoneDisplay" style="color:var(--ink-muted);font-size:13px;font-weight:600;">📞 +91 6303420048</span>
-        <span>·</span>
-        <a href="#emiCalculator">Home Loan Calculator</a>
-        <span>·</span>
-        <a href="https://wa.me/916303420048" target="_blank" id="footerWhatsAppLink" style="color:#059669;font-weight:700;display:inline-flex;align-items:center;gap:6px;">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="#059669"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          Direct WhatsApp Agent
-        </a>
+
+      <div class="footer-bottom">
+        <div id="socialLinks" class="footer-social-links" role="group" aria-label="Social media links">
+          <a id="socialInstagram" hidden target="_blank" rel="noopener noreferrer" aria-label="Vasati Properties on Instagram">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".7" fill="currentColor" stroke="none"/></svg>
+          </a>
+          <span id="socialInstagramPlaceholder" class="footer-social-placeholder" role="img" aria-label="Instagram link not configured" title="Instagram">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".7" fill="currentColor" stroke="none"/></svg>
+          </span>
+          <a id="socialYouTube" hidden target="_blank" rel="noopener noreferrer" aria-label="Vasati Properties on YouTube">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="4"/><path d="m10 9 5 3-5 3z"/></svg>
+          </a>
+          <span id="socialYouTubePlaceholder" class="footer-social-placeholder" role="img" aria-label="YouTube link not configured" title="YouTube">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="4"/><path d="m10 9 5 3-5 3z"/></svg>
+          </span>
+          <a id="socialFacebook" hidden target="_blank" rel="noopener noreferrer" aria-label="Vasati Properties on Facebook">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14.5 21v-8h2.8l.5-3h-3.3V8c0-.9.3-1.5 1.6-1.5H18V3.8c-.7-.1-1.6-.2-2.7-.2-2.8 0-4.7 1.7-4.7 4.8V10H8v3h2.6v8"/></svg>
+          </a>
+          <span id="socialFacebookPlaceholder" class="footer-social-placeholder" role="img" aria-label="Facebook link not configured" title="Facebook">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14.5 21v-8h2.8l.5-3h-3.3V8c0-.9.3-1.5 1.6-1.5H18V3.8c-.7-.1-1.6-.2-2.7-.2-2.8 0-4.7 1.7-4.7 4.8V10H8v3h2.6v8"/></svg>
+          </span>
+          <a id="socialWhatsAppChannel" class="social-whatsapp" hidden target="_blank" rel="noopener noreferrer" aria-label="Vasati Properties WhatsApp Channel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20l1.2-4.7A8.5 8.5 0 1 1 20.5 11.5Z"/><path d="M8.8 8.2c.2-.5.4-.5.7-.5h.5c.2 0 .4.1.5.4l.7 1.6c.1.2.1.4-.1.6l-.5.6c-.2.2-.2.4-.1.6.4.7 1 1.3 1.7 1.7.2.1.4.1.6-.1l.6-.6c.2-.2.4-.2.7-.1l1.5.7c.3.1.4.3.4.5v.5c0 .3-.1.5-.5.7-.4.2-1 .3-1.6.1-1-.3-2.2-.9-3.3-2-1.1-1.1-1.7-2.3-2-3.3-.1-.6 0-1.2.2-1.4Z"/></svg>
+          </a>
+          <span id="socialWhatsAppChannelPlaceholder" class="footer-social-placeholder social-whatsapp" role="img" aria-label="WhatsApp Channel link not configured" title="WhatsApp Channel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20l1.2-4.7A8.5 8.5 0 1 1 20.5 11.5Z"/><path d="M8.8 8.2c.2-.5.4-.5.7-.5h.5c.2 0 .4.1.5.4l.7 1.6c.1.2.1.4-.1.6l-.5.6c-.2.2-.2.4-.1.6.4.7 1 1.3 1.7 1.7.2.1.4.1.6-.1l.6-.6c.2-.2.4-.2.7-.1l1.5.7c.3.1.4.3.4.5v.5c0 .3-.1.5-.5.7-.4.2-1 .3-1.6.1-1-.3-2.2-.9-3.3-2-1.1-1.1-1.7-2.3-2-3.3-.1-.6 0-1.2.2-1.4Z"/></svg>
+          </span>
+        </div>
+        <p class="footer-copyright">Vasati Properties · Bengaluru, India</p>
       </div>
     </div>
   </footer>
+
+  <aside id="analyticsConsentNotice" hidden style="position:fixed;left:16px;bottom:16px;z-index:5000;max-width:400px;padding:16px;background:#0b192c;color:white;border:1px solid #334155;border-radius:12px;box-shadow:0 12px 30px #0004;">
+    <p style="font-size:13px;line-height:1.5;margin:0 0 12px;">We use Google Analytics only with your consent. Analytics are anonymous and cannot identify every visitor; we associate analytics with customer details only after you voluntarily submit them.</p>
+    <button type="button" id="acceptAnalytics" class="btn btn-primary btn-sm">Allow analytics</button>
+    <button type="button" id="declineAnalytics" class="btn btn-outline btn-sm">Decline</button>
+  </aside>
 
   <!-- Project Brochure Lead Gate Modal -->
   <div id="brochureModal" class="brochure-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.75);backdrop-filter:blur(5px);z-index:9999;align-items:center;justify-content:center;padding:16px;">
@@ -690,8 +945,9 @@
 
         <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:12.5px;color:#166534;margin-bottom:18px;display:flex;align-items:flex-start;gap:10px;line-height:1.45;">
           <span style="font-size:18px;">🔒</span>
-          <span>Please enter your name and phone number to unlock and immediately download the complete project brochure PDF.</span>
+          <span>Provide your contact details, accept the privacy notice, and verify your chosen contact method before downloading.</span>
         </div>
+        <p style="font-size:12px;margin:0 0 14px;color:#475569;">Optional account sign-in (separate from OTP verification): <a href="/auth/google" style="color:#1d4ed8;text-decoration:underline;">Continue with Google</a>. You must still verify the selected contact method below.</p>
 
         <div style="margin-bottom:14px;">
           <label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px;">Your Full Name *</label>
@@ -699,14 +955,38 @@
         </div>
 
         <div style="margin-bottom:18px;">
-          <label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px;">Contact Number (WhatsApp) *</label>
-          <input type="tel" id="brochureLeadPhone" name="phone" required placeholder="e.g. 9876543210" pattern="[0-9]{10}" title="Please enter a 10-digit mobile number" style="width:100%;padding:12px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;">
-          <span style="display:block;font-size:11px;color:#64748b;margin-top:4px;">We'll never spam. Used only for verification & sending project details.</span>
+          <label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px;">Email address *</label>
+          <input type="email" id="brochureLeadEmail" name="email" required autocomplete="email" placeholder="you@example.com" style="width:100%;padding:12px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;">
         </div>
 
-        <button type="submit" id="brochureSubmitBtn" class="btn btn-primary" style="width:100%;padding:13px;font-size:15px;font-weight:700;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg, #16a34a, #15803d);border:none;color:white;cursor:pointer;">
-          <span>📄 Unlock & Download Brochure</span>
+        <div style="margin-bottom:18px;">
+          <label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px;">Phone number *</label>
+          <input type="tel" id="brochureLeadPhone" name="phone" required autocomplete="tel" placeholder="e.g. +91 9876543210" style="width:100%;padding:12px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;">
+        </div>
+
+        <fieldset style="border:0;padding:0;margin:0 0 16px;">
+          <legend style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px;">Verify using</legend>
+          <label style="margin-right:16px;font-size:13px;"><input type="radio" name="verification_method" value="email" checked> Email</label>
+          <label style="font-size:13px;"><input type="radio" name="verification_method" value="sms"> SMS</label>
+        </fieldset>
+
+        <label style="display:flex;gap:9px;align-items:flex-start;margin-bottom:16px;font-size:12px;line-height:1.5;color:#475569;">
+          <input type="checkbox" id="brochurePrivacyConsent" required style="margin-top:3px;">
+          <span>I agree to the <a href="/privacy" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:underline;">privacy notice</a> and understand Vasati will use these details to verify access and record this brochure request.</span>
+        </label>
+
+        <div id="brochureOtpStep" hidden style="margin-bottom:16px;">
+          <label for="brochureOtpCode" style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px;">One-time verification code *</label>
+          <input type="text" id="brochureOtpCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{4,10}" maxlength="10" style="width:100%;padding:12px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;">
+          <div id="brochureOtpStatus" role="status" aria-live="polite" style="font-size:12px;color:#475569;margin-top:6px;"></div>
+          <button type="button" id="resendBrochureOtp" class="btn btn-outline btn-sm" disabled style="margin-top:8px;">Resend code in 60s</button>
+        </div>
+
+        <button type="button" id="brochureSubmitBtn" class="btn btn-primary" style="width:100%;padding:13px;font-size:15px;font-weight:700;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg, #16a34a, #15803d);border:none;color:white;cursor:pointer;">
+          <span>Send verification code</span>
         </button>
+        <button type="button" id="brochureVerifyBtn" class="btn btn-primary" hidden style="width:100%;margin-top:8px;padding:13px;">Verify code</button>
+        <a id="brochureDownloadAction" class="btn btn-primary" hidden style="width:100%;margin-top:8px;padding:13px;text-align:center;">Download verified brochure</a>
       </form>
     </div>
   </div>
@@ -731,6 +1011,11 @@
     let currentSlide = 0;
     let slideTimer;
     let siteSettings = {};
+    let activeBrochureVerificationId = '';
+    let brochureResendTimer;
+    let analyticsMeasurementId = '';
+    let analyticsSessionId = '';
+    let analyticsRefreshTimer;
     const WHATSAPP_ICON_SVG = `<svg viewBox="0 0 24 24" width="20" height="20" fill="#ffffff" style="display:inline-block;vertical-align:middle;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
 
     function formatEmbedUrl(url) {
@@ -768,6 +1053,15 @@
         const data = await res.json();
         if (data.success && data.data) {
           siteSettings = data.data;
+          if (siteSettings.seo_title) document.title = siteSettings.seo_title;
+          if (siteSettings.seo_description) document.getElementById('metaDescription').content = siteSettings.seo_description;
+          [
+            ['navAll', 'nav_all'], ['navNew', 'nav_new'], ['navReady', 'nav_ready'],
+            ['navResale', 'nav_resale'], ['navVilla', 'nav_villa']
+          ].forEach(([id, key]) => {
+            const link = document.getElementById(id);
+            if (link && siteSettings[key]) link.textContent = siteSettings[key];
+          });
 
           if (siteSettings.hero_tag && document.getElementById('heroTag')) {
             document.getElementById('heroTag').textContent = siteSettings.hero_tag;
@@ -787,16 +1081,46 @@
           if (siteSettings.stat_trust && document.getElementById('statTrust')) {
             document.getElementById('statTrust').textContent = siteSettings.stat_trust;
           }
-          if (siteSettings.contact_phone && document.getElementById('footerPhoneDisplay')) {
-            document.getElementById('footerPhoneDisplay').textContent = `📞 ${siteSettings.contact_phone}`;
+          if (siteSettings.contact_phone && document.getElementById('footerPhoneValue')) {
+            document.getElementById('footerPhoneValue').textContent = siteSettings.contact_phone;
+            const phoneNumber = String(siteSettings.contact_phone).replace(/[^\d+]/g, '');
+            document.getElementById('footerPhoneLink').href = `tel:${phoneNumber}`;
           }
-          if (siteSettings.whatsapp_number) {
-            const num = siteSettings.whatsapp_number.replace(/[^0-9]/g, '');
+          const emailLink = document.getElementById('footerEmailLink');
+          if (emailLink && siteSettings.contact_email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(siteSettings.contact_email)) {
+            emailLink.href = `mailto:${siteSettings.contact_email}`;
+            document.getElementById('footerEmailValue').textContent = siteSettings.contact_email;
+          }
+          const number = String(siteSettings.whatsapp_number || '').replace(/[^0-9]/g, '');
+          if (number) {
             const mobWa = document.getElementById('mobTabWhatsApp');
-            if (mobWa) mobWa.href = `https://wa.me/${num}?text=Hello%20Vasati%20Properties,%20I%20am%20looking%20for%20homes%20in%20Bengaluru`;
+            if (mobWa) {
+              mobWa.href = `https://wa.me/${number}?text=Hello%20Vasati%20Properties,%20I%20am%20looking%20for%20homes%20in%20Bengaluru`;
+              mobWa.hidden = false;
+            }
             const footWa = document.getElementById('footerWhatsAppLink');
-            if (footWa) footWa.href = `https://wa.me/${num}`;
+            if (footWa) {
+              footWa.href = `https://wa.me/${number}`;
+              footWa.hidden = false;
+            }
           }
+          const socialSettings = [
+            ['socialInstagram', siteSettings.social_instagram, /^https:\/\/(www\.)?instagram\.com\//],
+            ['socialYouTube', siteSettings.social_youtube, /^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//],
+            ['socialFacebook', siteSettings.social_facebook, /^https:\/\/(www\.)?facebook\.com\//],
+            ['socialWhatsAppChannel', siteSettings.social_whatsapp_channel, /^https:\/\/(www\.)?whatsapp\.com\//]
+          ];
+          socialSettings.forEach(([id, value, pattern]) => {
+            const link = document.getElementById(id);
+            if (link && value && pattern.test(value)) {
+              link.href = value;
+              link.hidden = false;
+              const placeholder = document.getElementById(`${id}Placeholder`);
+              if (placeholder) placeholder.hidden = true;
+            }
+          });
+          if (featuredProjects.length) renderSlider();
+          if (allProperties.length) renderProperties();
         }
       } catch (err) {
         console.error('Error loading site settings:', err);
@@ -844,7 +1168,7 @@
     function renderSlider() {
       const track = document.getElementById('sliderTrack');
       const indicators = document.getElementById('sliderIndicators');
-      const waNum = (siteSettings.whatsapp_number || '916303420048').replace(/[^0-9]/g, '');
+      const waNum = String(siteSettings.whatsapp_number || '').replace(/[^0-9]/g, '');
 
       track.innerHTML = featuredProjects.map(p => `
         <div class="slide-item">
@@ -857,10 +1181,10 @@
             <div class="slide-offer">✦ ${p.offer_text}</div>
             <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
               <a href="#propertiesSection" class="btn btn-primary btn-sm">Explore Homes</a>
-              <a href="https://wa.me/${waNum}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(p.name)}" target="_blank" class="btn btn-whatsapp btn-sm" style="display:inline-flex;align-items:center;gap:6px;">
+              ${waNum ? `<a href="https://wa.me/${waNum}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(p.name)}" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-sm" style="display:inline-flex;align-items:center;gap:6px;">
                 ${WHATSAPP_ICON_SVG}
                 <span>Chat on WhatsApp</span>
-              </a>
+              </a>` : ''}
               ${p.video_url ? `<a href="${p.video_url}" target="_blank" class="btn btn-outline btn-sm" style="background:rgba(255,255,255,0.15);color:white;border-color:rgba(255,255,255,0.3);backdrop-filter:blur(4px);">▶ Video Tour</a>` : ''}
             </div>
           </div>
@@ -924,7 +1248,7 @@
         return;
       }
 
-      const waNum = (siteSettings.whatsapp_number || '916303420048').replace(/[^0-9]/g, '');
+      const waNum = String(siteSettings.whatsapp_number || '').replace(/[^0-9]/g, '');
 
       grid.innerHTML = list.map(p => {
         const isSaved = state.saved.has(p.id);
@@ -960,12 +1284,12 @@
               </div>
               <div class="card-footer">
                 <button class="btn btn-primary btn-sm" onclick="openDetail('${p.id}'); event.stopPropagation();">View Details</button>
-                <button type="button" class="btn btn-outline btn-sm" onclick="initiateBrochureDownload(event, '${p.id}')" style="border-color:#16a34a;color:#15803d;background:#f0fdf4;font-weight:700;display:inline-flex;align-items:center;gap:4px;" title="Download Project Brochure PDF">
+                ${p.brochure_url ? `<button type="button" class="btn btn-outline btn-sm" onclick="initiateBrochureDownload(event, '${p.id}')" style="border-color:#16a34a;color:#15803d;background:#f0fdf4;font-weight:700;display:inline-flex;align-items:center;gap:4px;" title="Download Project Brochure PDF">
                   📄 Brochure
-                </button>
-                <a href="https://wa.me/${waNum}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(p.title)}%20(${p.priceLabel})" target="_blank" onclick="event.stopPropagation();" class="btn btn-whatsapp btn-sm" style="flex:0 0 46px;width:46px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;" title="Chat on WhatsApp" aria-label="Chat on WhatsApp">
+                </button>` : ''}
+                ${waNum ? `<a href="https://wa.me/${waNum}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(p.title)}%20(${p.priceLabel})" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="btn btn-whatsapp btn-sm" style="flex:0 0 46px;width:46px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;" title="Chat on WhatsApp" aria-label="Chat on WhatsApp">
                   ${WHATSAPP_ICON_SVG}
-                </a>
+                </a>` : ''}
               </div>
             </div>
           </article>
@@ -1171,6 +1495,7 @@
         `;
       }).join('');
 
+      trackAnalytics('property_view', p.id);
       document.getElementById('propertyDetailContent').innerHTML = `
         <div class="detail-gallery-grid">
           <img src="${mainPhoto}" id="mainDetailPhoto" class="gallery-main" alt="${p.title}">
@@ -1218,15 +1543,14 @@
               </div>
             </div>
 
-            <!-- Project Brochure Download Section -->
-            <div class="detail-card" style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:14px;padding:20px;">
+            ${p.brochure_url ? `<div class="detail-card" style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:14px;padding:20px;">
               <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
                 <div style="display:flex;align-items:center;gap:14px;">
                   <div style="font-size:36px;line-height:1;">📄</div>
                   <div>
                     <h3 style="margin:0;font-size:17px;font-weight:800;color:#166534;">Official Project Brochure (PDF)</h3>
                     <p style="margin:4px 0 0;font-size:13.5px;color:#15803d;">Includes comprehensive floor plans, master layout, premium specifications & price sheet.</p>
-                  </div>
+                  </div>` : ''}
                 </div>
                 <button type="button" class="btn btn-primary" onclick="initiateBrochureDownload(event, '${p.id}')" style="background:linear-gradient(135deg, #16a34a, #15803d);border-color:#16a34a;font-weight:700;padding:12px 22px;border-radius:10px;display:flex;align-items:center;gap:8px;">
                   <span>📥 Download Brochure</span>
@@ -1292,10 +1616,10 @@
               
               <button type="submit" class="btn btn-primary" id="submitLeadBtn" style="width:100%;margin-top:6px;">Schedule Site Visit</button>
               
-              <a href="https://wa.me/${(siteSettings.whatsapp_number || '916303420048').replace(/[^0-9]/g, '')}?text=Hello,%20I%20would%20like%20to%20inquire%20about%20${encodeURIComponent(p.title)}%20(${p.priceLabel})" target="_blank" class="btn btn-whatsapp" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:10px;">
+              ${String(siteSettings.whatsapp_number || '').replace(/[^0-9]/g, '') ? `<a href="https://wa.me/${String(siteSettings.whatsapp_number || '').replace(/[^0-9]/g, '')}?text=Hello,%20I%20would%20like%20to%20inquire%20about%20${encodeURIComponent(p.title)}%20(${p.priceLabel})" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:10px;">
                 ${WHATSAPP_ICON_SVG}
                 <span>Direct WhatsApp Chat</span>
-              </a>
+              </a>` : ''}
             </form>
           </aside>
         </div>
@@ -1315,7 +1639,8 @@
             property_title: p.title,
             name: visitForm.name.value.trim(),
             phone: visitForm.phone.value.trim(),
-            message: visitForm.preferred_date?.value ? `Requested visit date: ${visitForm.preferred_date.value}` : 'Scheduled visit from detail page'
+            message: visitForm.preferred_date?.value ? `Requested visit date: ${visitForm.preferred_date.value}` : 'Scheduled visit from detail page',
+            analytics_consent: localStorage.getItem('vasati_analytics_consent') === 'accepted'
           };
 
           const res = await fetch('/api/enquiries', {
@@ -1325,6 +1650,7 @@
           });
           const resData = await res.json();
           if (resData.success) {
+            trackAnalytics('enquiry', p.id);
             showToast('✅ Site visit request confirmed! Our agent will call you shortly.');
             visitForm.reset();
           } else {
@@ -1367,28 +1693,31 @@
         return;
       }
 
-      const brochureUrl = p.brochure_url || '/uploads/brochures/vasati_project_brochure.pdf';
-
-      // Setup hidden inputs
+      if (!p.brochure_url) {
+        showToast('A brochure is not currently available for this property.');
+        return;
+      }
       document.getElementById('brochurePropertyId').value = p.id;
       document.getElementById('brochurePropertyTitle').value = p.title;
-      document.getElementById('brochureDownloadUrl').value = brochureUrl;
       document.getElementById('brochureModalPropertyTitle').textContent = `${p.title} · ${p.location}`;
-
-      // Pre-fill previously entered name/phone if available
-      try {
-        const savedContact = JSON.parse(localStorage.getItem('vasati_lead_contact') || '{}');
-        if (savedContact.name) document.getElementById('brochureLeadName').value = savedContact.name;
-        if (savedContact.phone) document.getElementById('brochureLeadPhone').value = savedContact.phone;
-      } catch (e) {}
+      activeBrochureVerificationId = '';
+      clearInterval(brochureResendTimer);
+      document.getElementById('brochureOtpStep').hidden = true;
+      document.getElementById('brochureVerifyBtn').hidden = true;
+      document.getElementById('brochureDownloadAction').hidden = true;
+      document.getElementById('brochureSubmitBtn').hidden = false;
+      document.getElementById('brochureLeadForm').reset();
 
       const modal = document.getElementById('brochureModal');
       modal.style.display = 'flex';
+      fetch('/api/customer/session').then(response => response.json()).then(session => {
+        if (session.authenticated) {
+          if (session.name) document.getElementById('brochureLeadName').value = session.name;
+          if (session.email) document.getElementById('brochureLeadEmail').value = session.email;
+        }
+      }).catch(() => {});
       setTimeout(() => {
-        const targetInput = document.getElementById('brochureLeadName').value 
-          ? document.getElementById('brochureLeadPhone') 
-          : document.getElementById('brochureLeadName');
-        targetInput?.focus();
+        document.getElementById('brochureLeadName')?.focus();
       }, 50);
     }
 
@@ -1402,63 +1731,233 @@
       }
     });
 
-    function triggerBrochureFile(url, fileName) {
-      const a = document.createElement('a');
-      a.href = url;
-      a.target = '_blank';
-      a.download = fileName || 'Vasati_Project_Brochure.pdf';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
-      window.open(url, '_blank');
+    function beginBrochureResendCooldown(seconds) {
+      const resendButton = document.getElementById('resendBrochureOtp');
+      let remaining = seconds;
+      clearInterval(brochureResendTimer);
+      resendButton.disabled = true;
+      resendButton.textContent = `Resend code in ${remaining}s`;
+      brochureResendTimer = setInterval(() => {
+        remaining -= 1;
+        if (remaining <= 0) {
+          clearInterval(brochureResendTimer);
+          resendButton.disabled = false;
+          resendButton.textContent = 'Resend code';
+        } else {
+          resendButton.textContent = `Resend code in ${remaining}s`;
+        }
+      }, 1000);
     }
 
-    // Lead Form Submission Handler for Brochure
-    document.getElementById('brochureLeadForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    function trackAnalytics(eventName, propertyId = '', source = '') {
+      if (localStorage.getItem('vasati_analytics_consent') !== 'accepted') return;
+      if (!analyticsSessionId) {
+        analyticsSessionId = localStorage.getItem('vasati_analytics_session') || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        localStorage.setItem('vasati_analytics_session', analyticsSessionId);
+      }
+      if (!source && document.referrer) {
+        try { source = new URL(document.referrer).hostname; } catch {}
+      }
+      if (['property_view', 'social_click'].includes(eventName)) {
+        fetch('/api/analytics/events', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ event: eventName, property_id: propertyId, source, session_id: analyticsSessionId, consent: true })
+        }).catch(() => {});
+      }
+      if (analyticsMeasurementId && window.gtag) {
+        window.gtag('event', eventName, propertyId ? { property_id: propertyId } : {});
+      }
+    }
+
+    function enableGoogleAnalytics() {
+      if (!analyticsMeasurementId || window.gtag) return;
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function(){ window.dataLayer.push(arguments); };
+      window.gtag('js', new Date());
+      window.gtag('config', analyticsMeasurementId, { anonymize_ip: true });
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(analyticsMeasurementId)}`;
+      document.head.appendChild(script);
+    }
+
+    async function setupAnalyticsConsent() {
+      try {
+        const response = await fetch('/api/public-config');
+        const config = await response.json();
+        analyticsMeasurementId = config.analyticsMeasurementId || '';
+      } catch {
+        analyticsMeasurementId = '';
+      }
+      const consent = localStorage.getItem('vasati_analytics_consent');
+      if (consent === 'accepted') enableGoogleAnalytics();
+      if (!consent) document.getElementById('analyticsConsentNotice').hidden = false;
+      document.getElementById('acceptAnalytics').addEventListener('click', () => {
+        localStorage.setItem('vasati_analytics_consent', 'accepted');
+        document.getElementById('analyticsConsentNotice').hidden = true;
+        enableGoogleAnalytics();
+      });
+      document.getElementById('declineAnalytics').addEventListener('click', () => {
+        localStorage.setItem('vasati_analytics_consent', 'declined');
+        document.getElementById('analyticsConsentNotice').hidden = true;
+        if (analyticsMeasurementId && window.gtag) {
+          window[`ga-disable-${analyticsMeasurementId}`] = true;
+          window.gtag('consent', 'update', { analytics_storage: 'denied' });
+          document.cookie.split(';').forEach(cookie => {
+            const name = cookie.split('=')[0].trim();
+            if (name.startsWith('_ga')) document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax`;
+          });
+        }
+      });
+    }
+
+    document.getElementById('subscriptionForm').addEventListener('submit', async event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const status = document.getElementById('subscriptionStatus');
+      const submit = form.querySelector('button[type="submit"]');
+      const submitLabel = submit.querySelector('span');
+      submit.disabled = true;
+      submitLabel.textContent = 'Joining…';
+      status.className = 'footer-status is-loading';
+      status.textContent = 'Submitting your request…';
+      try {
+        const response = await fetch('/api/subscribers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('subscriptionEmail').value.trim(),
+            marketing_consent: document.getElementById('marketingConsent').checked,
+            analytics_consent: localStorage.getItem('vasati_analytics_consent') === 'accepted'
+          })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'Could not subscribe.');
+        status.className = 'footer-status is-success';
+        status.textContent = `${result.message} `;
+        const unsubscribe = document.createElement('a');
+        unsubscribe.href = `/unsubscribe?token=${encodeURIComponent(result.unsubscribeToken)}`;
+        unsubscribe.textContent = 'Unsubscribe';
+        status.appendChild(unsubscribe);
+        trackAnalytics('subscription');
+        form.reset();
+      } catch (error) {
+        status.className = 'footer-status is-error';
+        status.textContent = error.message || 'Could not subscribe.';
+      } finally {
+        submit.disabled = false;
+        submitLabel.textContent = 'Join the list';
+      }
+    });
+
+    document.getElementById('socialLinks').addEventListener('click', event => {
+      const link = event.target.closest('a[href]');
+      if (link && !link.hidden) trackAnalytics('social_click', '', link.id);
+    });
+
+    document.getElementById('brochureSubmitBtn').addEventListener('click', async () => {
       const btn = document.getElementById('brochureSubmitBtn');
       const propId = document.getElementById('brochurePropertyId').value;
-      const propTitle = document.getElementById('brochurePropertyTitle').value;
-      const brochureUrl = document.getElementById('brochureDownloadUrl').value;
       const name = document.getElementById('brochureLeadName').value.trim();
+      const email = document.getElementById('brochureLeadEmail').value.trim();
       const phone = document.getElementById('brochureLeadPhone').value.trim();
+      const method = document.querySelector('input[name="verification_method"]:checked')?.value;
 
-      if (!name || !phone) {
-        showToast('⚠️ Please enter both your name and phone number');
+      if (!document.getElementById('brochureLeadForm').reportValidity()) return;
+      if (!document.getElementById('brochurePrivacyConsent').checked) {
+        showToast('Please accept the privacy notice to continue.');
         return;
       }
-
       btn.disabled = true;
-      btn.innerHTML = '<span>Verifying & Downloading...</span>';
-
+      btn.textContent = 'Sending verification code...';
       try {
-        // Record enquiry in backend database
-        await fetch('/api/enquiries', {
+        const response = await fetch('/api/brochures/verification/start', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             property_id: propId,
-            property_title: propTitle,
-            name: name,
-            phone: phone,
-            message: `Requested project brochure PDF for ${propTitle}`
+            name,
+            email,
+            phone,
+            method,
+            privacy_consent: true,
+            analytics_consent: localStorage.getItem('vasati_analytics_consent') === 'accepted'
           })
         });
-
-        // Cache details locally for user convenience
-        localStorage.setItem('vasati_lead_contact', JSON.stringify({ name, phone }));
-
-        closeBrochureModal();
-        showToast('✅ Verification complete! Opening PDF brochure...');
-        triggerBrochureFile(brochureUrl, `${propTitle.replace(/[^a-zA-Z0-9]/g, '_')}_Brochure.pdf`);
-      } catch (err) {
-        closeBrochureModal();
-        triggerBrochureFile(brochureUrl, `${propTitle.replace(/[^a-zA-Z0-9]/g, '_')}_Brochure.pdf`);
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'Could not send verification code.');
+        activeBrochureVerificationId = result.verificationId;
+        document.getElementById('brochureOtpStep').hidden = false;
+        document.getElementById('brochureVerifyBtn').hidden = false;
+        document.getElementById('brochureSubmitBtn').hidden = true;
+        document.getElementById('brochureOtpStatus').textContent = `A code was sent using ${method === 'sms' ? 'SMS' : 'email'}. It expires in 10 minutes.`;
+        document.getElementById('brochureOtpCode').focus();
+        beginBrochureResendCooldown(result.resendAfterSeconds || 60);
+      } catch (error) {
+        document.getElementById('brochureOtpStatus').textContent = error.message || 'Could not send the verification code.';
+        showToast(error.message || 'Could not send verification code.');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<span>📄 Unlock & Download Brochure</span>';
+        btn.textContent = 'Send verification code';
       }
+    });
+
+    document.getElementById('resendBrochureOtp').addEventListener('click', async () => {
+      const resendButton = document.getElementById('resendBrochureOtp');
+      resendButton.disabled = true;
+      try {
+        const response = await fetch('/api/brochures/verification/resend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ verification_id: activeBrochureVerificationId })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'Could not resend code.');
+        document.getElementById('brochureOtpStatus').textContent = 'A new verification code was sent.';
+        beginBrochureResendCooldown(result.resendAfterSeconds || 60);
+      } catch (error) {
+        document.getElementById('brochureOtpStatus').textContent = error.message || 'Could not resend code.';
+        if (error.message.includes('Wait ')) {
+          const seconds = Number(error.message.match(/\d+/)?.[0]) || 60;
+          beginBrochureResendCooldown(seconds);
+        } else {
+          resendButton.disabled = false;
+        }
+      }
+    });
+
+    document.getElementById('brochureVerifyBtn').addEventListener('click', async () => {
+      const verifyButton = document.getElementById('brochureVerifyBtn');
+      verifyButton.disabled = true;
+      verifyButton.textContent = 'Checking code...';
+      try {
+        const response = await fetch('/api/brochures/verification/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            verification_id: activeBrochureVerificationId,
+            code: document.getElementById('brochureOtpCode').value.trim()
+          })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'Verification failed.');
+        const download = document.getElementById('brochureDownloadAction');
+        download.href = result.downloadUrl;
+        download.hidden = false;
+        verifyButton.hidden = true;
+        document.getElementById('brochureOtpStatus').textContent = 'Contact verified. Your secure download link expires in 5 minutes and works once.';
+        trackAnalytics('verification_completed', document.getElementById('brochurePropertyId').value);
+      } catch (error) {
+        document.getElementById('brochureOtpStatus').textContent = error.message || 'Verification failed.';
+      } finally {
+        verifyButton.disabled = false;
+        verifyButton.textContent = 'Verify code';
+      }
+    });
+
+    document.getElementById('brochureDownloadAction').addEventListener('click', () => {
+      trackAnalytics('brochure_download', document.getElementById('brochurePropertyId').value);
     });
 
     // Mobile Navigation Triggers
@@ -1482,6 +1981,7 @@
     loadSiteSettings();
     loadFeaturedProjects();
     loadProperties();
+    setupAnalyticsConsent();
     handleRoute();
   </script>
 </body>

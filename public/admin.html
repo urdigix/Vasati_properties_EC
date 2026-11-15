@@ -55,7 +55,7 @@
     .sidebar-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--card-border); font-size: 11.5px; color: #6b7280; }
 
     /* Main Content Area */
-    .main-content { flex: 1; padding: 32px 36px; overflow-y: auto; max-height: 100vh; }
+    .main-content { flex: 1; min-width: 0; padding: 32px 36px; overflow-y: auto; max-height: 100vh; }
     .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 16px; }
     .top-header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.6px; }
     .top-header p { font-size: 14px; color: var(--muted); margin-top: 4px; }
@@ -143,6 +143,151 @@
     }
     .toast.show { opacity: 1; transform: translateY(0); }
 
+    /* GA4 analytics dashboard */
+    .analytics-toolbar {
+      display: grid;
+      grid-template-columns: minmax(150px, 1fr) minmax(180px, 1fr) auto auto;
+      align-items: end;
+      gap: 14px;
+      padding: 18px 20px;
+    }
+    .analytics-filter { display: grid; gap: 6px; min-width: 0; }
+    .analytics-filter label,
+    .analytics-updated-label { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+    .analytics-select {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 11px;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      background: #0c1220;
+      color: var(--text);
+      font: inherit;
+      font-size: 13px;
+    }
+    .analytics-select:focus-visible,
+    .analytics-toolbar button:focus-visible,
+    .analytics-country-button:focus-visible,
+    .analytics-map-marker:focus-visible {
+      outline: 3px solid #60a5fa;
+      outline-offset: 3px;
+    }
+    .analytics-updated { display: grid; gap: 5px; align-self: center; min-width: max-content; }
+    .analytics-updated time { color: var(--text); font-size: 12px; }
+    .analytics-state {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin: 0 0 22px;
+      padding: 15px 18px;
+      border: 1px solid #374151;
+      border-radius: 10px;
+      background: #111827;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .analytics-state[hidden],
+    .analytics-setup[hidden],
+    .analytics-dashboard[hidden],
+    .analytics-map-view[hidden],
+    .analytics-map-notice[hidden] { display: none; }
+    .analytics-state.is-loading { color: #d1d5db; }
+    .analytics-state.is-error { border-color: rgba(248, 113, 113, .45); color: #fecaca; }
+    .analytics-state.is-setup { border-color: rgba(245, 158, 11, .45); color: #fde68a; }
+    .analytics-spinner {
+      width: 17px;
+      height: 17px;
+      flex: 0 0 17px;
+      margin-top: 1px;
+      border: 2px solid #4b5563;
+      border-top-color: #60a5fa;
+      border-radius: 50%;
+      animation: analytics-spin .8s linear infinite;
+    }
+    @keyframes analytics-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      .analytics-spinner { animation: none; border-top-color: #60a5fa; }
+    }
+    .analytics-setup { margin-bottom: 22px; }
+    .analytics-setup h2 { margin-bottom: 8px; font-size: 17px; }
+    .analytics-setup p { color: #d1d5db; font-size: 13px; line-height: 1.65; }
+    .analytics-setup ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; list-style: none; }
+    .analytics-setup li { padding: 5px 9px; border: 1px solid #374151; border-radius: 6px; color: #bfdbfe; font: 12px ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .analytics-section { margin: 26px 0; }
+    .analytics-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .analytics-section-heading h2 { font-size: 18px; font-weight: 800; }
+    .analytics-section-heading p { color: var(--muted); font-size: 12px; }
+    .analytics-kpi-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .analytics-kpi-grid.realtime { grid-template-columns: minmax(220px, 1fr); }
+    .analytics-kpi .stat-val { overflow-wrap: anywhere; }
+    .analytics-report-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .analytics-report-grid .card { min-width: 0; margin-bottom: 0; }
+    .analytics-report-body { padding: 18px 20px; }
+    .analytics-empty { color: var(--muted); font-size: 13px; }
+    .analytics-bar-list { display: grid; gap: 14px; }
+    .analytics-bar-row { min-width: 0; }
+    .analytics-bar-label { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; color: #e5e7eb; font-size: 12px; }
+    .analytics-bar-label span { min-width: 0; overflow-wrap: anywhere; }
+    .analytics-bar-label strong { flex: 0 0 auto; color: #bfdbfe; font-variant-numeric: tabular-nums; }
+    .analytics-bar-track { height: 6px; overflow: hidden; border-radius: 9px; background: #263244; }
+    .analytics-bar-fill { display: block; height: 100%; min-width: 2px; border-radius: inherit; background: #3b82f6; }
+    .analytics-country-button {
+      padding: 0;
+      border: 0;
+      background: none;
+      color: #bfdbfe;
+      font: inherit;
+      cursor: pointer;
+      text-align: left;
+    }
+    .analytics-country-button:hover { text-decoration: underline; }
+    .analytics-map-card { margin-top: 18px; }
+    .analytics-map-note { margin: 0 20px 16px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .analytics-map-notice {
+      margin: 0 20px 20px;
+      padding: 13px 15px;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      background: #0c1220;
+      color: #d1d5db;
+      font-size: 12px;
+      line-height: 1.65;
+    }
+    .analytics-map-view { padding: 0 12px 16px; }
+    .analytics-map-svg { display: block; width: 100%; height: auto; max-height: 460px; }
+    .analytics-map-country { fill: #172235; stroke: #344256; stroke-width: .7; vector-effect: non-scaling-stroke; }
+    .analytics-map-marker { cursor: pointer; }
+    .analytics-map-marker circle { fill: #60a5fa; stroke: #0b1220; stroke-width: 2; vector-effect: non-scaling-stroke; }
+    .analytics-map-marker:hover circle,
+    .analytics-map-marker:focus circle { fill: #fbbf24; }
+    .analytics-map-tooltip { min-height: 22px; padding: 0 10px; color: #d1d5db; font-size: 12px; text-align: center; }
+    .analytics-map-legend { padding: 0 20px 18px; color: var(--muted); font-size: 11px; }
+    @media (max-width: 1050px) {
+      .analytics-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .analytics-report-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 760px) {
+      body { display: block; }
+      .sidebar { width: 100%; padding: 14px; }
+      .brand { margin-bottom: 14px; }
+      .nav-list { flex-direction: row; overflow-x: auto; padding-bottom: 4px; }
+      .nav-list li { flex: 0 0 auto; }
+      .nav-btn { width: auto; white-space: nowrap; }
+      .sidebar-footer { display: none; }
+      .main-content { max-height: none; overflow: visible; padding: 22px 14px; }
+      .top-header { align-items: flex-start; }
+      .top-header > div:last-child { width: 100%; flex-wrap: wrap; }
+      .analytics-toolbar { grid-template-columns: minmax(0, 1fr); padding: 14px; }
+      .analytics-updated { min-width: 0; }
+      .analytics-kpi-grid { grid-template-columns: minmax(0, 1fr); }
+      .analytics-section-heading { align-items: flex-start; flex-direction: column; gap: 5px; }
+      .analytics-report-body { padding: 15px; }
+      .analytics-map-card .card-head { padding: 16px; }
+      .analytics-map-note, .analytics-map-notice { margin-right: 14px; margin-left: 14px; }
+      .analytics-map-view { padding-right: 4px; padding-left: 4px; }
+    }
+
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
   </style>
@@ -156,16 +301,24 @@
         <div style="font-size:16px;font-weight:800;letter-spacing:1px;color:white;line-height:1.1;">VASATI</div>
         <div style="font-size:9.5px;font-weight:700;letter-spacing:2px;color:#38bdf8;margin-top:2px;">ADMIN PORTAL</div>
       </div>
+      <div class="form-group form-full">
+        <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:13px;">
+          <input type="checkbox" id="formPublished" style="width:auto;">
+          Publish this listing on the public website
+        </label>
+      </div>
     </a>
     <ul class="nav-list">
       <li><button class="nav-btn active" data-tab="properties">🏢 Properties CMS</button></li>
       <li><button class="nav-btn" data-tab="slides">🎠 Hero Carousel Slides</button></li>
       <li><button class="nav-btn" data-tab="settings">⚙️ Site Content & Settings</button></li>
       <li><button class="nav-btn" data-tab="enquiries">📩 Leads & Inquiries</button></li>
+      <li><button class="nav-btn" data-tab="brochures">📄 Brochure Activity</button></li>
+      <li><button class="nav-btn" data-tab="subscribers">✉️ Subscribers</button></li>
+      <li><button class="nav-btn" data-tab="analytics">📊 Analytics</button></li>
       <li><a href="/" class="nav-btn" target="_blank">🌐 Live Portal ↗</a></li>
     </ul>
     <div class="sidebar-footer">
-      Node.js v22 Engine<br>
       PostgreSQL DB: vasati-data
     </div>
   </aside>
@@ -177,8 +330,10 @@
         <h1 id="pageTitle">Properties Management</h1>
         <p id="pageSubtitle">Live inventory control with instant synchronization across Bengaluru portals.</p>
       </div>
-      <div style="display:flex;gap:10px;">
+      <div style="display:flex;gap:10px;align-items:center;">
+        <span id="adminIdentity" style="font-size:12px;color:var(--muted);"></span>
         <button class="btn btn-outline" id="refreshBtn">🔄 Refresh Data</button>
+        <button class="btn btn-outline" id="logoutBtn">Sign out</button>
         <button class="btn btn-primary" id="openAddModalBtn">➕ Add Property</button>
         <button class="btn btn-primary" id="openAddSlideBtn" style="display:none;">➕ Add Hero Slide</button>
       </div>
@@ -307,7 +462,18 @@
             </div>
           </div>
 
-          <h3 style="font-size:15px;color:#38bdf8;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px;">2. Contact & Customer Support</h3>
+          <h3 style="font-size:15px;color:#38bdf8;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px;">2. SEO & Navigation</h3>
+          <div class="form-grid" style="margin-bottom:24px;">
+            <div class="form-group form-full"><label>SEO Page Title</label><input type="text" id="settingSeoTitle" maxlength="160"></div>
+            <div class="form-group form-full"><label>SEO Description</label><textarea id="settingSeoDescription" rows="2" maxlength="320"></textarea></div>
+            <div class="form-group"><label>All Properties</label><input type="text" id="settingNavAll" maxlength="40"></div>
+            <div class="form-group"><label>New Launch</label><input type="text" id="settingNavNew" maxlength="40"></div>
+            <div class="form-group"><label>Ready to Move</label><input type="text" id="settingNavReady" maxlength="40"></div>
+            <div class="form-group"><label>Resale</label><input type="text" id="settingNavResale" maxlength="40"></div>
+            <div class="form-group"><label>Luxury Villa</label><input type="text" id="settingNavVilla" maxlength="40"></div>
+          </div>
+
+          <h3 style="font-size:15px;color:#38bdf8;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px;">3. Contact & Customer Support</h3>
           <div class="form-grid" style="margin-bottom:24px;">
             <div class="form-group">
               <label>Primary Phone Number</label>
@@ -323,7 +489,15 @@
             </div>
           </div>
 
-          <h3 style="font-size:15px;color:#38bdf8;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px;">3. Live Portfolio Counters (Homepage)</h3>
+          <h3 style="font-size:15px;color:#38bdf8;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px;">4. Social Destinations</h3>
+          <div class="form-grid" style="margin-bottom:24px;">
+            <div class="form-group"><label>Instagram URL</label><input type="url" id="settingInstagram" placeholder="https://instagram.com/..."></div>
+            <div class="form-group"><label>YouTube URL</label><input type="url" id="settingYouTube" placeholder="https://youtube.com/@..."></div>
+            <div class="form-group"><label>Facebook URL</label><input type="url" id="settingFacebook" placeholder="https://facebook.com/..."></div>
+            <div class="form-group"><label>WhatsApp Channel URL</label><input type="url" id="settingWhatsAppChannel" placeholder="https://whatsapp.com/channel/..."></div>
+          </div>
+
+          <h3 style="font-size:15px;color:#38bdf8;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px;">5. Live Portfolio Counters (Homepage)</h3>
           <div class="form-grid" style="margin-bottom:24px;">
             <div class="form-group">
               <label>Active Homes Stat</label>
@@ -376,6 +550,144 @@
             </tbody>
           </table>
         </div>
+      </div>
+    </section>
+
+    <section class="tab-pane" id="tab-brochures">
+      <div class="card">
+        <div class="card-head"><h2>Verified brochure requests and downloads</h2></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Customer</th><th>Email</th><th>Phone</th><th>Property</th><th>Method / Verified</th><th>Downloaded</th></tr></thead>
+            <tbody id="brochureActivityBody"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab-pane" id="tab-subscribers">
+      <div class="card">
+        <div class="card-head">
+          <h2>Property update subscribers</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <input id="subscriberSearch" type="search" placeholder="Search name or email" aria-label="Search subscribers">
+            <select id="subscriberStatus" aria-label="Filter subscribers"><option value="">All</option><option value="active">Active</option><option value="unsubscribed">Unsubscribed</option></select>
+            <button type="button" class="btn btn-outline btn-sm" id="exportSubscribers">Export CSV</button>
+          </div>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Email</th><th>Name</th><th>Consent</th><th>Status</th><th>Joined</th></tr></thead><tbody id="subscribersBody"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Loading…</td></tr></tbody></table></div>
+      </div>
+    </section>
+
+    <section class="tab-pane" id="tab-analytics">
+      <div class="card analytics-toolbar" aria-label="Analytics report controls">
+        <div class="analytics-filter">
+          <label for="analyticsRange">Historical date range</label>
+          <select id="analyticsRange" class="analytics-select">
+            <option value="7d">Last 7 days</option>
+            <option value="30d" selected>Last 30 days</option>
+            <option value="90d">Last 90 days</option>
+          </select>
+        </div>
+        <div class="analytics-filter">
+          <label for="analyticsCountry">Country filter</label>
+          <select id="analyticsCountry" class="analytics-select" disabled>
+            <option value="">All countries</option>
+          </select>
+        </div>
+        <div class="analytics-updated">
+          <span class="analytics-updated-label">Last successful update</span>
+          <time id="analyticsLastUpdated">Not updated yet</time>
+        </div>
+        <button type="button" class="btn btn-outline" id="refreshAnalyticsBtn" aria-controls="analyticsDashboard">Refresh analytics</button>
+      </div>
+
+      <div id="analyticsState" class="analytics-state is-loading" role="status" aria-live="polite">
+        <span class="analytics-spinner" aria-hidden="true"></span>
+        <span id="analyticsStateMessage">Loading GA4 analytics…</span>
+      </div>
+      <section id="analyticsSetupDetails" class="card analytics-setup" hidden aria-labelledby="analyticsSetupTitle">
+        <div class="card-head"><h2 id="analyticsSetupTitle">GA4 setup required</h2></div>
+        <div class="analytics-report-body">
+          <p>Configure GA4 tracking, the numeric GA4 property ID, and a server-side service account with read access to this property. Credentials stay on the server and are never sent to this page.</p>
+          <ul id="analyticsMissingConfig"></ul>
+          <p>No location map is connected. Location is approximate when supported, never exact. A GA4 Data API / map integration must be configured by the site owner. The summary refresh interval is 60 seconds; anonymous analytics cannot identify every visitor.</p>
+        </div>
+      </section>
+
+      <div id="analyticsDashboard" class="analytics-dashboard" hidden aria-busy="true">
+        <section class="analytics-section" aria-labelledby="analyticsRealtimeTitle">
+          <div class="analytics-section-heading">
+            <h2 id="analyticsRealtimeTitle">Realtime</h2>
+            <p>GA4 Realtime active users in the last 30 minutes.</p>
+          </div>
+          <div class="analytics-kpi-grid realtime">
+            <div class="stat-card analytics-kpi">
+              <div class="stat-label">Active users (last 30 minutes)</div>
+              <div class="stat-val" id="analyticsRealtimeActiveUsers">—</div>
+              <div class="stat-sub">Realtime aggregate; not an individual visitor count.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="analytics-section" aria-labelledby="analyticsHistoricalTitle">
+          <div class="analytics-section-heading">
+            <h2 id="analyticsHistoricalTitle">Historical report</h2>
+            <p id="analyticsHistoricalRange">Selected date range</p>
+          </div>
+          <div class="analytics-kpi-grid">
+            <div class="stat-card analytics-kpi">
+              <div class="stat-label">Active users</div>
+              <div class="stat-val" id="analyticsHistoricalActiveUsers">—</div>
+              <div class="stat-sub">GA4 active users in the selected range.</div>
+            </div>
+            <div class="stat-card analytics-kpi">
+              <div class="stat-label">Sessions</div>
+              <div class="stat-val" id="analyticsSessions">—</div>
+              <div class="stat-sub">Sessions are not unique visitors.</div>
+            </div>
+            <div class="stat-card analytics-kpi">
+              <div class="stat-label">Page views</div>
+              <div class="stat-val" id="analyticsPageViews">—</div>
+              <div class="stat-sub">Page-view events are not unique visitors.</div>
+            </div>
+          </div>
+        </section>
+
+        <div class="analytics-report-grid">
+          <section class="card" aria-labelledby="analyticsPagesTitle">
+            <div class="card-head"><h2 id="analyticsPagesTitle">Top pages</h2></div>
+            <div id="analyticsTopPages" class="analytics-report-body analytics-bar-list" aria-live="polite"></div>
+          </section>
+          <section class="card" aria-labelledby="analyticsSourcesTitle">
+            <div class="card-head"><h2 id="analyticsSourcesTitle">Traffic sources</h2></div>
+            <div id="analyticsTrafficSources" class="analytics-report-body analytics-bar-list" aria-live="polite"></div>
+          </section>
+          <section class="card" aria-labelledby="analyticsDevicesTitle">
+            <div class="card-head"><h2 id="analyticsDevicesTitle">Devices</h2></div>
+            <div id="analyticsDevices" class="analytics-report-body analytics-bar-list" aria-live="polite"></div>
+          </section>
+          <section class="card" aria-labelledby="analyticsCountriesTitle">
+            <div class="card-head"><h2 id="analyticsCountriesTitle">Countries</h2></div>
+            <div class="table-wrap">
+              <table aria-label="Country-level sessions in selected range">
+                <thead><tr><th scope="col">Country</th><th scope="col">Sessions</th></tr></thead>
+                <tbody id="analyticsCountries"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <section class="card analytics-map-card" aria-labelledby="analyticsMapTitle">
+          <div class="card-head"><h2 id="analyticsMapTitle">Approximate country activity</h2></div>
+          <p class="analytics-map-note">Aggregated country-level sessions only. Markers use country centroids as approximate references; they never represent exact or individual visitor locations.</p>
+          <p id="analyticsMapNotice" class="analytics-map-notice" hidden>No supported country-level map positions are available for this report range. Locations are approximate when supported and never exact.</p>
+          <div id="analyticsMapView" class="analytics-map-view" hidden>
+            <svg id="analyticsMap" class="analytics-map-svg" viewBox="0 0 960 440" role="group" aria-label="Interactive approximate country-level activity map"></svg>
+            <p id="analyticsMapTooltip" class="analytics-map-tooltip" role="status" aria-live="polite">Select a country marker to filter the dashboard.</p>
+          </div>
+          <p class="analytics-map-legend">Select or keyboard-focus a marker to see aggregate sessions and filter the report by country.</p>
+        </section>
       </div>
     </section>
   </main>
@@ -439,7 +751,7 @@
           </div>
           <div class="form-group form-full">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
-              <label style="margin:0;">Property Photos * (Upload 3–4 Photos for Gallery)</label>
+              <label style="margin:0;">Property Photos * (Maximum 4, first photo is cover)</label>
               <span id="galleryCountBadge" style="font-size:12px;font-weight:700;color:#38bdf8;background:rgba(56,189,248,0.12);padding:2px 8px;border-radius:12px;">0 photos</span>
             </div>
             <div style="background:#0c1220;border:1px dashed var(--card-border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px;">
@@ -447,7 +759,7 @@
               <div style="display:flex;align-items:center;gap:10px;background:#111827;padding:10px 14px;border-radius:8px;border:1px solid var(--card-border);flex-wrap:wrap;">
                 <label class="btn btn-primary btn-sm" style="cursor:pointer;margin:0;display:inline-flex;align-items:center;gap:6px;font-weight:700;white-space:nowrap;">
                   📸 Choose Photos to Upload (Select 3–4)
-                  <input type="file" id="formGalleryFiles" accept="image/png,image/jpeg,image/webp,image/avif,image/jpg" multiple style="display:none;">
+                  <input type="file" id="formGalleryFiles" accept="image/png,image/jpeg,image/webp" multiple style="display:none;">
                 </label>
                 <div style="font-size:12px;color:var(--muted);flex:1;min-width:160px;" id="galleryUploadStatus">
                   Upload multiple photos at once or one by one. The first photo is your cover image.
@@ -647,6 +959,10 @@
     let slides = [];
     let enquiries = [];
     let siteSettings = {};
+    let analyticsRefreshTimer;
+    let analyticsRequestController;
+    let analyticsHasData = false;
+    const analyticsKnownCountries = new Set();
 
     const toast = document.getElementById('toast');
     let toastTimer;
@@ -657,9 +973,19 @@
       toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
     }
 
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, character => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[character]);
+    }
+
     // --- Tab Switcher ---
     document.querySelectorAll('.nav-btn[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => {
+        clearInterval(analyticsRefreshTimer);
+        analyticsRefreshTimer = undefined;
+        analyticsRequestController?.abort();
+        analyticsRequestController = undefined;
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const target = btn.dataset.tab;
@@ -694,8 +1020,39 @@
           addPropBtn.style.display = 'none';
           addSlideBtn.style.display = 'none';
           loadEnquiries();
+        } else if (target === 'brochures') {
+          titleEl.textContent = 'Verified Brochure Activity';
+          subEl.textContent = 'Review customer verification and download history.';
+          addPropBtn.style.display = 'none';
+          addSlideBtn.style.display = 'none';
+          loadBrochureActivity();
+        } else if (target === 'subscribers') {
+          titleEl.textContent = 'Property Update Subscribers';
+          subEl.textContent = 'Manage marketing subscriptions and consent.';
+          addPropBtn.style.display = 'none';
+          addSlideBtn.style.display = 'none';
+          loadSubscribers();
+        } else if (target === 'analytics') {
+          titleEl.textContent = 'Analytics';
+          subEl.textContent = 'Consent-based anonymous event summary. Refreshes every 60 seconds while this tab is open.';
+          addPropBtn.style.display = 'none';
+          addSlideBtn.style.display = 'none';
+          loadAnalytics();
+          startAnalyticsRefresh();
         }
       });
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.getElementById('tab-analytics').classList.contains('active')) return;
+      if (document.visibilityState === 'visible') {
+        loadAnalytics();
+        startAnalyticsRefresh();
+      } else {
+        clearInterval(analyticsRefreshTimer);
+        analyticsRefreshTimer = undefined;
+        analyticsRequestController?.abort();
+      }
     });
 
     // --- Stats & Counters ---
@@ -717,14 +1074,15 @@
     // --- Properties CMS ---
     async function loadProperties() {
       try {
-        const res = await fetch('/api/properties');
+        const res = await fetch('/api/admin/properties');
         const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Access denied.');
         if (data.success) {
           properties = data.data;
           renderPropertiesTable();
         }
-      } catch (e) {
-        showToast('Error loading properties');
+      } catch (error) {
+        showToast(error.message || 'Error loading properties');
       }
     }
 
@@ -947,7 +1305,11 @@
             <img src="${url}" alt="Photo ${idx+1}" style="width:100%;height:100%;object-fit:cover;">
             ${isCover ? '<span style="position:absolute;top:5px;left:5px;background:#0284c7;color:white;font-size:9.5px;font-weight:800;padding:2px 5px;border-radius:4px;letter-spacing:0.3px;">★ COVER</span>' : ''}
             <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent, rgba(0,0,0,0.85));padding:4px 6px;display:flex;justify-content:space-between;align-items:center;">
-              ${!isCover ? `<button type="button" onclick="setCoverImage(${idx})" style="background:none;border:none;color:#94a3b8;font-size:10px;font-weight:700;cursor:pointer;padding:2px;" title="Set as primary cover">Set Cover</button>` : '<span></span>'}
+            <span style="display:flex;gap:4px;align-items:center;">
+              <button type="button" onclick="moveGalleryImage(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} aria-label="Move photo earlier" style="background:none;border:none;color:#fff;font-size:12px;cursor:pointer;padding:2px;">←</button>
+              ${!isCover ? `<button type="button" onclick="setCoverImage(${idx})" style="background:none;border:none;color:#94a3b8;font-size:10px;font-weight:700;cursor:pointer;padding:2px;" title="Set as primary cover">Set Cover</button>` : ''}
+              <button type="button" onclick="moveGalleryImage(${idx}, 1)" ${idx === currentGalleryImages.length - 1 ? 'disabled' : ''} aria-label="Move photo later" style="background:none;border:none;color:#fff;font-size:12px;cursor:pointer;padding:2px;">→</button>
+            </span>
               <button type="button" onclick="removeGalleryImage(${idx})" style="background:rgba(239,68,68,0.85);color:white;border:none;border-radius:4px;width:18px;height:18px;cursor:pointer;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;" title="Delete photo">✕</button>
             </div>
           </div>
@@ -962,6 +1324,13 @@
         renderGalleryGrid();
         showToast('Cover photo updated');
       }
+    }
+
+    function moveGalleryImage(idx, direction) {
+      const target = idx + direction;
+      if (target < 0 || target >= currentGalleryImages.length) return;
+      [currentGalleryImages[idx], currentGalleryImages[target]] = [currentGalleryImages[target], currentGalleryImages[idx]];
+      renderGalleryGrid();
     }
 
     function removeGalleryImage(idx) {
@@ -984,6 +1353,7 @@
       renderGalleryGrid();
       document.getElementById('galleryUploadStatus').textContent = 'Upload 3–4 photos from your computer or keep default gallery.';
       document.getElementById('formGalleryFiles').value = '';
+      document.getElementById('formPublished').checked = false;
       document.getElementById('formVideoUrl').value = '';
       document.getElementById('formBrochureUrl').value = '';
       document.getElementById('imageUploadStatus').textContent = '';
@@ -1017,6 +1387,7 @@
       document.getElementById('formArea').value = p.area;
       document.getElementById('formBaths').value = p.baths || 2;
       document.getElementById('formStatus').value = (p.status === 'Ready to Move' || p.status === 'Ready') ? 'Ready' : p.status;
+      document.getElementById('formPublished').checked = Boolean(p.published);
       document.getElementById('formAdminNote').value = p.admin_note || '';
       
       currentGalleryImages = (Array.isArray(p.images) && p.images.length) ? [...p.images] : (p.image ? [p.image] : []);
@@ -1097,7 +1468,8 @@
         video_url: document.getElementById('formVideoUrl').value.trim(),
         brochure_url: document.getElementById('formBrochureUrl').value.trim(),
         description: document.getElementById('formDescription').value.trim(),
-        admin_note: document.getElementById('formAdminNote').value.trim()
+        admin_note: document.getElementById('formAdminNote').value.trim(),
+        published: document.getElementById('formPublished').checked
       };
 
       try {
@@ -1109,14 +1481,15 @@
           body: JSON.stringify(payload)
         });
         const result = await res.json();
+        if (!res.ok) throw new Error(result.message || 'Could not save property.');
         if (result.success) {
-          showToast(id ? '✅ Property updated!' : '✅ Property added!');
+          showToast(id ? '✅ Property updated!' : '✅ Draft property added!');
           propModal.close();
           loadProperties();
           loadStats();
         }
       } catch (err) {
-        showToast('Error saving property');
+        showToast(err.message || 'Error saving property');
       } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = 'Save Property';
@@ -1128,6 +1501,10 @@
       const input = document.getElementById('manualImageUrlInput');
       const val = input.value.trim();
       if (!val) return;
+      if (currentGalleryImages.length >= 4) {
+        showToast('A property can have no more than 4 photos.');
+        return;
+      }
       currentGalleryImages.push(val);
       input.value = '';
       renderGalleryGrid();
@@ -1157,17 +1534,25 @@
       const files = Array.from(e.target.files);
       if (!files.length) return;
 
-      const validFiles = files.filter(f => f.type.startsWith('image/'));
+      const validFiles = files.filter(f => ['image/jpeg', 'image/png', 'image/webp'].includes(f.type) && f.size <= 8 * 1024 * 1024);
       if (!validFiles.length) {
-        showToast('Please select valid image files');
+        showToast('Choose JPEG, PNG, or WebP images no larger than 8 MB.');
         return;
       }
+      const slots = 4 - currentGalleryImages.length;
+      if (slots <= 0) {
+        showToast('A property can have no more than 4 photos.');
+        e.target.value = '';
+        return;
+      }
+      if (validFiles.length > slots) showToast(`Only ${slots} more photo${slots === 1 ? '' : 's'} can be added.`);
 
       const status = document.getElementById('galleryUploadStatus');
-      status.textContent = `⏳ Uploading ${validFiles.length} photo${validFiles.length > 1 ? 's' : ''}...`;
+      const uploadFiles = validFiles.slice(0, slots);
+      status.textContent = `⏳ Uploading ${uploadFiles.length} photo${uploadFiles.length > 1 ? 's' : ''}...`;
 
       let uploadedCount = 0;
-      for (const file of validFiles) {
+      for (const file of uploadFiles) {
         try {
           const reader = new FileReader();
           const base64Promise = new Promise((resolve, reject) => {
@@ -1183,6 +1568,7 @@
             body: JSON.stringify({ filename: file.name, fileData: base64Data })
           });
           const data = await res.json();
+          if (!res.ok) throw new Error(data.message || `Could not upload ${file.name}.`);
           if (data.success && data.url) {
             currentGalleryImages.push(data.url);
             uploadedCount++;
@@ -1190,6 +1576,7 @@
           }
         } catch (err) {
           console.error('Error uploading file:', file.name, err);
+          status.textContent = err.message || `Could not upload ${file.name}.`;
         }
       }
 
@@ -1495,9 +1882,20 @@
           document.getElementById('settingHeroTag').value = siteSettings.hero_tag || '';
           document.getElementById('settingHeroTitle').value = siteSettings.hero_title || '';
           document.getElementById('settingHeroSubtitle').value = siteSettings.hero_subtitle || '';
+          document.getElementById('settingSeoTitle').value = siteSettings.seo_title || '';
+          document.getElementById('settingSeoDescription').value = siteSettings.seo_description || '';
+          document.getElementById('settingNavAll').value = siteSettings.nav_all || '';
+          document.getElementById('settingNavNew').value = siteSettings.nav_new || '';
+          document.getElementById('settingNavReady').value = siteSettings.nav_ready || '';
+          document.getElementById('settingNavResale').value = siteSettings.nav_resale || '';
+          document.getElementById('settingNavVilla').value = siteSettings.nav_villa || '';
           document.getElementById('settingContactPhone').value = siteSettings.contact_phone || '';
           document.getElementById('settingWhatsApp').value = siteSettings.whatsapp_number || '';
           document.getElementById('settingContactEmail').value = siteSettings.contact_email || '';
+          document.getElementById('settingInstagram').value = siteSettings.social_instagram || '';
+          document.getElementById('settingYouTube').value = siteSettings.social_youtube || '';
+          document.getElementById('settingFacebook').value = siteSettings.social_facebook || '';
+          document.getElementById('settingWhatsAppChannel').value = siteSettings.social_whatsapp_channel || '';
           document.getElementById('settingStatActive').value = siteSettings.stat_active_listings || '';
           document.getElementById('settingStatHubs').value = siteSettings.stat_hubs || '';
           document.getElementById('settingStatTrust').value = siteSettings.stat_trust || '';
@@ -1519,9 +1917,20 @@
         hero_tag: document.getElementById('settingHeroTag').value.trim(),
         hero_title: document.getElementById('settingHeroTitle').value.trim(),
         hero_subtitle: document.getElementById('settingHeroSubtitle').value.trim(),
+        seo_title: document.getElementById('settingSeoTitle').value.trim(),
+        seo_description: document.getElementById('settingSeoDescription').value.trim(),
+        nav_all: document.getElementById('settingNavAll').value.trim(),
+        nav_new: document.getElementById('settingNavNew').value.trim(),
+        nav_ready: document.getElementById('settingNavReady').value.trim(),
+        nav_resale: document.getElementById('settingNavResale').value.trim(),
+        nav_villa: document.getElementById('settingNavVilla').value.trim(),
         contact_phone: document.getElementById('settingContactPhone').value.trim(),
         whatsapp_number: document.getElementById('settingWhatsApp').value.trim(),
         contact_email: document.getElementById('settingContactEmail').value.trim(),
+        social_instagram: document.getElementById('settingInstagram').value.trim(),
+        social_youtube: document.getElementById('settingYouTube').value.trim(),
+        social_facebook: document.getElementById('settingFacebook').value.trim(),
+        social_whatsapp_channel: document.getElementById('settingWhatsAppChannel').value.trim(),
         stat_active_listings: document.getElementById('settingStatActive').value.trim(),
         stat_hubs: document.getElementById('settingStatHubs').value.trim(),
         stat_trust: document.getElementById('settingStatTrust').value.trim()
@@ -1578,15 +1987,15 @@
 
       tbody.innerHTML = enquiries.map(e => `
         <tr>
-          <td><strong>${e.name}</strong></td>
-          <td><a href="tel:${e.phone}" style="color:#60a5fa;text-decoration:underline;">📞 ${e.phone}</a></td>
+          <td><strong>${escapeHtml(e.name)}</strong></td>
+          <td><a href="tel:${String(e.phone || '').replace(/[^\d+]/g, '')}" style="color:#60a5fa;text-decoration:underline;">📞 ${escapeHtml(e.phone)}</a></td>
           <td>
-            <strong>${e.property_title || 'General'}</strong>
-            ${e.message ? `<div style="font-size:11.5px;color:var(--muted);">${e.message}</div>` : ''}
+            <strong>${escapeHtml(e.property_title || 'General')}</strong>
+            ${e.message ? `<div style="font-size:11.5px;color:var(--muted);">${escapeHtml(e.message)}</div>` : ''}
           </td>
           <td style="font-size:12px;color:var(--muted)">${new Date(e.created_at).toLocaleDateString('en-IN')}</td>
           <td>
-            <select onchange="updateEnquiryStatus(${e.id}, this.value)" style="padding:4px 8px;border-radius:6px;background:#0c1220;color:white;border:1px solid var(--card-border);font-size:12px;">
+            <select onchange="updateEnquiryStatus(${Number(e.id)}, this.value)" style="padding:4px 8px;border-radius:6px;background:#0c1220;color:white;border:1px solid var(--card-border);font-size:12px;">
               <option value="New" ${e.status === 'New' ? 'selected' : ''}>🟠 New</option>
               <option value="Contacted" ${e.status === 'Contacted' ? 'selected' : ''}>🔵 Contacted</option>
               <option value="Closed" ${e.status === 'Closed' ? 'selected' : ''}>⚪ Closed</option>
@@ -1596,7 +2005,7 @@
             <div style="display:flex;align-items:center;gap:6px;min-width:220px;max-width:320px;">
               <input type="text" 
                      id="feedbackInput_${e.id}" 
-                     value="${(e.feedback || '').replace(/"/g, '&quot;')}" 
+                     value="${escapeHtml(e.feedback || '')}"
                      placeholder="Add feedback / notes..." 
                      onchange="updateEnquiryFeedback(${e.id}, this.value)"
                      onkeydown="if(event.key==='Enter'){updateEnquiryFeedback(${e.id}, this.value);this.blur();}"
@@ -1611,7 +2020,7 @@
             </div>
           </td>
           <td style="text-align:right">
-            <a href="https://wa.me/91${e.phone.replace(/[^0-9]/g,'')}?text=Hello%20${encodeURIComponent(e.name)},%20regarding%20your%20inquiry%20on%20Vasati%20Properties" target="_blank" class="btn btn-outline btn-sm" style="color:#34d399;display:inline-flex;align-items:center;gap:6px;">
+            <a href="https://wa.me/${String(e.phone || '').replace(/[^0-9]/g,'')}?text=Hello%20${encodeURIComponent(e.name)},%20regarding%20your%20inquiry%20on%20Vasati%20Properties" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm" style="color:#34d399;display:inline-flex;align-items:center;gap:6px;">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="#34d399"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
               <span>WhatsApp</span>
             </a>
@@ -1682,7 +2091,305 @@
       }
     }
 
+    async function loadBrochureActivity() {
+      try {
+        const response = await fetch('/api/admin/brochure-activity');
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'Could not load brochure activity.');
+        document.getElementById('brochureActivityBody').innerHTML = result.data.map(row => `
+          <tr>
+            <td>${escapeHtml(row.name)}</td>
+            <td>${escapeHtml(row.email)}</td>
+            <td>${escapeHtml(row.phone)}</td>
+            <td>${escapeHtml(row.property_title || row.property_id)}</td>
+            <td>${escapeHtml(row.method)} · ${row.verified_at ? escapeHtml(new Date(row.verified_at).toLocaleString()) : 'Not verified'}</td>
+            <td>${row.downloaded_at ? escapeHtml(new Date(row.downloaded_at).toLocaleString()) : 'Not downloaded'}</td>
+          </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">No brochure requests yet.</td></tr>';
+      } catch (error) {
+        showToast(error.message || 'Could not load brochure activity.');
+      }
+    }
+
+    async function loadSubscribers() {
+      try {
+        const params = new URLSearchParams({
+          search: document.getElementById('subscriberSearch').value.trim(),
+          status: document.getElementById('subscriberStatus').value
+        });
+        const response = await fetch(`/api/admin/subscribers?${params}`);
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'Could not load subscribers.');
+        document.getElementById('subscribersBody').innerHTML = result.data.map(row => `
+          <tr>
+            <td>${escapeHtml(row.email)}</td>
+            <td>${escapeHtml(row.name || '')}</td>
+            <td>${escapeHtml(new Date(row.consent_at).toLocaleString())}</td>
+            <td>${row.unsubscribed_at ? 'Unsubscribed' : 'Active'}</td>
+            <td>${escapeHtml(new Date(row.created_at).toLocaleDateString())}</td>
+          </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">No matching subscribers.</td></tr>';
+      } catch (error) {
+        showToast(error.message || 'Could not load subscribers.');
+      }
+    }
+
+    async function exportSubscribers() {
+      if (!confirm('Export subscriber personal data to CSV? This action is recorded in the audit log.')) return;
+      try {
+        const response = await fetch('/api/admin/subscribers/export', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ confirm: true })
+        });
+        if (!response.ok) {
+          const result = await response.json();
+          throw new Error(result.message || 'Could not export subscribers.');
+        }
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'subscribers.csv';
+        link.click();
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        showToast(error.message || 'Could not export subscribers.');
+      }
+    }
+
+    function setAnalyticsState(state, message) {
+      const stateEl = document.getElementById('analyticsState');
+      stateEl.className = `analytics-state is-${state}`;
+      stateEl.hidden = false;
+      document.getElementById('analyticsStateMessage').textContent = message;
+      document.querySelector('#analyticsState .analytics-spinner').hidden = state !== 'loading';
+    }
+
+    function renderAnalyticsBars(containerId, rows, emptyMessage) {
+      const container = document.getElementById(containerId);
+      container.replaceChildren();
+      if (!rows.length) {
+        const empty = document.createElement('p');
+        empty.className = 'analytics-empty';
+        empty.textContent = emptyMessage;
+        container.appendChild(empty);
+        return;
+      }
+
+      const maximum = Math.max(1, ...rows.map(row => row.value));
+      rows.forEach(row => {
+        const item = document.createElement('div');
+        item.className = 'analytics-bar-row';
+        const label = document.createElement('div');
+        label.className = 'analytics-bar-label';
+        const name = document.createElement('span');
+        name.textContent = row.name;
+        const value = document.createElement('strong');
+        value.textContent = Number(row.value).toLocaleString();
+        label.append(name, value);
+
+        const track = document.createElement('div');
+        track.className = 'analytics-bar-track';
+        track.setAttribute('aria-hidden', 'true');
+        const fill = document.createElement('span');
+        fill.className = 'analytics-bar-fill';
+        fill.style.width = `${Math.max(1, row.value / maximum * 100)}%`;
+        track.appendChild(fill);
+        item.append(label, track);
+        container.appendChild(item);
+      });
+    }
+
+    function updateAnalyticsCountryOptions(countries) {
+      const select = document.getElementById('analyticsCountry');
+      countries.forEach(country => analyticsKnownCountries.add(country.name));
+      const selectedCountry = select.value;
+      select.replaceChildren(new Option('All countries', ''));
+      [...analyticsKnownCountries].sort((a, b) => a.localeCompare(b)).forEach(country => {
+        select.add(new Option(country, country));
+      });
+      select.value = selectedCountry;
+      select.disabled = analyticsKnownCountries.size === 0;
+    }
+
+    function selectAnalyticsCountry(country) {
+      const select = document.getElementById('analyticsCountry');
+      if (![...select.options].some(option => option.value === country)) return;
+      select.value = country;
+      loadAnalytics();
+    }
+
+    function renderAnalyticsMap(data) {
+      const notice = document.getElementById('analyticsMapNotice');
+      const mapView = document.getElementById('analyticsMapView');
+      const svg = document.getElementById('analyticsMap');
+      const markers = Array.isArray(data.map?.markers) ? data.map.markers : [];
+      const features = Array.isArray(data.map?.features) ? data.map.features : [];
+      svg.replaceChildren();
+
+      if (!markers.length || !features.length) {
+        mapView.hidden = true;
+        notice.hidden = false;
+        notice.textContent = 'No supported country-level map positions are available for this report range. Locations are approximate when supported and never exact.';
+        return;
+      }
+
+      notice.hidden = true;
+      mapView.hidden = false;
+      features.forEach(feature => {
+        const countryShape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        countryShape.setAttribute('d', feature.d);
+        countryShape.setAttribute('class', 'analytics-map-country');
+        countryShape.setAttribute('aria-hidden', 'true');
+        svg.appendChild(countryShape);
+      });
+
+      const tooltip = document.getElementById('analyticsMapTooltip');
+      markers.forEach(marker => {
+        if (!Number.isFinite(marker.x) || !Number.isFinite(marker.y) || !Number.isFinite(marker.sessions)) return;
+        const point = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        point.classList.add('analytics-map-marker');
+        point.setAttribute('tabindex', '0');
+        point.setAttribute('role', 'button');
+        point.setAttribute('aria-label', `${marker.country}: ${Number(marker.sessions).toLocaleString()} sessions, approximate country-level location. Select to filter.`);
+        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('cx', marker.x);
+        dot.setAttribute('cy', marker.y);
+        dot.setAttribute('r', Math.min(14, Math.max(4, 3 + Math.sqrt(marker.sessions))));
+        const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        title.textContent = `${marker.country}: ${Number(marker.sessions).toLocaleString()} sessions (approximate country centroid)`;
+        point.append(dot, title);
+
+        const showTooltip = () => {
+          tooltip.textContent = `${marker.country}: ${Number(marker.sessions).toLocaleString()} sessions · approximate country-level location`;
+        };
+        point.addEventListener('click', () => selectAnalyticsCountry(marker.country));
+        point.addEventListener('focus', showTooltip);
+        point.addEventListener('pointerenter', showTooltip);
+        point.addEventListener('keydown', event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            selectAnalyticsCountry(marker.country);
+          }
+        });
+        svg.appendChild(point);
+      });
+      tooltip.textContent = 'Select a country marker to filter the dashboard.';
+    }
+
+    function startAnalyticsRefresh() {
+      clearInterval(analyticsRefreshTimer);
+      analyticsRefreshTimer = undefined;
+      const analyticsTab = document.getElementById('tab-analytics');
+      if (!analyticsTab.classList.contains('active') || document.visibilityState !== 'visible') return;
+      analyticsRefreshTimer = setInterval(() => {
+        if (document.visibilityState === 'visible') loadAnalytics();
+      }, 60_000);
+    }
+
+    async function loadAnalytics() {
+      if (!document.getElementById('tab-analytics').classList.contains('active') || document.visibilityState !== 'visible') return;
+
+      analyticsRequestController?.abort();
+      const controller = new AbortController();
+      analyticsRequestController = controller;
+      const dashboard = document.getElementById('analyticsDashboard');
+      const setupDetails = document.getElementById('analyticsSetupDetails');
+      dashboard.setAttribute('aria-busy', 'true');
+      setupDetails.hidden = true;
+      if (!analyticsHasData) {
+        dashboard.hidden = true;
+        setAnalyticsState('loading', 'Loading GA4 analytics…');
+      } else {
+        dashboard.hidden = false;
+        setAnalyticsState('loading', 'Refreshing GA4 reports… Showing the last successful data until this refresh completes.');
+      }
+
+      const range = document.getElementById('analyticsRange').value;
+      const country = document.getElementById('analyticsCountry').value;
+      const params = new URLSearchParams({ range });
+      if (country) params.set('country', country);
+
+      try {
+        const response = await fetch(`/api/admin/analytics?${params}`, { signal: controller.signal });
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.message || 'Could not load GA4 analytics.');
+        if (analyticsRequestController !== controller) return;
+
+        const data = result.data;
+        if (data.status === 'setup-required') {
+          analyticsHasData = false;
+          dashboard.hidden = true;
+          setupDetails.hidden = false;
+          document.getElementById('analyticsCountry').disabled = true;
+          const missing = document.getElementById('analyticsMissingConfig');
+          missing.replaceChildren();
+          data.missing.forEach(name => {
+            const item = document.createElement('li');
+            item.textContent = name;
+            missing.appendChild(item);
+          });
+          setAnalyticsState('setup', data.message);
+          return;
+        }
+
+        analyticsHasData = true;
+        document.getElementById('analyticsState').hidden = true;
+        dashboard.hidden = false;
+        dashboard.setAttribute('aria-busy', 'false');
+        document.getElementById('analyticsRealtimeActiveUsers').textContent = Number(data.realtime.activeUsers).toLocaleString();
+        document.getElementById('analyticsHistoricalActiveUsers').textContent = Number(data.historical.activeUsers).toLocaleString();
+        document.getElementById('analyticsSessions').textContent = Number(data.historical.sessions).toLocaleString();
+        document.getElementById('analyticsPageViews').textContent = Number(data.historical.pageViews).toLocaleString();
+        document.getElementById('analyticsHistoricalRange').textContent = `${data.rangeLabel} · GA4 Data API`;
+        renderAnalyticsBars('analyticsTopPages', data.topPages, 'No page-view data for this range.');
+        renderAnalyticsBars('analyticsTrafficSources', data.trafficSources, 'No traffic-source data for this range.');
+        renderAnalyticsBars('analyticsDevices', data.devices, 'No device data for this range.');
+
+        const countries = Array.isArray(data.countries) ? data.countries : [];
+        updateAnalyticsCountryOptions(countries);
+        const countriesBody = document.getElementById('analyticsCountries');
+        countriesBody.innerHTML = countries.length
+          ? countries.map(item => `<tr><td><button type="button" class="analytics-country-button" data-country="${escapeHtml(item.name)}">${escapeHtml(item.name)}</button></td><td>${Number(item.sessions).toLocaleString()}</td></tr>`).join('')
+          : '<tr><td colspan="2" class="analytics-empty">No country-level session data for this range.</td></tr>';
+        countriesBody.querySelectorAll('.analytics-country-button').forEach(button => {
+          button.addEventListener('click', () => selectAnalyticsCountry(button.dataset.country));
+        });
+        renderAnalyticsMap(data);
+
+        const updated = new Date(data.lastUpdatedAt);
+        const lastUpdated = document.getElementById('analyticsLastUpdated');
+        if (!Number.isNaN(updated.getTime())) {
+          lastUpdated.dateTime = updated.toISOString();
+          lastUpdated.textContent = updated.toLocaleString();
+        }
+      } catch (error) {
+        if (error.name === 'AbortError' || analyticsRequestController !== controller) return;
+        setAnalyticsState('error', error.message || 'Could not load GA4 analytics. Try again shortly.');
+        if (!analyticsHasData) dashboard.hidden = true;
+      } finally {
+        if (analyticsRequestController === controller) {
+          dashboard.setAttribute('aria-busy', 'false');
+          analyticsRequestController = undefined;
+        }
+      }
+    }
+
+    document.getElementById('analyticsRange').addEventListener('change', loadAnalytics);
+    document.getElementById('analyticsCountry').addEventListener('change', loadAnalytics);
+    document.getElementById('refreshAnalyticsBtn').addEventListener('click', loadAnalytics);
+
+    document.getElementById('subscriberSearch').addEventListener('input', () => {
+      clearTimeout(window.subscriberSearchTimer);
+      window.subscriberSearchTimer = setTimeout(loadSubscribers, 250);
+    });
+    document.getElementById('subscriberStatus').addEventListener('change', loadSubscribers);
+    document.getElementById('exportSubscribers').addEventListener('click', exportSubscribers);
+
     document.getElementById('refreshBtn').addEventListener('click', () => {
+      if (document.getElementById('tab-analytics').classList.contains('active')) {
+        loadAnalytics();
+        return;
+      }
       loadStats();
       loadProperties();
       loadSlides();
@@ -1691,12 +2398,23 @@
       showToast('Data refreshed');
     });
 
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/api/admin/auth/logout', { method: 'POST' });
+      location.replace('/admin/login');
+    });
+
     // Startup Initialization
-    loadStats();
-    loadProperties();
-    loadSlides();
-    loadSettings();
-    loadEnquiries();
+    fetch('/api/admin/session').then(async response => {
+      const session = await response.json();
+      if (!session.authenticated) return location.replace('/admin/login');
+      if (session.mustChangePassword) return location.replace('/admin/login?change=1');
+      document.getElementById('adminIdentity').textContent = session.email;
+      loadStats();
+      loadProperties();
+      loadSlides();
+      loadSettings();
+      loadEnquiries();
+    }).catch(() => location.replace('/admin/login'));
   </script>
 </body>
 </html>

@@ -3,7 +3,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { DatabaseSync } = require('node:sqlite');
 
-const dataDir = path.join(__dirname, '..', 'data');
+const dataDir = path.resolve(process.env.DATA_DIR || path.join(__dirname, '..', 'data'));
 fs.mkdirSync(dataDir, { recursive: true });
 const dbPath = path.join(dataDir, 'properties.db');
 const db = new DatabaseSync(dbPath);
@@ -22,7 +22,7 @@ function parseJsonField(value, fallback = []) {
 
 function formatProperty(property) {
   if (!property) return null;
-  const imageList = parseJsonField(property.images, property.image ? [property.image] : []);
+  const imageList = parseJsonField(property.images, property.image ? [property.image] : []).slice(0, 4);
   const amenities = parseJsonField(property.amenities, null);
   const proximity = parseJsonField(property.proximity, null);
 
@@ -32,7 +32,8 @@ function formatProperty(property) {
     images: imageList,
     amenities: amenities && amenities.length ? amenities : null,
     proximity: proximity && proximity.length ? proximity : null,
-    featured: Number(property.featured) === 1 || property.featured === true
+    featured: Number(property.featured) === 1 || property.featured === true,
+    published: Number(property.published) === 1 || property.published === true
   };
 }
 
@@ -43,6 +44,17 @@ const defaultSettings = {
   contact_phone: '+91 6303420048',
   whatsapp_number: '916303420048',
   contact_email: 'contact@vasatiproperties.com',
+  social_instagram: '',
+  social_youtube: '',
+  social_facebook: '',
+  social_whatsapp_channel: '',
+  seo_title: 'Vasati Properties — Premium Bengaluru Homes & Luxury Real Estate',
+  seo_description: 'Discover premier residential properties, luxury villas, and verified resale homes across Bengaluru with Vasati Properties.',
+  nav_all: 'All Properties',
+  nav_new: 'New Launch',
+  nav_ready: 'Ready to Move',
+  nav_resale: 'Resale',
+  nav_villa: 'Luxury Villa',
   stat_active_listings: '150+',
   stat_hubs: '15+',
   stat_trust: '100%'
@@ -64,7 +76,7 @@ const seedProjects = [
 ];
 
 function ensureColumn(tableName, columnName, columnSql) {
-  const exists = db.prepare("SELECT 1 FROM pragma_table_info(?) WHERE name = ?").all([tableName, columnName]);
+  const exists = db.prepare("SELECT 1 FROM pragma_table_info(?) WHERE name = ?").all(tableName, columnName);
   if (!exists.length) {
     db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnSql};`);
   }
@@ -96,6 +108,7 @@ function initializeDatabase() {
       proximity TEXT,
       admin_note TEXT,
       featured INTEGER DEFAULT 0,
+      published INTEGER NOT NULL DEFAULT 1,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -139,7 +152,123 @@ function initializeDatabase() {
       size_bytes INTEGER NOT NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS admin_users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'admin',
+      must_change_password INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS admin_sessions (
+      token_hash TEXT PRIMARY KEY,
+      admin_id INTEGER NOT NULL REFERENCES admin_users(id) ON DELETE CASCADE,
+      expires_at INTEGER NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS rate_limits (
+      key TEXT PRIMARY KEY,
+      window_started_at INTEGER NOT NULL,
+      count INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS otp_verifications (
+      id TEXT PRIMARY KEY,
+      property_id TEXT NOT NULL,
+      customer_id INTEGER,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      method TEXT NOT NULL,
+      consent_at TEXT NOT NULL,
+      verified_at TEXT,
+      analytics_consent INTEGER NOT NULL DEFAULT 0,
+      attempt_count INTEGER NOT NULL DEFAULT 0,
+      last_sent_at INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS brochure_downloads (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      verification_id TEXT NOT NULL REFERENCES otp_verifications(id),
+      property_id TEXT NOT NULL,
+      token_hash TEXT NOT NULL UNIQUE,
+      expires_at INTEGER NOT NULL,
+      downloaded_at INTEGER,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS subscribers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL UNIQUE,
+      name TEXT,
+      consent_at TEXT NOT NULL,
+      unsubscribed_at TEXT,
+      unsubscribe_token_hash TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS analytics_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_name TEXT NOT NULL,
+      property_id TEXT,
+      source TEXT,
+      session_hash TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS audit_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      actor TEXT NOT NULL,
+      action TEXT NOT NULL,
+      target TEXT,
+      details TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS customers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      google_subject TEXT NOT NULL UNIQUE,
+      email TEXT NOT NULL,
+      name TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS customer_sessions (
+      token_hash TEXT PRIMARY KEY,
+      customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+      expires_at INTEGER NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS oauth_states (
+      state_hash TEXT PRIMARY KEY,
+      nonce TEXT NOT NULL,
+      expires_at INTEGER NOT NULL
+    );
   `);
+
+  ensureColumn('properties', 'published', 'INTEGER NOT NULL DEFAULT 1');
+  ensureColumn('otp_verifications', 'attempt_count', 'INTEGER NOT NULL DEFAULT 0');
+  ensureColumn('otp_verifications', 'last_sent_at', 'INTEGER NOT NULL DEFAULT 0');
+  ensureColumn('otp_verifications', 'analytics_consent', 'INTEGER NOT NULL DEFAULT 0');
+  ensureColumn('otp_verifications', 'customer_id', 'INTEGER');
+  for (const property of db.prepare('SELECT id, image, images FROM properties WHERE images IS NOT NULL').all()) {
+    const images = parseJsonField(property.images, property.image ? [property.image] : []).filter(Boolean);
+    if (images.length > 4) {
+      const coverIndex = images.indexOf(property.image);
+      if (coverIndex > 0) images.unshift(images.splice(coverIndex, 1)[0]);
+      images.length = 4;
+      db.prepare('UPDATE properties SET image = ?, images = ? WHERE id = ?')
+        .run(images[0], JSON.stringify(images), property.id);
+    }
+  }
+  db.exec('CREATE INDEX IF NOT EXISTS admin_sessions_expires_at_idx ON admin_sessions (expires_at);');
+  db.exec('CREATE INDEX IF NOT EXISTS analytics_events_created_at_idx ON analytics_events (created_at DESC);');
+  db.exec('CREATE INDEX IF NOT EXISTS audit_logs_created_at_idx ON audit_logs (created_at DESC);');
 
   try {
     db.exec("CREATE INDEX IF NOT EXISTS enquiries_created_at_idx ON enquiries (created_at DESC);");
@@ -177,9 +306,10 @@ function initializeDatabase() {
   }
 }
 
-function getAllProperties(filters = {}) {
+function getAllProperties(filters = {}, includeUnpublished = false) {
   let sql = 'SELECT * FROM properties WHERE 1 = 1';
   const params = [];
+  if (!includeUnpublished) sql += ' AND published = 1';
 
   if (filters.locality && filters.locality !== 'all' && filters.locality !== 'Bengaluru' && filters.locality !== 'Bangalore') {
     sql += ' AND (location LIKE ? OR locality LIKE ?)';
@@ -250,8 +380,8 @@ function getAllProperties(filters = {}) {
   return rows.map(formatProperty);
 }
 
-function getPropertyById(id) {
-  const row = db.prepare('SELECT * FROM properties WHERE id = ?').get(id);
+function getPropertyById(id, includeUnpublished = false) {
+  const row = db.prepare(`SELECT * FROM properties WHERE id = ?${includeUnpublished ? '' : ' AND published = 1'}`).get(id);
   return formatProperty(row);
 }
 
@@ -267,12 +397,13 @@ function createProperty(prop) {
     : typeof prop.images === 'string'
       ? (() => { try { const parsed = JSON.parse(prop.images); return Array.isArray(parsed) ? parsed.filter(Boolean) : [prop.images].filter(Boolean); } catch { return [prop.images].filter(Boolean); } })()
       : [];
+  if (images.length > 4) throw new Error('A property can have no more than 4 images.');
   const discountImage = images.length ? images[0] : image;
   const query = `
     INSERT INTO properties (
       id, title, location, locality, price, price_label, bhk, area, baths, status,
-      image, images, video_url, brochure_url, alt, listed, kind, possession, description, amenities, proximity, featured
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      image, images, video_url, brochure_url, alt, listed, kind, possession, description, amenities, proximity, featured, published
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   db.prepare(query).run(
     id,
@@ -296,13 +427,14 @@ function createProperty(prop) {
     String(prop.description || ''),
     prop.amenities ? JSON.stringify(Array.isArray(prop.amenities) ? prop.amenities : String(prop.amenities).split(',')) : null,
     prop.proximity ? JSON.stringify(prop.proximity) : null,
-    Number(Boolean(prop.featured))
+    Number(Boolean(prop.featured)),
+    Number(Boolean(prop.published))
   );
   return id;
 }
 
 function updateProperty(id, prop) {
-  const current = getPropertyById(id);
+  const current = getPropertyById(id, true);
   if (!current) return false;
 
   const next = {
@@ -319,8 +451,9 @@ function updateProperty(id, prop) {
     : typeof prop.images === 'string'
       ? (() => { try { const parsed = JSON.parse(prop.images); return Array.isArray(parsed) ? parsed.filter(Boolean) : [prop.images].filter(Boolean); } catch { return [prop.images].filter(Boolean); } })()
       : parseJsonField(current.images, current.image ? [current.image] : []);
+  if (imageList.length > 4) throw new Error('A property can have no more than 4 images.');
 
-  const image = String(prop.image || next.image || (imageList[0] || ''));
+  const image = String(prop.image || (prop.images !== undefined ? imageList[0] : next.image) || (imageList[0] || ''));
   const query = `
     UPDATE properties SET
       title = ?,
@@ -344,6 +477,7 @@ function updateProperty(id, prop) {
       amenities = ?,
       proximity = ?,
       featured = ?
+      , published = ?
     WHERE id = ?
   `;
   db.prepare(query).run(
@@ -368,6 +502,7 @@ function updateProperty(id, prop) {
     next.amenities ? JSON.stringify(Array.isArray(next.amenities) ? next.amenities : String(next.amenities).split(',')) : (current.amenities ? current.amenities : null),
     next.proximity ? JSON.stringify(next.proximity) : (current.proximity ? current.proximity : null),
     Number(next.featured),
+    prop.published !== undefined ? Number(Boolean(prop.published)) : Number(Boolean(current.published)),
     id
   );
   return true;
@@ -521,6 +656,27 @@ function getMediaAsset(id) {
   return db.prepare('SELECT * FROM media_assets WHERE id = ?').get(id);
 }
 
+function logAudit(actor, action, target = null, details = null) {
+  db.prepare('INSERT INTO audit_logs (actor, action, target, details) VALUES (?, ?, ?, ?)').run(
+    String(actor), String(action), target ? String(target) : null,
+    details ? JSON.stringify(details) : null
+  );
+}
+
+function consumeRateLimit(key, limit, windowMs, now = Date.now()) {
+  const row = db.prepare('SELECT window_started_at, count FROM rate_limits WHERE key = ?').get(key);
+  if (!row || now - row.window_started_at >= windowMs) {
+    db.prepare(`INSERT INTO rate_limits (key, window_started_at, count) VALUES (?, ?, 1)
+      ON CONFLICT(key) DO UPDATE SET window_started_at = excluded.window_started_at, count = 1`).run(key, now);
+    return { allowed: true, retryAfter: 0 };
+  }
+  if (row.count >= limit) {
+    return { allowed: false, retryAfter: Math.ceil((windowMs - (now - row.window_started_at)) / 1000) };
+  }
+  db.prepare('UPDATE rate_limits SET count = count + 1 WHERE key = ?').run(key);
+  return { allowed: true, retryAfter: 0 };
+}
+
 module.exports = {
   db,
   initializeDatabase,
@@ -542,5 +698,7 @@ module.exports = {
   deleteEnquiry,
   getStats,
   createMediaAsset,
-  getMediaAsset
+  getMediaAsset,
+  logAudit,
+  consumeRateLimit
 };

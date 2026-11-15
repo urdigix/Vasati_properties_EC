@@ -1,59 +1,54 @@
 # Vasati Properties
 
-A Bengaluru property listings website with a public-facing site, property and enquiry APIs, and an admin dashboard.
+Bengaluru real-estate listings website and admin portal. The default application is Express + SQLite (`server.js`), with static responsive pages under `public/`. The older Next.js, Prisma, and PostgreSQL files are legacy scaffolding and are not used by the default start or Coolify Docker deployment.
 
-## Requirements
+## Run locally
 
-- Node.js 24 LTS (the project uses Node's built-in `node:sqlite` module)
-- npm
-
-## Get started
+Requirements: Node.js 24 LTS and npm.
 
 ```powershell
-git clone https://github.com/urdigix/vasati_properties.git
-cd vasati_properties
 npm ci
 npm start
 ```
 
-Open:
+Open <http://localhost:3000>. Admin sign-in: <http://localhost:3000/admin>.
 
-- Website: <http://localhost:3000>
-- Admin dashboard: <http://localhost:3000/admin>
+The first local start creates `data/properties.db` and seeds the sample properties plus a hashed, temporary admin account:
 
-The first run creates `data/properties.db` and initializes the SQLite schema and starter content. The `data/` directory is local application data and should not be committed.
+- Email: `admin@example.com`
+- Password: `Admin@12345`
 
-For development, `npm run dev` also starts the Express server. To use another port in PowerShell:
+Change this password at first sign-in. These credentials are for local development only. Production refuses the temporary password; configure a unique `ADMIN_DEFAULT_PASSWORD` in Coolify. Never reuse the local database/password in production.
 
-```powershell
-$env:PORT = "3001"
-npm start
-```
+Copy `.env.example` to `.env` to configure local integrations. No OTP is simulated. Until Twilio Verify is configured, brochure verification returns a clear configuration error.
 
-## Features
+## Current functionality
 
-- Property listings, filters, and individual property details
-- Featured projects and site settings
-- Enquiry submission and management APIs
-- Local image and media uploads
-- Admin dashboard for managing listings and enquiries
+- Public property listings, search, property details, carousel, responsive layouts, and editable site settings.
+- Session-authenticated admin pages and mutation endpoints, hashed passwords, rate-limited login, first-login password change, and audit entries.
+- Draft/publish controls; unpublished properties are excluded from public listing and detail APIs.
+- Property image galleries with a maximum of four images enforced by the browser and database layer. Uploads accept JPEG, PNG, and WebP up to 8 MB and are resized/re-encoded to WebP.
+- PDF/media upload, admin-side brochure editing, and one-time, short-lived brochure links after contact consent and successful Twilio Verify OTP. Direct public brochure paths are blocked.
+- Optional Google OAuth customer sign-in. OAuth establishes an account session only; it does not replace the required OTP verification step for brochure downloads.
+- Subscriber consent, deduplication, search/filter, unsubscribe tokens, and confirmation-gated CSV export.
+- Editable social destinations; unconfigured links are hidden. Optional WhatsApp contact buttons hide if no number is configured.
+- Consent-gated GA4 tag plus first-party anonymous event summaries.
+- Authenticated `/mcp` endpoint with read-only and draft-write bearer scopes.
 
-## API overview
+See [INSTALLATION.md](./INSTALLATION.md) and [COOLIFY.md](./COOLIFY.md).
 
-- `GET /api/properties` and `GET /api/properties/:id`
-- `POST`, `PUT`, and `DELETE /api/properties` routes
-- `GET /api/featured-projects`
-- `POST /api/enquiries` and admin enquiry management routes
-- `GET /api/settings` and `GET /api/stats`
+## API/security notes
 
-See [INSTALLATION.md](./INSTALLATION.md) for platform-specific setup and troubleshooting.
+- Public: `GET /api/properties`, `GET /api/properties/:id`, `GET /api/featured-projects`, and public settings.
+- Admin writes and customer data routes require the admin session. Admin endpoints are not protected by an obscure URL.
+- Brochure OTP routes: `/api/brochures/verification/start`, `/resend`, and `/complete`. Download tokens expire after five minutes and are single-use.
+- Subscriber exports require explicit confirmation and are audit logged.
+- MCP tools never return customer PII and cannot publish or delete properties.
 
-## Important deployment note
+## Required owner setup for production
 
-The admin page and administrative API routes in the current Express server do not enforce authentication. Do not expose this application or its admin endpoints to the public internet until authentication and authorization have been implemented and reviewed. Use only non-sensitive test data in local development.
+Configure a unique admin bootstrap password, HTTPS, persistent Coolify volumes, and regular backups. Configure Google OAuth credentials and its exact HTTPS callback, Twilio Verify SMS/email channels, and a GA4 measurement ID if those integrations are to be used. Generate separate random MCP read/write tokens. Do not expose secrets in public code or commit `.env`.
 
-The current default server uses SQLite. The repository also contains older Next.js, Prisma, and PostgreSQL-related configuration; those paths are not the default local startup flow and should not be assumed to provide production deployment parity.
+The analytics page currently reports anonymous first-party events, not a GA4 live map. It clearly says location is unavailable and that refreshes occur every 60 seconds. Visitor geolocation/GA4 Data API integration and email marketing delivery are not configured. Subscriber confirmation provides an unsubscribe link in the page; configure an email delivery provider before running a marketing campaign.
 
-## License and legal notice
-
-No license is currently specified. Legal and compliance claims should be independently reviewed before relying on them or deploying the site.
+No license is currently specified. Legal/compliance statements must be reviewed by qualified counsel before relying on them.

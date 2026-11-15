@@ -1,76 +1,48 @@
-# Coolify Deployment Guide
+# Coolify deployment
 
-This guide details how to deploy the **Bangalore Real Estate DPDP-Compliant Platform** using [Coolify](https://coolify.io).
+The active app is Express + Node's built-in SQLite database. The legacy Next.js/Prisma/PostgreSQL scaffolding is not used by `npm start` or this Dockerfile.
 
----
+## Deploy
 
-## Architecture Overview
-- **Application:** Next.js 14 (Standalone output, multi-stage Docker build, non-root user `nextjs`).
-- **Database:** PostgreSQL 16 (Persistent volume, automated healthcheck).
-- **Security:** In-transit HSTS, AES-256-GCM field encryption at rest, salted SHA-256 IP hashing, TOTP 2FA.
+1. Create a Coolify Docker Compose resource from this repository's `docker-compose.yml`.
+2. Attach a domain with HTTPS enabled.
+3. Configure the required environment variables below in Coolify. Never reuse the local bootstrap password.
+4. Deploy. The SQLite database and uploaded files live in named volumes (`app_data` and `uploads_data`) and survive container replacement. Back up both volumes before upgrades.
+5. Restrict the admin URL to staff as an additional network control. The app still enforces a hashed-password login and role checks.
 
----
+Required production settings:
 
-## Deployment Option A: Docker Compose (Recommended)
-This method spins up both the **Next.js application** and **PostgreSQL database** together with automatic networking and health checks.
+- `ADMIN_DEFAULT_PASSWORD`: unique strong bootstrap password; startup refuses the temporary local password. If a local database is copied into production, change its password before deploying.
+- `IP_HASH_SALT`: random secret used to pseudonymize analytics sessions.
+- `APP_BASE_URL`: public HTTPS origin.
 
-1. In your Coolify dashboard, create a new **Project** or **Resource**.
-2. Select **Docker Compose**.
-3. Paste the contents of [`docker-compose.yml`](./docker-compose.yml).
-4. Configure the environment variables in the Coolify UI (see [Environment Variables](#environment-variables)).
-5. Click **Deploy**.
-6. The container entrypoint will automatically:
-   - Run `npx prisma db push` to synchronize the PostgreSQL database schema.
-   - Run `node prisma/seed.js` to seed verified Bangalore RERA inventory and default administrator credentials.
-   - Start the optimized production server on port `3000`.
+Optional integrations:
 
----
+- Google OAuth: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` (`https://your-domain/auth/google/callback`). Register the exact redirect URI in Google Cloud.
+- Customer OTP: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID`. Configure SMS and email channels and a 10-minute code lifetime in Twilio Verify. OTP is not simulated; brochure verification returns an explicit unavailable error until configured.
+- GA4 browser tracking: `GA4_MEASUREMENT_ID` (`G-...`). The browser tag and event collection are enabled only after analytics consent.
+- GA4 admin reports (optional): `GA4_PROPERTY_ID` (numeric property ID), `GA4_SERVICE_ACCOUNT_EMAIL`, and `GA4_SERVICE_ACCOUNT_PRIVATE_KEY`. Enable the Google Analytics Data API in the service account's Google Cloud project, then add the service-account email to the GA4 property's access management with Viewer permission. Store the private key only as a Coolify server secret (escaped `\n` sequences are supported); it and access tokens are never sent to the browser. The measurement ID and reporting property ID are separate settings.
+- Remote MCP: set independent high-entropy `MCP_READ_TOKEN` and `MCP_WRITE_TOKEN`. Expose the endpoint only through the HTTPS domain at `/mcp`. Keep tokens server-side and grant only the needed token to each client.
 
-## Deployment Option B: Standalone Dockerfile + Managed PostgreSQL
-If you prefer running a separate managed PostgreSQL database in Coolify:
+## Database and storage
 
-1. **Deploy Database:** In Coolify, create a **PostgreSQL** database service. Note the connection string.
-2. **Deploy Application:** Connect your Git repository (GitHub / GitLab) and select **Dockerfile**.
-3. Set the `DATABASE_URL` environment variable to point to your Coolify PostgreSQL instance.
-4. Set the domains (e.g. `https://bangalore.yourdomain.com`).
-5. Coolify will automatically provision an SSL certificate via Let's Encrypt with HTTP/2 and HSTS.
+SQLite is appropriate for a single application instance with a persistent local volume. Do not scale this configuration horizontally without moving the data layer to a supported shared database and implementing safe concurrent migrations. Uploads are stored in the persistent `uploads_data` volume; the SQLite volume contains listings, settings, customer request metadata, sessions, and audit records. Include both volumes in backups.
 
----
+## Operational checks
 
-## Environment Variables
+- Health check: `GET /`.
+- Administrator: `/admin`; initial local-only login is documented in `README.md`. The first successful login requires a password change.
+- Configure and verify OAuth callback and Twilio delivery before advertising those workflows.
+- Configure and verify the GA4 measurement ID and server-side reporting property separately. The dashboard uses the GA4 Realtime API for active users and the GA4 Data API for historical reports. If reporting credentials are absent, it shows a setup-required state; API failures are reported without fabricating data.
+- The country map renders local country outlines and places aggregate GA4 country sessions at country-centroid positions. These are approximate country-level summaries, not exact visitor locations or individual tracking. Countries without a supported map shape are omitted.
+- Review the Coolify proxy's forwarded-header and HTTPS settings. The app sets secure cookies in production.
 
-| Variable | Description | Example / Default |
-| :--- | :--- | :--- |
-| `DATABASE_URL` | PostgreSQL connection URL | `postgresql://user:pass@db:5432/dbname?schema=public` |
-| `FIELD_ENCRYPTION_KEY` | 32-byte hex key for AES-256-GCM | `openssl rand -hex 32` |
-| `IP_HASH_SALT` | Salt for SHA-256 IP hashing | `openssl rand -hex 16` |
-| `ADMIN_SESSION_SECRET` | Secret for signing admin sessions | `openssl rand -hex 32` |
-| `ADMIN_DEFAULT_EMAIL` | Default administrator email | `admin@example.com` |
-| `ADMIN_DEFAULT_PASSWORD` | Default administrator password | `VasatiProperties@2026!` |
-| `NEXT_PUBLIC_APP_URL` | Public production website URL | `https://bangalore.yourdomain.com` |
-| `NEXT_PUBLIC_BUSINESS_NAME` | Business trade name | `[BUSINESS_NAME_PLACEHOLDER]` |
-| `NEXT_PUBLIC_BUSINESS_ADDRESS` | Registered Bangalore address | `[BUSINESS_ADDRESS_PLACEHOLDER]` |
-| `NEXT_PUBLIC_AGENCY_KRERA_NO` | Karnataka RERA agency reg no. | `PRM/KA/RERA/1251/[YEAR]/AG/[NO]` |
-| `NEXT_PUBLIC_GRIEVANCE_OFFICER_NAME` | Grievance Officer name | `[GRIEVANCE_OFFICER_NAME_PLACEHOLDER]` |
-| `NEXT_PUBLIC_GRIEVANCE_OFFICER_EMAIL`| Grievance Officer email | `grievance@yourdomain.in` |
-| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Official WhatsApp business phone | `916303420048` |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile public site key| `0x4AAAAAA...` (Optional) |
-| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key | `0x4AAAAAA...` (Optional) |
+## Remote MCP client setup
 
----
+Add a remote MCP server URL of `https://your-domain.example/mcp` in a client that supports remote MCP over Streamable HTTP. Authenticate with the bearer token configured for that client. Use the read token for `properties_list`, `property_get`, and `website_content_get`. Use the separate write token only when authorized draft creation/update is needed; it cannot publish, delete, export customer records, or read personal information. Publishing and deletion remain manual admin actions. Client product-plan, workspace, and administrator approval requirements vary; check the current client-side MCP availability and policy before enabling the connection.
 
-## Database Backups & Data Sovereignty
-In accordance with Rule 5 of project requirements and DPDP Act 2023 best practices:
-1. In the Coolify PostgreSQL settings, enable **Automated Daily Backups**.
-2. Configure S3-compatible remote storage located in India (e.g. AWS `ap-south-1` Mumbai or GCP `asia-south1` Mumbai).
-3. Set backup retention to **30 days**.
+The endpoint uses stateless JSON-RPC over HTTPS POST (Streamable HTTP). Do not expose it over plain HTTP, commit tokens, or place tokens in browser code. Token rotation is performed by updating Coolify secrets and restarting the app.
 
----
+## Important limitations
 
-## Verification & Health Check
-- The container includes a Docker health check:
-  ```sh
-  wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/ || exit 1
-  ```
-- Coolify monitors this endpoint to ensure zero-downtime rolling deploys.
-
+The admin dashboard reports GA4 aggregates when its server-side integration is configured; it does not identify individuals. Its summary refreshes every 60 seconds while the Analytics page is visible. The country map is approximate and uses country-centroid positions, never exact visitor locations. No email-marketing delivery provider is configured, so new subscribers receive a one-time unsubscribe link in the confirmation UI; wire an email provider before operating a mailing program.

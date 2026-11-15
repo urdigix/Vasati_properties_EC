@@ -1,88 +1,53 @@
 # Installation
 
-This guide covers running the current Express + SQLite application locally. The default server entry point is `server.js`; a PostgreSQL service and Prisma setup are not required for this local workflow.
-
-## Prerequisites
-
-- Node.js 24 LTS
-- npm (bundled with Node.js)
-- Git
-
-The app uses Node's built-in `node:sqlite` module, so use a Node version that provides it. Node.js 24 is the recommended runtime.
+The active app runs Express with SQLite. Use Node.js 24 LTS (for `node:sqlite`), npm, and a writable data directory.
 
 ## Windows (PowerShell)
 
-1. Install Node.js 24 LTS from <https://nodejs.org/>.
-2. Clone the repository and enter its folder:
+```powershell
+npm ci
+npm start
+```
 
-   ```powershell
-   git clone https://github.com/urdigix/vasati_properties.git
-   cd vasati_properties
-   ```
+Open the website at <http://localhost:3000> and admin sign-in at <http://localhost:3000/admin>. The first local run initializes the SQLite database and starter listings. The local bootstrap administrator is `admin@example.com` / `Admin@12345`; change the password at first sign-in.
 
-3. Install the locked dependencies:
-
-   ```powershell
-   npm ci
-   ```
-
-4. Start the server:
-
-   ```powershell
-   npm start
-   ```
-
-5. Visit <http://localhost:3000>. The dashboard is at <http://localhost:3000/admin>.
-
-To select a different port in PowerShell:
+To select another port:
 
 ```powershell
 $env:PORT = "3001"
 npm start
 ```
 
-## macOS and Linux
-
-Install Node.js 24 LTS and Git using your preferred installer, then run:
+## macOS/Linux
 
 ```sh
-git clone https://github.com/urdigix/vasati_properties.git
-cd vasati_properties
 npm ci
 npm start
 ```
 
-Open <http://localhost:3000>. To use a different port:
+Set `PORT=3001` to choose another port.
 
-```sh
-PORT=3001 npm start
-```
+## Local configuration
 
-## Development
+Copy `.env.example` to `.env` and set `DATA_DIR` plus integration settings as needed. The server does not automatically load `.env`; export variables in the shell or use your process manager's environment support. For production, set `NODE_ENV=production` and a unique `ADMIN_DEFAULT_PASSWORD`; startup refuses the temporary local password.
 
-Run the same Express server with:
+`data/properties.db` stores SQLite data. Image uploads are written below `public/uploads/properties/`; brochures and other uploaded media are stored in the database, and legacy brochure files under `public/uploads/brochures/` are served only by the verified-download route. Keep both database and uploads on durable storage and back them up together.
 
-```sh
-npm run dev
-```
+## External services
 
-Stop the server with `Ctrl+C`.
+- **Twilio Verify:** required for email/SMS OTP delivery. Set all Twilio variables in `.env`, configure supported channels and expiry in Twilio. Without this provider the app returns an explicit unavailable response rather than pretending a code was delivered.
+- **Google OAuth:** set the Google client ID/secret and exact callback URI `/auth/google/callback`.
+- **Google Analytics 4:** set `GA4_MEASUREMENT_ID` for consent-gated browser tracking. To enable the authenticated admin reports, also set `GA4_PROPERTY_ID`, `GA4_SERVICE_ACCOUNT_EMAIL`, and `GA4_SERVICE_ACCOUNT_PRIVATE_KEY` on the server. Enable the Google Analytics Data API in Google Cloud and grant the service account Viewer access to the GA4 property. Never put its private key in frontend code.
+- **Remote MCP:** configure separate random read and write tokens and expose `/mcp` through HTTPS.
 
-## Database and uploads
-
-On startup, the application creates the `data/` directory, initializes `data/properties.db`, and inserts starter settings and sample listings when needed. Image uploads are written under `public/uploads/properties/`; other uploaded media is stored in the SQLite database.
-
-These are local runtime data, not source files. Back up the database and uploaded files before removing or replacing them. Do not commit real customer information, production database files, or uploaded customer media.
-
-The current server does not require an `.env` file for local startup. `PORT` is the supported server setting.
+The admin Analytics page separates GA4 Realtime active users from historical active users, sessions, and page views. It refreshes while visible every 60 seconds. Country markers use aggregate country sessions and country-centroid positions only; they are not exact visitor locations or individual tracking. If the reporting integration is not configured, the page displays setup instructions and does not invent metrics.
 
 ## Troubleshooting
 
-- **`node:sqlite` is unavailable:** confirm `node --version` reports Node.js 24 LTS, then retry.
-- **Port 3000 is already in use:** set `PORT` to an available port as shown above.
-- **The site loads but no listings appear:** check the server console for startup errors and confirm the process can write to the project directory so it can create the SQLite database.
-- **Dependency installation fails:** use `npm ci` with the repository's `package-lock.json`; do not mix package managers in the same install.
+- `node:sqlite` missing: upgrade to Node 24.
+- `EADDRINUSE`: set an available `PORT`.
+- App cannot create its database: ensure `DATA_DIR` exists and is writable.
+- OTP says delivery is not configured: set Twilio credentials; no development OTP bypass exists.
+- Google sign-in is unavailable: set all Google OAuth variables and register the exact redirect URI.
 
-## Before deployment
-
-The current admin page and administrative API endpoints do not enforce authentication. Do not make the application publicly accessible until authentication and authorization have been added and security-reviewed. Also review the repository's older Docker, Next.js, Prisma, and PostgreSQL files separately; they do not describe the default SQLite-backed local startup path.
+See [COOLIFY.md](./COOLIFY.md) for deployment, persistent volume, HTTPS, backup, and remote MCP instructions.
