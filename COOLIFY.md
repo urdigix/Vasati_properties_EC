@@ -1,5 +1,7 @@
 # Coolify deployment
 
+For separate frontend/backend configuration and isolated database/upload volumes, use the root `docker-compose.coolify.yml`; see [split deployment instructions](deploy/README.md). The original `docker-compose.yml` below remains the single-container option.
+
 The active app is Express + Node's built-in SQLite database. The legacy Next.js/Prisma/PostgreSQL scaffolding is not used by `npm start` or this Dockerfile.
 
 ## Deploy

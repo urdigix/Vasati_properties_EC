@@ -31,6 +31,7 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
     NODE_ENV: 'development',
     PORT: String(port),
     DATA_DIR: dataDir,
+    UPLOADS_DIR: path.join(dataDir, 'isolated-uploads'),
     ADMIN_DEFAULT_EMAIL: 'admin@example.com',
     ADMIN_DEFAULT_PASSWORD: 'Admin@12345',
     MCP_READ_TOKEN: 'test-read-token',
@@ -70,6 +71,7 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
 
     const base = `http://127.0.0.1:${port}`;
     const request = (url, options = {}) => fetch(`${base}${url}`, options);
+    assert.deepEqual(await (await request('/api/health')).json(), { status: 'ok' });
     const json = (body, headers = {}) => ({
       headers: { 'Content-Type': 'application/json', ...headers },
       body: JSON.stringify(body)
@@ -170,7 +172,9 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
     assert.equal(imageUpload.status, 200);
     const imageResult = await imageUpload.json();
     assert.match(imageResult.url, /\.webp$/);
-    uploadedImagePath = path.join(root, 'public', imageResult.url.slice(1));
+    uploadedImagePath = path.join(env.UPLOADS_DIR, imageResult.url.replace(/^\/uploads\//, ''));
+    assert.ok(fs.existsSync(uploadedImagePath), 'admin image uses the configured persistent upload directory');
+    assert.equal((await request(imageResult.url)).status, 200);
     const optimizedImage = Buffer.from(await (await request(imageResult.url)).arrayBuffer());
     assert.equal((await sharp(optimizedImage).metadata()).format, 'webp');
 
