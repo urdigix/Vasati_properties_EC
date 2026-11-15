@@ -1661,29 +1661,38 @@
       };
       visitDateInput.value = '';
       visitTimeInput.value = '';
-      const updateVisitSubmitState = () => {
+      const isVisitFormReady = () => {
         const now = new Date();
         const today = getISTDate(now);
+        const nextMinute = new Date(now.getTime() + 60_000);
+        const selectedDate = visitDateInput.value;
+        const selectedTime = visitTimeInput.value;
+        const minimumTime = getISTTime(nextMinute);
         visitDateInput.min = today;
-        visitTimeInput.min = visitDateInput.value === today
-          ? getISTTime(new Date(now.getTime() + 60_000))
-          : '';
-        const requiredInputs = [visitNameInput, visitPhoneInput, visitDateInput, visitTimeInput];
-        submitLeadButton.disabled = isSubmittingVisit || !requiredInputs.every(input =>
-          input.value.trim() && input.validity.valid
+        visitTimeInput.min = selectedDate === today ? minimumTime : '';
+        const futureVisitDate = selectedDate && selectedDate >= today;
+        const futureVisitTime = selectedDate > today
+          || (selectedDate === today && getISTDate(nextMinute) === today && selectedTime >= minimumTime);
+        return Boolean(
+          visitNameInput.value.trim()
+          && visitPhoneInput.value.trim()
+          && futureVisitDate
+          && selectedTime
+          && futureVisitTime
         );
       };
-
-      [visitNameInput, visitPhoneInput, visitDateInput, visitTimeInput].forEach(input => {
-        input.addEventListener('input', updateVisitSubmitState);
-        input.addEventListener('change', updateVisitSubmitState);
-      });
+      const updateVisitSubmitState = () => {
+        submitLeadButton.disabled = isSubmittingVisit || !isVisitFormReady();
+      };
+      visitForm.addEventListener('input', updateVisitSubmitState, true);
+      visitForm.addEventListener('change', updateVisitSubmitState, true);
       updateVisitSubmitState();
 
       visitForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        if (!visitForm.checkValidity()) {
+        if (!isVisitFormReady()) {
           visitForm.reportValidity();
+          updateVisitSubmitState();
           return;
         }
         isSubmittingVisit = true;
