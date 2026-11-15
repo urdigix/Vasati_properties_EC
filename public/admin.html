@@ -301,12 +301,6 @@
         <div style="font-size:16px;font-weight:800;letter-spacing:1px;color:white;line-height:1.1;">VASATI</div>
         <div style="font-size:9.5px;font-weight:700;letter-spacing:2px;color:#38bdf8;margin-top:2px;">ADMIN PORTAL</div>
       </div>
-      <div class="form-group form-full">
-        <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:13px;">
-          <input type="checkbox" id="formPublished" style="width:auto;">
-          Publish this listing on the public website
-        </label>
-      </div>
     </a>
     <ul class="nav-list">
       <li><button class="nav-btn active" data-tab="properties">🏢 Properties CMS</button></li>
@@ -319,7 +313,7 @@
       <li><a href="/" class="nav-btn" target="_blank">🌐 Live Portal ↗</a></li>
     </ul>
     <div class="sidebar-footer">
-      PostgreSQL DB: vasati-data
+      Persistent SQLite database
     </div>
   </aside>
 
@@ -703,6 +697,12 @@
       <div class="modal-body">
         <div class="form-grid">
           <div class="form-group form-full">
+            <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:13px;">
+              <input type="checkbox" id="formPublished" style="width:auto;">
+              Publish this listing on the public website
+            </label>
+          </div>
+          <div class="form-group form-full">
             <label>Property Title *</label>
             <input type="text" id="formTitle" placeholder="E.g. Ultra Luxury 3 BHK in Indiranagar" required>
           </div>
@@ -775,7 +775,7 @@
           <div class="form-group form-full">
             <label>Video Tour (Upload MP4/WebM or Enter YouTube URL)</label>
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-              <input type="url" id="formVideoUrl" placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..." style="flex:1;min-width:240px;">
+              <input type="text" id="formVideoUrl" placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..." style="flex:1;min-width:240px;">
               <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0;display:inline-flex;align-items:center;gap:6px;">
                 🎥 Choose Video
                 <input type="file" id="formVideoFile" accept="video/mp4,video/webm" style="display:none;">
@@ -1418,14 +1418,10 @@
       document.getElementById('brochureUploadStatus').textContent = p.brochure_url ? `Attached: ${p.brochure_url}` : '';
       document.getElementById('formDescription').value = p.description || '';
 
-      currentAmenities = (Array.isArray(p.amenities) && p.amenities.length) 
-        ? [...p.amenities] 
-        : [...defaultAmenitiesList];
+      currentAmenities = Array.isArray(p.amenities) ? [...p.amenities] : [];
       renderAmenitiesUI();
 
-      currentProximity = (Array.isArray(p.proximity) && p.proximity.length)
-        ? p.proximity.map(item => ({ ...item }))
-        : defaultProximityList.map(item => ({ ...item }));
+      currentProximity = Array.isArray(p.proximity) ? p.proximity.map(item => ({ ...item })) : [];
       renderProximityUI();
 
       propModal.showModal();

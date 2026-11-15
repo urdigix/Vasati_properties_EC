@@ -8,6 +8,8 @@ const adminAuth = require('./server/admin-auth');
 const { ALLOWED_RANGES, Ga4AnalyticsClient, LOCATION_MAP_NOTICE } = require('./server/ga4-analytics');
 
 const app = express();
+// Only internal reverse proxies may supply the client address used by rate limits.
+app.set('trust proxy', 'loopback, linklocal, uniquelocal');
 const ga4Analytics = new Ga4AnalyticsClient();
 const requestedPort = Number.parseInt(process.env.PORT || '3000', 10);
 const PORT = Number.isInteger(requestedPort) && requestedPort >= 0 && requestedPort <= 65535 ? requestedPort : 3000;
@@ -19,6 +21,14 @@ fs.mkdirSync(path.join(uploadsDir, 'brochures'), { recursive: true });
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use((req, res, next) => {
+  if (/^\/api\/(admin|customer|enquiries|stats)(\/|$)/i.test(req.path)) res.set('Cache-Control', 'no-store');
+  if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+    req.body ??= {};
+    if (Array.isArray(req.body) || typeof req.body !== 'object') return res.status(400).json({ success: false, message: 'Request body must be an object.' });
+  }
+  next();
+});
 
 function sameOriginMutation(req, res, next) {
   if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return next();
@@ -69,7 +79,7 @@ app.get('/api/admin/session', (req, res) => {
 function cookieValue(req, name) {
   for (const part of String(req.headers.cookie || '').split(';')) {
     const [key, ...value] = part.trim().split('=');
-    if (key === name) return decodeURIComponent(value.join('='));
+    if (key === name) { try { return decodeURIComponent(value.join('=')); } catch { return null; } }
   }
   return null;
 }
@@ -249,7 +259,7 @@ app.put('/api/settings', async (req, res) => {
     res.json({ success: true, message: 'Settings updated successfully', data: updated });
   } catch (error) {
     console.error('Error updating settings:', error);
-    res.status(500).json({ success: false, message: 'Server error updating settings' });
+    res.status(error.status || 500).json({ success: false, message: error.status === 400 ? error.message : 'Server error updating settings' });
   }
 });
 
@@ -276,7 +286,7 @@ app.get('/api/properties', async (req, res) => {
       sort
     });
 
-    res.json({ success: true, count: properties.length, data: properties });
+    res.json({ success: true, count: properties.length, data: properties.map(({ admin_note, ...property }) => property) });
   } catch (error) {
     console.error('Error fetching properties:', error);
     res.status(500).json({ success: false, message: 'Server error fetching properties' });
@@ -290,7 +300,8 @@ app.get('/api/properties/:id', async (req, res) => {
     if (!property) {
       return res.status(404).json({ success: false, message: 'Property not found' });
     }
-    res.json({ success: true, data: property });
+    const { admin_note, ...publicProperty } = property;
+    res.json({ success: true, data: publicProperty });
   } catch (error) {
     console.error('Error fetching property:', error);
     res.status(500).json({ success: false, message: 'Server error fetching property' });
@@ -306,13 +317,13 @@ app.post('/api/properties', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Missing required property fields' });
     }
 
-    const newId = await db.createProperty({ ...req.body, published: Boolean(req.body.published) });
+    const newId = await db.createProperty(req.body);
     const created = await db.getPropertyById(newId, true);
-    db.logAudit(adminAuth.currentAdmin(req).email, 'property.created', newId, { published: false });
+    db.logAudit(adminAuth.currentAdmin(req).email, 'property.created', newId, { published: created.published });
     res.status(201).json({ success: true, message: 'Property created successfully', data: created });
   } catch (error) {
     console.error('Error creating property:', error);
-    res.status(error.message.includes('no more than 4 images') ? 400 : 500).json({ success: false, message: error.message || 'Server error creating property' });
+    res.status(error.status || (error.message.includes('no more than 4 images') ? 400 : 500)).json({ success: false, message: error.status || error.message.includes('no more than 4 images') ? error.message : 'Server error creating property' });
   }
 });
 
@@ -331,7 +342,7 @@ app.put('/api/properties/:id', async (req, res) => {
     res.json({ success: true, message: 'Property updated successfully', data: updated });
   } catch (error) {
     console.error('Error updating property:', error);
-    res.status(error.message.includes('no more than 4 images') ? 400 : 500).json({ success: false, message: error.message || 'Server error updating property' });
+    res.status(error.status || (error.message.includes('no more than 4 images') ? 400 : 500)).json({ success: false, message: error.status || error.message.includes('no more than 4 images') ? error.message : 'Server error updating property' });
   }
 });
 
@@ -383,7 +394,7 @@ app.post('/api/featured-projects', async (req, res) => {
 app.put('/api/featured-projects/:id', async (req, res) => {
   if (!adminAuth.activeAdmin(req, res)) return;
   try {
-    await db.updateFeaturedProject(req.params.id, req.body);
+    if (!await db.updateFeaturedProject(req.params.id, req.body)) return res.status(404).json({ success: false, message: 'Slide not found.' });
     res.json({ success: true, message: 'Slide updated successfully' });
   } catch (error) {
     console.error('Error updating slide:', error);
@@ -394,7 +405,7 @@ app.put('/api/featured-projects/:id', async (req, res) => {
 app.delete('/api/featured-projects/:id', async (req, res) => {
   if (!adminAuth.activeAdmin(req, res)) return;
   try {
-    await db.deleteFeaturedProject(req.params.id);
+    if (!await db.deleteFeaturedProject(req.params.id)) return res.status(404).json({ success: false, message: 'Slide not found.' });
     res.json({ success: true, message: 'Slide deleted successfully' });
   } catch (error) {
     console.error('Error deleting slide:', error);
@@ -419,7 +430,9 @@ app.post('/api/upload-image', adminAuth.requireAdmin, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Image must be no larger than 8 MB.' });
     }
     const sharp = require('sharp');
-    const metadata = await sharp(buffer, { failOn: 'error' }).metadata();
+    let metadata;
+    try { metadata = await sharp(buffer, { failOn: 'error' }).metadata(); }
+    catch { return res.status(400).json({ success: false, message: 'Invalid image file.' }); }
     if (!['jpeg', 'png', 'webp'].includes(metadata.format)) {
       return res.status(400).json({ success: false, message: 'Upload a JPEG, PNG, or WebP image.' });
     }
@@ -435,7 +448,7 @@ app.post('/api/upload-image', adminAuth.requireAdmin, async (req, res) => {
     }
 
     const baseName = path.basename(String(filename || 'photo').replace(/[^a-zA-Z0-9._-]/g, '_'), path.extname(String(filename || 'photo')));
-    const uniqueFilename = `${Date.now()}_${baseName}`;
+    const uniqueFilename = `${crypto.randomUUID()}_${baseName.slice(0, 100)}`;
     const filePath = path.join(uploadDir, `${uniqueFilename}.webp`);
     fs.writeFileSync(filePath, optimized);
 
@@ -454,6 +467,7 @@ async function storeMedia(req, res) {
     if (!fileData) {
       return res.status(400).json({ success: false, message: 'No file data provided.' });
     }
+    if (typeof fileData !== 'string') return res.status(400).json({ success: false, message: 'Invalid file data.' });
     const base64Content = fileData.includes('base64,') ? fileData.split('base64,')[1] : fileData;
     if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64Content)) {
       return res.status(400).json({ success: false, message: 'Invalid file data.' });
@@ -468,7 +482,9 @@ async function storeMedia(req, res) {
     }
     if (contentType.startsWith('image/')) {
       const sharp = require('sharp');
-      const metadata = await sharp(buffer, { failOn: 'error' }).metadata();
+      let metadata;
+      try { metadata = await sharp(buffer, { failOn: 'error' }).metadata(); }
+      catch { return res.status(400).json({ success: false, message: 'Invalid image file.' }); }
       if (!['jpeg', 'png', 'webp'].includes(metadata.format)) {
         return res.status(400).json({ success: false, message: 'Upload a JPEG, PNG, or WebP image.' });
       }
@@ -491,8 +507,9 @@ app.get('/api/media/:id', async (req, res) => {
   try {
     const media = await db.getMediaAsset(req.params.id);
     if (!media) return res.status(404).json({ success: false, message: 'Media not found.' });
-    if (media.content_type === 'application/pdf' && !adminAuth.activeAdmin(req, res)) {
-      return;
+    if (media.content_type === 'application/pdf') {
+      res.set('Cache-Control', 'private, no-store');
+      if (!adminAuth.activeAdmin(req, res)) return;
     }
     res.set({ 'Content-Type': media.content_type, 'Content-Length': media.size_bytes, 'Content-Disposition': `inline; filename="${media.filename.replace(/[\r\n"]/g, '_')}"` });
     res.send(media.data);
@@ -507,8 +524,11 @@ app.get('/api/media/:id', async (req, res) => {
 // Submit new enquiry (Public)
 app.post('/api/enquiries', async (req, res) => {
   try {
-    const { name, phone, email, message, property_id, property_title } = req.body;
-    if (!name || !phone) {
+    const { message, property_id, property_title } = req.body;
+    const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+    const phone = normalizedPhone(req.body.phone);
+    const email = req.body.email ? validEmail(req.body.email) : '';
+    if (!name || name.length > 120 || !phone || (req.body.email && !email)) {
       return res.status(400).json({ success: false, message: 'Name and Phone number are required' });
     }
     const requestLimit = db.consumeRateLimit(`enquiry:${req.ip}`, 8, 60 * 60_000);
@@ -559,6 +579,9 @@ app.patch('/api/enquiries/:id', async (req, res) => {
   if (!adminAuth.activeAdmin(req, res)) return;
   try {
     const { status, feedback } = req.body;
+    if (!db.db.prepare('SELECT 1 FROM enquiries WHERE id = ?').get(req.params.id)) return res.status(404).json({ success: false, message: 'Enquiry not found.' });
+    if (status !== undefined && !['New', 'Contacted', 'Closed'].includes(status)) return res.status(400).json({ success: false, message: 'Invalid enquiry status.' });
+    if (feedback !== undefined && typeof feedback !== 'string') return res.status(400).json({ success: false, message: 'Feedback must be text.' });
     if (status === undefined && feedback === undefined) {
       return res.status(400).json({ success: false, message: 'Status or feedback is required' });
     }
@@ -581,6 +604,7 @@ app.patch('/api/enquiries/:id', async (req, res) => {
 app.delete('/api/enquiries/:id', async (req, res) => {
   if (!adminAuth.activeAdmin(req, res)) return;
   try {
+    if (!db.db.prepare('SELECT 1 FROM enquiries WHERE id = ?').get(req.params.id)) return res.status(404).json({ success: false, message: 'Enquiry not found.' });
     await db.deleteEnquiry(req.params.id);
     res.json({ success: true, message: 'Enquiry deleted successfully' });
   } catch (error) {
@@ -720,8 +744,9 @@ app.post('/api/brochures/verification/complete', async (req, res) => {
     const now = Date.now();
     const token = crypto.randomBytes(32).toString('base64url');
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-    db.db.prepare('UPDATE otp_verifications SET verified_at = ? WHERE id = ? AND verified_at IS NULL')
+    const claimed = db.db.prepare('UPDATE otp_verifications SET verified_at = ? WHERE id = ? AND verified_at IS NULL')
       .run(new Date(now).toISOString(), verificationId);
+    if (!claimed.changes) return res.status(400).json({ success: false, message: 'This verification has already been used.' });
     db.db.prepare(`
       INSERT INTO brochure_downloads (verification_id, property_id, token_hash, expires_at, created_at)
       VALUES (?, ?, ?, ?, ?)
@@ -1011,7 +1036,7 @@ app.post('/mcp', (req, res) => {
     return reply({ content: [{ type: 'text', text: JSON.stringify(result) }] });
   } catch (error) {
     console.error('MCP tool failed:', toolName, error.message);
-    return reply(undefined, { code: -32603, message: 'Tool execution failed.' });
+    return reply(undefined, { code: error.status === 400 ? -32602 : -32603, message: error.status === 400 ? error.message : 'Tool execution failed.' });
   }
 });
 
@@ -1031,7 +1056,14 @@ app.get('/api/stats', async (req, res) => {
 // Fallback to index.html
 app.use((req, res) => {
   if (req.path === '/mcp') return res.set('Allow', 'POST').sendStatus(405);
+  if (req.path.startsWith('/api/')) return res.status(404).json({ success: false, message: 'API route not found.' });
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.use((error, _req, res, _next) => {
+  console.error('Request failed:', error.message);
+  res.status(error.status >= 400 && error.status < 500 ? error.status : 500)
+    .json({ success: false, message: error.status === 413 ? 'Request body is too large.' : error.status === 400 ? 'Invalid request body.' : 'Request could not be completed.' });
 });
 
 // Initialize SQLite schema and start the server.

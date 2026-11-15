@@ -7,6 +7,12 @@ const vm = require('node:vm');
 const html = fs.readFileSync(path.join(__dirname, '..', 'public', 'admin.html'), 'utf8');
 const source = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 
+test('publish control belongs to the property form and uploaded video paths are accepted', () => {
+  const form = html.match(/<form id="propertyForm">([\s\S]*?)<\/form>/)[1];
+  assert.match(form, /id="formPublished"/);
+  assert.match(form, /type="text" id="formVideoUrl"/);
+});
+
 function loadAdmin(logoutStatus) {
   const listeners = new Map();
   const elements = new Map([...html.matchAll(/\bid=["']([^"']+)["']/g)].map(([, id]) => [id, {

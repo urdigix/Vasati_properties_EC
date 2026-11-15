@@ -40,6 +40,9 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
     GA4_PROPERTY_ID: '',
     GA4_SERVICE_ACCOUNT_EMAIL: '',
     GA4_SERVICE_ACCOUNT_PRIVATE_KEY: '',
+    GOOGLE_CLIENT_ID: '',
+    GOOGLE_CLIENT_SECRET: '',
+    GOOGLE_REDIRECT_URI: '',
     TWILIO_ACCOUNT_SID: 'AC00000000000000000000000000000000',
     TWILIO_AUTH_TOKEN: 'test-auth-token',
     TWILIO_VERIFY_SERVICE_SID: 'VA00000000000000000000000000000000'
@@ -110,6 +113,113 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
     assert.equal(analyticsBody.data.status, 'setup-required');
     assert.ok(analyticsBody.data.locationMapNotice.includes('Location is approximate when supported, never exact.'));
     assert.equal((await request('/api/admin/analytics?range=all-time', { headers: { cookie } })).status, 400);
+
+    const adminRequest = (url, method = 'GET', body) => request(url, {
+      method, ...(body === undefined ? { headers: { cookie } } : json(body, { cookie }))
+    });
+    await t.test('property CRUD preserves prices and private notes, validates edits, and filters ready homes', async () => {
+      const payload = { title: 'Audit home', location: 'Audit locality', price: 50, bhk: 2, area: '1000 sqft',
+        admin_note: 'Private negotiation', published: true, description: 'Original',
+        amenities: ['Pool'], proximity: [{ title: 'Metro', time: '5 min' }], possession: 'Ready to move' };
+      for (const patch of [{ price: -1 }, { price: 'invalid' }, { bhk: 0 }, { published: 'false' }, { title: ' ' }]) {
+        assert.equal((await adminRequest('/api/properties', 'POST', { ...payload, ...patch })).status, 400);
+      }
+      const created = await adminRequest('/api/properties', 'POST', payload);
+      assert.equal(created.status, 201);
+      const home = (await created.json()).data;
+      assert.equal(home.priceLabel, '₹50 L');
+      assert.equal(home.admin_note, payload.admin_note);
+      const publicHome = (await (await request(`/api/properties/${home.id}`)).json()).data;
+      assert.equal(Object.hasOwn(publicHome, 'admin_note'), false);
+      const ready = (await (await request('/api/properties?status=Ready%20to%20Move&search=Audit%20home')).json()).data;
+      assert.equal(ready.length, 1);
+      assert.equal(Object.hasOwn(ready[0], 'admin_note'), false);
+      const edited = await adminRequest(`/api/properties/${home.id}`, 'PUT', { price: 120, description: '', admin_note: '', amenities: null, proximity: [] });
+      assert.equal(edited.status, 200);
+      const saved = (await edited.json()).data;
+      assert.equal(saved.priceLabel, '₹1.20 Cr');
+      assert.equal(saved.description, '');
+      assert.equal(saved.admin_note, '');
+      assert.equal(saved.amenities, null);
+      assert.equal(saved.proximity, null);
+      assert.equal((await adminRequest(`/api/properties/${home.id}`, 'PUT', { price: -2 })).status, 400);
+      assert.equal((await adminRequest(`/api/properties/${home.id}`, 'PUT', { published: false })).status, 200);
+      assert.equal((await request(`/api/properties/${home.id}`)).status, 404);
+      assert.equal((await adminRequest(`/api/properties/${home.id}`, 'DELETE')).status, 200);
+      assert.equal((await adminRequest(`/api/properties/${home.id}`, 'DELETE')).status, 404);
+    });
+
+    await t.test('slide CRUD handles partial updates and missing records', async () => {
+      const created = await adminRequest('/api/featured-projects', 'POST', { name: 'Audit slide', image: '/images/home.jpg', builder_name: 'Builder' });
+      assert.equal(created.status, 201);
+      const { id } = await created.json();
+      assert.equal((await adminRequest(`/api/featured-projects/${id}`, 'PUT', { offer_text: 'Updated' })).status, 200);
+      const slide = (await (await request('/api/featured-projects')).json()).data.find(row => row.id === id);
+      assert.equal(slide.name, 'Audit slide');
+      assert.equal(slide.builder_name, 'Builder');
+      assert.equal(slide.offer_text, 'Updated');
+      assert.equal((await adminRequest(`/api/featured-projects/${id}`, 'DELETE')).status, 200);
+      assert.equal((await adminRequest(`/api/featured-projects/${id}`, 'DELETE')).status, 404);
+      assert.equal((await adminRequest(`/api/featured-projects/${id}`, 'PUT', {})).status, 404);
+    });
+
+    await t.test('enquiry validation, status, feedback, filtering and deletion', async () => {
+      assert.equal((await request('/api/enquiries', { method: 'POST', ...json({ name: ' ', phone: 'abc' }) })).status, 400);
+      const created = await request('/api/enquiries', { method: 'POST', ...json({ name: 'Audit lead', phone: '9876543210', email: 'lead@example.test', message: 'Visit please' }) });
+      assert.equal(created.status, 201);
+      const id = (await created.json()).enquiryId;
+      assert.equal((await adminRequest(`/api/enquiries/${id}`, 'PATCH', { status: 'invalid' })).status, 400);
+      assert.equal((await adminRequest(`/api/enquiries/${id}`, 'PATCH', { status: 'Contacted', feedback: 'Visit scheduled' })).status, 200);
+      const lead = (await (await adminRequest('/api/enquiries?status=Contacted')).json()).data.find(row => row.id === id);
+      assert.equal(lead.feedback, 'Visit scheduled');
+      assert.equal(lead.phone, '+919876543210');
+      assert.equal((await adminRequest(`/api/enquiries/${id}`, 'DELETE')).status, 200);
+      assert.equal((await adminRequest(`/api/enquiries/${id}`, 'DELETE')).status, 404);
+      assert.equal((await adminRequest(`/api/enquiries/${id}`, 'PATCH', { status: 'Closed' })).status, 404);
+    });
+
+    await t.test('settings, statistics, subscribers, consent, export and unsubscribe', async () => {
+      assert.equal((await adminRequest('/api/settings', 'PUT', { hero_title: {} })).status, 400);
+      assert.equal((await adminRequest('/api/settings', 'PUT', { hero_title: 'Audit title' })).status, 200);
+      assert.equal((await (await request('/api/settings')).json()).data.hero_title, 'Audit title');
+      assert.equal(typeof (await (await adminRequest('/api/stats')).json()).data.totalProperties, 'number');
+      assert.equal((await request('/api/subscribers', { method: 'POST', ...json({ email: 'subscriber@example.test' }) })).status, 400);
+      const subscribed = await request('/api/subscribers', { method: 'POST', ...json({ email: 'subscriber@example.test', name: '=formula', marketing_consent: true }) });
+      assert.equal(subscribed.status, 201);
+      const { unsubscribeToken } = await subscribed.json();
+      assert.equal((await (await adminRequest('/api/admin/subscribers?status=active&search=subscriber')).json()).count, 1);
+      assert.equal((await adminRequest('/api/admin/subscribers/export', 'POST', {})).status, 400);
+      const exported = await adminRequest('/api/admin/subscribers/export', 'POST', { confirm: true });
+      assert.equal(exported.status, 200);
+      assert.match(await exported.text(), /'=formula/);
+      assert.equal((await request('/api/subscribers/unsubscribe', { method: 'POST', ...json({ token: unsubscribeToken }) })).status, 200);
+      assert.equal((await (await adminRequest('/api/admin/subscribers?status=unsubscribed')).json()).count, 1);
+      assert.equal((await request('/api/subscribers/unsubscribe', { method: 'POST', ...json({ token: unsubscribeToken }) })).status, 404);
+      const before = database.db.prepare('SELECT COUNT(*) AS count FROM analytics_events').get().count;
+      assert.equal((await request('/api/analytics/events', { method: 'POST', ...json({ event: 'property_view', consent: false }) })).status, 204);
+      assert.equal(database.db.prepare('SELECT COUNT(*) AS count FROM analytics_events').get().count, before);
+      assert.equal((await request('/api/analytics/events', { method: 'POST', ...json({ event: 'property_view', consent: true }) })).status, 204);
+      assert.equal(database.db.prepare('SELECT COUNT(*) AS count FROM analytics_events').get().count, before + 1);
+    });
+
+    await t.test('invalid uploads, malformed cookies, JSON and unknown API routes fail cleanly', async () => {
+      assert.equal((await adminRequest('/api/upload-image', 'POST', { fileData: 'aGVsbG8=' })).status, 400);
+      assert.equal((await adminRequest('/api/media', 'POST', { fileData: {}, contentType: 'application/pdf' })).status, 400);
+      assert.equal((await adminRequest('/api/media', 'POST', { fileData: 'aGVsbG8=', contentType: 'image/png' })).status, 400);
+      assert.equal((await request('/api/customer/session', { headers: { cookie: 'vasati_customer_session=%' } })).status, 200);
+      assert.equal((await request('/api/admin/session', { headers: { cookie: 'vasati_admin_session=%' } })).status, 200);
+      const malformed = await request('/api/enquiries', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{' });
+      assert.equal(malformed.status, 400);
+      assert.equal((await malformed.json()).success, false);
+      assert.equal((await request('/api/does-not-exist')).status, 404);
+      assert.equal((await request('/api/enquiries', { method: 'POST' })).status, 400);
+      assert.equal((await request('/auth/google')).status, 503);
+      assert.equal((await request('/auth/google/callback?state=invalid&code=invalid')).status, 400);
+      assert.equal((await (await request('/api/customer/session')).json()).authenticated, false);
+      assert.equal((await request('/api/customer/logout', { method: 'POST' })).status, 200);
+      assert.match((await adminRequest('/api/admin/session')).headers.get('cache-control'), /no-store/);
+      assert.equal((await request('/api/settings', { method: 'PUT', ...json({}, { cookie, origin: 'https://attacker.example' }) })).status, 403);
+    });
 
     const viewerPassword = 'Viewer-Only-Password-123!';
     database.db.prepare(`INSERT INTO admin_users (email, password_hash, role, must_change_password)
@@ -279,6 +389,14 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
     const downloadActivity = await request('/api/admin/brochure-activity', { headers: { cookie } });
     assert.equal(downloadActivity.status, 200);
     assert.equal((await downloadActivity.json()).data.some(row => row.email === 'verified@example.test' && row.downloaded_at), true);
+
+    const raceOtp = await startVerification('concurrent@example.test');
+    const raceId = (await raceOtp.json()).verificationId;
+    const raceResults = await Promise.all([1, 2].map(() => request('/api/brochures/verification/complete', {
+      method: 'POST', ...json({ verification_id: raceId, code: '123456' })
+    })));
+    assert.deepEqual(raceResults.map(response => response.status).sort(), [200, 400]);
+    assert.equal(database.db.prepare('SELECT COUNT(*) AS count FROM brochure_downloads WHERE verification_id = ?').get(raceId).count, 1);
 
     const logout = await request('/api/admin/auth/logout', { method: 'POST', headers: { cookie } });
     assert.equal(logout.status, 200);

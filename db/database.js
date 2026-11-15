@@ -7,6 +7,27 @@ const dataDir = path.resolve(process.env.DATA_DIR || path.join(__dirname, '..', 
 fs.mkdirSync(dataDir, { recursive: true });
 const dbPath = path.join(dataDir, 'properties.db');
 const db = new DatabaseSync(dbPath);
+db.exec('PRAGMA busy_timeout = 5000; PRAGMA foreign_keys = ON;');
+
+function validateProperty(prop, partial = false) {
+  for (const key of ['title', 'location', 'area']) {
+    if ((!partial || prop[key] !== undefined) && (typeof prop[key] !== 'string' || !prop[key].trim())) {
+      throw Object.assign(new Error(`${key} is required.`), { status: 400 });
+    }
+  }
+  for (const key of ['price', 'bhk', 'baths']) {
+    if (prop[key] === undefined && (partial || key === 'baths')) continue;
+    const value = Number(prop[key]);
+    if (!Number.isFinite(value) || value <= 0 || (key !== 'price' && !Number.isInteger(value))) {
+      throw Object.assign(new Error(`${key} must be a positive ${key === 'price' ? 'number' : 'integer'}.`), { status: 400 });
+    }
+  }
+  for (const key of ['published', 'featured']) {
+    if (prop[key] !== undefined && typeof prop[key] !== 'boolean') {
+      throw Object.assign(new Error(`${key} must be true or false.`), { status: 400 });
+    }
+  }
+}
 
 function parseJsonField(value, fallback = []) {
   if (value === null || value === undefined || value === '') return fallback;
@@ -28,6 +49,7 @@ function formatProperty(property) {
 
   return {
     ...property,
+    priceLabel: property.price_label || (property.price >= 100 ? `₹${(property.price / 100).toFixed(2)} Cr` : `₹${property.price} L`),
     image: property.image || (imageList[0] || ''),
     images: imageList,
     amenities: amenities && amenities.length ? amenities : null,
@@ -83,6 +105,7 @@ function ensureColumn(tableName, columnName, columnSql) {
 }
 
 function initializeDatabase() {
+  const existingDatabase = Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'properties'").get());
   db.exec(`
     CREATE TABLE IF NOT EXISTS properties (
       id TEXT PRIMARY KEY,
@@ -251,6 +274,9 @@ function initializeDatabase() {
     );
   `);
 
+  db.exec('CREATE TABLE IF NOT EXISTS schema_migrations (name TEXT PRIMARY KEY);');
+  const shouldSeed = !existingDatabase && !db.prepare('SELECT 1 FROM schema_migrations WHERE name = ?').get('initial-sample-data');
+
   ensureColumn('properties', 'published', 'INTEGER NOT NULL DEFAULT 1');
   ensureColumn('otp_verifications', 'attempt_count', 'INTEGER NOT NULL DEFAULT 0');
   ensureColumn('otp_verifications', 'last_sent_at', 'INTEGER NOT NULL DEFAULT 0');
@@ -281,7 +307,7 @@ function initializeDatabase() {
   }
 
   const propertyCount = db.prepare('SELECT COUNT(*) AS count FROM properties').get().count;
-  if (propertyCount === 0) {
+  if (shouldSeed && propertyCount === 0) {
     const insertProperty = db.prepare(`
       INSERT INTO properties (
         id, title, location, locality, price, price_label, bhk, area, baths, status,
@@ -294,7 +320,7 @@ function initializeDatabase() {
   }
 
   const projectCount = db.prepare('SELECT COUNT(*) AS count FROM featured_projects').get().count;
-  if (projectCount === 0) {
+  if (shouldSeed && projectCount === 0) {
     const insertProject = db.prepare(`
       INSERT INTO featured_projects (
         id, name, builder_name, builder_logo, price_range, bhk_types, location, offer_text, image, video_url, link
@@ -304,6 +330,7 @@ function initializeDatabase() {
       insertProject.run(project[0], project[1], project[2], project[3], project[4], project[5], project[6], project[7], project[8], project[9], project[10]);
     }
   }
+  db.prepare('INSERT OR IGNORE INTO schema_migrations (name) VALUES (?)').run('initial-sample-data');
 }
 
 function getAllProperties(filters = {}, includeUnpublished = false) {
@@ -329,7 +356,7 @@ function getAllProperties(filters = {}, includeUnpublished = false) {
   if (filters.status && filters.status !== 'any' && filters.status !== 'All' && filters.status !== 'all') {
     const status = String(filters.status).trim();
     if (status === 'Ready' || status === 'Ready to Move') {
-      sql += " AND (status = 'Ready' OR status = 'Ready to Move')";
+      sql += " AND (status = 'Ready' OR status = 'Ready to Move' OR lower(possession) = 'ready to move')";
     } else if (status === 'New' || status === 'New Launch') {
       sql += " AND (status = 'New' OR status = 'New Launch')";
     } else if (status === 'Villa' || status === 'Luxury Villa') {
@@ -386,6 +413,7 @@ function getPropertyById(id, includeUnpublished = false) {
 }
 
 function createProperty(prop) {
+  validateProperty(prop);
   const id = prop.id || `prop_${Date.now().toString(36)}_${crypto.randomUUID()}`;
   const price = Number(prop.price ?? 0);
   const title = String(prop.title || 'Untitled Property');
@@ -430,10 +458,12 @@ function createProperty(prop) {
     Number(Boolean(prop.featured)),
     Number(Boolean(prop.published))
   );
+  db.prepare('UPDATE properties SET admin_note = ? WHERE id = ?').run(String(prop.admin_note || ''), id);
   return id;
 }
 
 function updateProperty(id, prop) {
+  validateProperty(prop, true);
   const current = getPropertyById(id, true);
   if (!current) return false;
 
@@ -485,7 +515,7 @@ function updateProperty(id, prop) {
     String(next.location || current.location),
     String(next.locality || current.locality || (next.location || current.location).split(',')[0]?.trim() || 'Bengaluru'),
     Number(next.price),
-    String(next.priceLabel || current.price_label || (Number(next.price) >= 100 ? `₹${(Number(next.price) / 100).toFixed(2)} Cr` : `₹${Number(next.price)} L`)),
+    String(prop.priceLabel || prop.price_label || (prop.price === undefined ? current.price_label : '') || (Number(next.price) >= 100 ? `₹${(Number(next.price) / 100).toFixed(2)} Cr` : `₹${Number(next.price)} L`)),
     Number(next.bhk),
     String(next.area || current.area || '0 sqft'),
     Number(next.baths),
@@ -498,13 +528,14 @@ function updateProperty(id, prop) {
     String(next.listed || current.listed || 'Agent listing · Verified'),
     String(next.kind || current.kind || 'Apartment'),
     String(next.possession || current.possession || 'Ready to move'),
-    String(next.description || current.description || ''),
-    next.amenities ? JSON.stringify(Array.isArray(next.amenities) ? next.amenities : String(next.amenities).split(',')) : (current.amenities ? current.amenities : null),
-    next.proximity ? JSON.stringify(next.proximity) : (current.proximity ? current.proximity : null),
+    String(next.description ?? ''),
+    next.amenities ? JSON.stringify(Array.isArray(next.amenities) ? next.amenities : String(next.amenities).split(',')) : null,
+    next.proximity ? JSON.stringify(next.proximity) : null,
     Number(next.featured),
     prop.published !== undefined ? Number(Boolean(prop.published)) : Number(Boolean(current.published)),
     id
   );
+  db.prepare('UPDATE properties SET admin_note = ? WHERE id = ?').run(String(next.admin_note || ''), id);
   return true;
 }
 
@@ -518,7 +549,7 @@ function getFeaturedProjects() {
 }
 
 function createFeaturedProject(project) {
-  const id = String(project.id || `proj_${Date.now().toString(36)}`);
+  const id = String(project.id || `proj_${crypto.randomUUID()}`);
   db.prepare(`
     INSERT INTO featured_projects (id, name, builder_name, builder_logo, price_range, bhk_types, location, offer_text, image, video_url, link)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -539,6 +570,9 @@ function createFeaturedProject(project) {
 }
 
 function updateFeaturedProject(id, project) {
+  const current = db.prepare('SELECT * FROM featured_projects WHERE id = ?').get(id);
+  if (!current) return false;
+  project = { ...current, ...project };
   db.prepare(`
     UPDATE featured_projects
     SET name = ?, builder_name = ?, builder_logo = ?, price_range = ?, bhk_types = ?, location = ?, offer_text = ?, image = ?, video_url = ?, link = ?
@@ -560,8 +594,7 @@ function updateFeaturedProject(id, project) {
 }
 
 function deleteFeaturedProject(id) {
-  db.prepare('DELETE FROM featured_projects WHERE id = ?').run(id);
-  return true;
+  return Boolean(db.prepare('DELETE FROM featured_projects WHERE id = ?').run(id).changes);
 }
 
 function getSiteSettings() {
@@ -570,6 +603,9 @@ function getSiteSettings() {
 }
 
 function updateSiteSettings(settingsObj = {}) {
+  if (!settingsObj || Array.isArray(settingsObj) || typeof settingsObj !== 'object' || Object.entries(settingsObj).some(([key, value]) => !Object.hasOwn(defaultSettings, key) || typeof value !== 'string')) {
+    throw Object.assign(new Error('Settings must contain recognized text fields.'), { status: 400 });
+  }
   for (const [key, value] of Object.entries(settingsObj)) {
     db.prepare('INSERT INTO site_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(key, String(value));
   }
@@ -623,7 +659,7 @@ function deleteEnquiry(id) {
 function getStats() {
   const totalProperties = db.prepare('SELECT COUNT(*) AS count FROM properties').get().count;
   const newHomes = db.prepare("SELECT COUNT(*) AS count FROM properties WHERE status = 'New' OR status = 'New Launch'").get().count;
-  const readyHomes = db.prepare("SELECT COUNT(*) AS count FROM properties WHERE status = 'Ready' OR status = 'Ready to Move'").get().count;
+  const readyHomes = db.prepare("SELECT COUNT(*) AS count FROM properties WHERE status = 'Ready' OR status = 'Ready to Move' OR lower(possession) = 'ready to move'").get().count;
   const resaleHomes = db.prepare("SELECT COUNT(*) AS count FROM properties WHERE status = 'Resale' OR status = 'Resale Ready'").get().count;
   const villas = db.prepare("SELECT COUNT(*) AS count FROM properties WHERE status = 'Villa' OR status = 'Luxury Villa' OR kind = 'Villa'").get().count;
   const totalSlides = db.prepare('SELECT COUNT(*) AS count FROM featured_projects').get().count;

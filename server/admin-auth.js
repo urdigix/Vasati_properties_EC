@@ -14,7 +14,7 @@ function getCookie(req, name) {
   const cookies = String(req.headers.cookie || '').split(';');
   for (const item of cookies) {
     const [key, ...parts] = item.trim().split('=');
-    if (key === name) return decodeURIComponent(parts.join('='));
+    if (key === name) { try { return decodeURIComponent(parts.join('=')); } catch { return null; } }
   }
   return null;
 }
