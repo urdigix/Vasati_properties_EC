@@ -13,7 +13,7 @@ services:
     # Route through it rather than starting a second proxy on ports 80/443.
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.vasati-ec-public.rule=Host(`${PUBLIC_HOST:-bt68y5vqmfrmy9dtuw3fjluy.200.141.3.5.sslip.io}`)"
+      - "traefik.http.routers.vasati-ec-public.rule=Host(`bt68y5vqmfrmy9dtuw3fjluy.200.141.3.5.sslip.io`)"
       - "traefik.http.routers.vasati-ec-public.entrypoints=websecure"
       - "traefik.http.routers.vasati-ec-public.tls=true"
       - "traefik.http.routers.vasati-ec-public.tls.certresolver=letsencrypt"
