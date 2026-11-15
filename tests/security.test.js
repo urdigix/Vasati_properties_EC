@@ -280,6 +280,13 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
     assert.equal(downloadActivity.status, 200);
     assert.equal((await downloadActivity.json()).data.some(row => row.email === 'verified@example.test' && row.downloaded_at), true);
 
+    const logout = await request('/api/admin/auth/logout', { method: 'POST', headers: { cookie } });
+    assert.equal(logout.status, 200);
+    assert.match(logout.headers.get('set-cookie'), /vasati_admin_session=;.*Max-Age=0/);
+    assert.equal((await (await request('/api/admin/session', { headers: { cookie } })).json()).authenticated, false);
+    assert.equal((await request('/api/admin/properties', { headers: { cookie } })).status, 401);
+    assert.equal((await request('/api/admin/auth/logout', { method: 'POST', headers: { cookie } })).status, 200);
+
     const productionDefault = spawnSync(process.execPath, [path.join(root, 'server.js')], {
       cwd: root,
       encoding: 'utf8',
