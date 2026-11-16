@@ -715,7 +715,6 @@
   <link rel="stylesheet" href="/responsive.css">
 </head>
 <body>
-  <a class="skip-link" href="#propertiesSection">Skip to properties</a>
 
   <!-- Top Navigation Bar -->
   <header class="topbar" id="topbar">
@@ -752,43 +751,16 @@
   <div id="homeSurface">
     
     <!-- Hero Section -->
-    <section class="hero" aria-labelledby="heroTitle">
+    <section class="hero">
       <div class="wrap">
         <div class="hero-header">
-          <span class="hero-tag" id="heroTag">BENGALURU · CURATED HOMES</span>
+          <span class="hero-tag" id="heroTag">✨ Premium Bengaluru Real Estate Portfolio</span>
           <h1 id="heroTitle">Find Your Dream Space in the Silicon Valley of India</h1>
           <p id="heroSubtitle">Verified builder developments, luxury gated communities, and prime resale apartments across Bengaluru's top tech corridors.</p>
         </div>
-        <form id="searchForm" class="property-search" role="search" aria-label="Find a property">
-          <div class="search-field search-location">
-            <label for="locInput">Where would you like to live?</label>
-            <input id="locInput" name="locality" type="search" placeholder="Enter a Bengaluru locality" maxlength="100" autocomplete="off">
-          </div>
-          <div class="search-field">
-            <label for="statusSelect">Property type</label>
-            <select id="statusSelect" name="status"><option value="any">All properties</option><option value="New">New launch</option><option value="Ready">Ready to move</option><option value="Resale">Resale</option><option value="Villa">Luxury villa</option></select>
-          </div>
-          <div class="search-field">
-            <label for="bhkSelect">Bedrooms</label>
-            <select id="bhkSelect" name="bhk"><option value="any">Any BHK</option><option value="1">1 BHK</option><option value="2">2 BHK</option><option value="3">3 BHK</option><option value="4">4+ BHK</option></select>
-          </div>
-          <div class="search-field">
-            <label for="budgetSelect">Maximum budget</label>
-            <select id="budgetSelect" name="budget"><option value="any">Any budget</option><option value="75">₹75 lakh</option><option value="100">₹1 crore</option><option value="150">₹1.5 crore</option><option value="200">₹2 crore</option><option value="300">₹3 crore</option><option value="500">₹5 crore</option></select>
-          </div>
-          <button type="submit" class="btn btn-primary search-submit"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>Find homes</button>
-        </form>
-        <div class="discovery-shortcuts" aria-label="Explore Bengaluru localities">
-          <span>Explore by area</span>
-          <button type="button" class="corridor-chip" data-loc="Whitefield">Whitefield</button>
-          <button type="button" class="corridor-chip" data-loc="Sarjapur">Sarjapur</button>
-          <button type="button" class="corridor-chip" data-loc="Electronic City">Electronic City</button>
-          <button type="button" class="corridor-chip" data-loc="Hebbal">Hebbal</button>
-        </div>
-        <div class="featured-heading" id="featuredHeading" hidden><span>IN THE SPOTLIGHT</span><button type="button" id="sliderPause" class="slider-pause" aria-pressed="false">Pause slideshow</button></div>
         <!-- Featured Carousel -->
-        <div class="hero-slider-wrap" id="featuredCarousel" hidden>
-          <div class="slider-viewport" id="sliderViewport" role="region" aria-roledescription="carousel" aria-label="Featured projects">
+        <div class="hero-slider-wrap">
+          <div class="slider-viewport" id="sliderViewport">
             <div class="slider-track" id="sliderTrack">
               <!-- Dynamically populated from /api/featured-projects -->
             </div>
@@ -804,14 +776,13 @@
     </section>
 
     <!-- Main Content Grid -->
-    <main class="wrap" id="propertiesSection" tabindex="-1">
+    <main class="wrap" id="propertiesSection">
       
-      <div class="section-header listing-heading"><div><p class="section-eyebrow">THE VASATI COLLECTION</p><h2>Make room for your next chapter.</h2></div><button type="button" id="clearFilters" class="clear-filters" hidden>Clear filters</button></div>
       <!-- Results Header -->
       <div class="results-bar">
-        <div id="resultsCounter" role="status" aria-live="polite" aria-atomic="true">Loading properties...</div>
+        <div id="resultsCounter">Loading properties...</div>
         <div style="display:flex;gap:10px;align-items:center;">
-          <label for="sortSelect" style="font-size:12px;font-weight:600;">Sort by</label>
+          <label style="font-size:12px;font-weight:600;">Sort By:</label>
           <select id="sortSelect" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:12.5px;font-weight:600;background:white;">
             <option value="recommended">Featured First</option>
             <option value="price">Price: Low to High</option>
@@ -1024,7 +995,7 @@
   </div>
 
   <!-- Notification Toast -->
-  <div class="toast-box" id="toastBox" role="status" aria-live="polite"></div>
+  <div class="toast-box" id="toastBox"></div>
 
   <!-- APPLICATION CLIENT JAVASCRIPT -->
   <script src="/property-details.js"></script>
@@ -1043,13 +1014,6 @@
     let featuredProjects = [];
     let currentSlide = 0;
     let slideTimer;
-    let propertyRequest;
-    let slidePaused = false;
-    let slideHovered = false;
-    let slideFocused = false;
-    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const scrollBehavior = () => motionPreference.matches ? 'instant' : 'smooth';
-    const escapeText = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     let siteSettings = {};
     let activeBrochureVerificationId = '';
     let brochureResendTimer;
@@ -1075,7 +1039,7 @@
     let toastTimeout;
 
     function showToast(msg) {
-      toastBox.textContent = msg;
+      toastBox.innerHTML = msg;
       toastBox.classList.add('show');
       clearTimeout(toastTimeout);
       toastTimeout = setTimeout(() => toastBox.classList.remove('show'), 3200);
@@ -1168,54 +1132,26 @@
     }
 
     // --- Dynamic API Ingestion ---
-    function syncSearchControls(updateValues = true) {
-      if (updateValues) {
-        document.getElementById('locInput').value = state.locality;
-        document.getElementById('statusSelect').value = state.kind;
-        document.getElementById('bhkSelect').value = state.bhk;
-        document.getElementById('budgetSelect').value = state.budget;
-        document.getElementById('sortSelect').value = state.sort;
-      }
-      document.getElementById('clearFilters').hidden = !(state.locality || state.kind !== 'any' || state.bhk !== 'any' || state.budget !== 'any' || state.showingSavedOnly);
-      document.querySelectorAll('[data-tab-filter]').forEach(link => {
-        const selected = link.dataset.tabFilter === state.kind;
-        link.classList.toggle('active', selected);
-        if (selected) link.setAttribute('aria-current', 'true'); else link.removeAttribute('aria-current');
-      });
-      document.querySelectorAll('.corridor-chip').forEach(chip => chip.setAttribute('aria-pressed', String(chip.dataset.loc === state.locality)));
-      document.getElementById('favTrigger').setAttribute('aria-pressed', String(state.showingSavedOnly));
-      document.getElementById('mobTabSaved').setAttribute('aria-pressed', String(state.showingSavedOnly));
-    }
-
     async function loadProperties() {
-      propertyRequest?.abort();
-      const request = new AbortController();
-      propertyRequest = request;
-      const grid = document.getElementById('propertyGrid');
-      const counter = document.getElementById('resultsCounter');
-      syncSearchControls();
-      grid.setAttribute('aria-busy', 'true');
-      counter.textContent = 'Finding homes…';
-      grid.innerHTML = '<div class="listing-message">Finding homes that fit your search…</div>';
       try {
+        const grid = document.getElementById('propertyGrid');
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:50px;color:var(--ink-muted);">Loading verified properties...</div>';
+
         const params = new URLSearchParams();
         if (state.kind !== 'any') params.set('status', state.kind);
         if (state.locality) params.set('locality', state.locality);
         if (state.bhk !== 'any') params.set('bhk', state.bhk);
         if (state.budget !== 'any') params.set('budget', state.budget);
         if (state.sort) params.set('sort', state.sort);
-        const res = await fetch(`/api/properties?${params.toString()}`, { signal: request.signal });
+
+        const res = await fetch(`/api/properties?${params.toString()}`);
         const data = await res.json();
-        if (!res.ok || !data.success || !Array.isArray(data.data)) throw new Error('Unable to load properties');
-        if (request.signal.aborted) return;
-        allProperties = data.data;
-        renderProperties();
+        if (data.success) {
+          allProperties = data.data;
+          renderProperties();
+        }
       } catch (err) {
-        if (request.signal.aborted) return;
-        counter.textContent = 'Properties are temporarily unavailable.';
-        grid.innerHTML = '<div class="listing-message"><h3>We couldn’t load the homes.</h3><p>Please check your connection and try again.</p><button type="button" class="btn btn-outline" onclick="loadProperties()">Try again</button></div>';
-      } finally {
-        if (propertyRequest === request) grid.setAttribute('aria-busy', 'false');
+        showToast('❌ Unable to connect to backend server');
       }
     }
 
@@ -1225,8 +1161,6 @@
         const data = await res.json();
         if (data.success && data.data.length) {
           featuredProjects = data.data;
-          document.getElementById('featuredHeading').hidden = false;
-          document.getElementById('featuredCarousel').hidden = false;
           renderSlider();
         }
       } catch (err) {
@@ -1240,24 +1174,22 @@
       const indicators = document.getElementById('sliderIndicators');
       const waNum = String(siteSettings.whatsapp_number || '').replace(/[^0-9]/g, '');
 
-      currentSlide = 0;
-      track.style.transform = 'translateX(0)';
-      track.innerHTML = featuredProjects.map((p, i) => `
-        <div class="slide-item" role="group" aria-roledescription="slide" aria-label="${i + 1} of ${featuredProjects.length}" ${i ? 'aria-hidden="true" inert' : 'aria-hidden="false"'}>
+      track.innerHTML = featuredProjects.map(p => `
+        <div class="slide-item">
           <div class="slide-info">
-            <span class="slide-partner">${escapeText(p.builder_name)}</span>
+            <span class="slide-partner">🏢 ${p.builder_name} · Premier Developer</span>
             <h2 class="slide-title">${p.name}</h2>
-            <div class="slide-location">${escapeText(p.location)}</div>
+            <div class="slide-location">📍 ${p.location}</div>
             <div class="slide-specs">${p.bhk_types}</div>
             <div class="slide-price">${p.price_range}</div>
-            <div class="slide-offer">${escapeText(p.offer_text)}</div>
+            <div class="slide-offer">✦ ${p.offer_text}</div>
             <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
               <a href="#propertiesSection" class="btn btn-primary btn-sm">Explore Homes</a>
               ${waNum ? `<a href="https://wa.me/${waNum}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(p.name)}" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-sm" style="display:inline-flex;align-items:center;gap:6px;">
                 ${WHATSAPP_ICON_SVG}
                 <span>Chat on WhatsApp</span>
               </a>` : ''}
-              ${p.video_url ? `<a href="${p.video_url}" target="_blank" class="btn btn-outline btn-sm" rel="noopener noreferrer">Video tour</a>` : ''}
+              ${p.video_url ? `<a href="${p.video_url}" target="_blank" class="btn btn-outline btn-sm" style="background:rgba(255,255,255,0.15);color:white;border-color:rgba(255,255,255,0.3);backdrop-filter:blur(4px);">▶ Video Tour</a>` : ''}
             </div>
           </div>
           <div class="slide-img-box">
@@ -1267,51 +1199,22 @@
       `).join('');
 
       indicators.innerHTML = featuredProjects.map((_, i) => `
-        <button class="indicator-dot ${i === 0 ? 'active' : ''}" aria-label="Show project ${i + 1}" aria-pressed="${i === 0}" onclick="goToSlide(${i})"></button>
+        <button class="indicator-dot ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})"></button>
       `).join('');
 
       startSlideAutoPlay();
     }
 
     function goToSlide(index) {
-      if (!featuredProjects.length) return;
       currentSlide = (index + featuredProjects.length) % featuredProjects.length;
       document.getElementById('sliderTrack').style.transform = `translateX(-${currentSlide * 100}%)`;
-      updateSlideVisibility();
       document.querySelectorAll('.indicator-dot').forEach((dot, i) => {
         dot.classList.toggle('active', i === currentSlide);
-        dot.setAttribute('aria-pressed', String(i === currentSlide));
       });
     }
-
-    function updateSlideVisibility() {
-      document.querySelectorAll('.slide-item').forEach((slide, i) => {
-        slide.setAttribute('aria-hidden', String(i !== currentSlide));
-        slide.inert = i !== currentSlide;
-      });
-    }
-
-    const slider = document.getElementById('sliderViewport');
-    slider.addEventListener('mouseenter', () => { slideHovered = true; startSlideAutoPlay(); });
-    slider.addEventListener('mouseleave', () => { slideHovered = false; startSlideAutoPlay(); });
-    slider.addEventListener('focusin', () => { slideFocused = true; startSlideAutoPlay(); });
-    slider.addEventListener('focusout', event => { slideFocused = slider.contains(event.relatedTarget); startSlideAutoPlay(); });
-    document.getElementById('sliderPause').addEventListener('click', () => {
-      slidePaused = !slidePaused;
-      startSlideAutoPlay();
-    });
-    motionPreference.addEventListener('change', startSlideAutoPlay);
-    document.addEventListener('visibilitychange', startSlideAutoPlay);
 
     function startSlideAutoPlay() {
       clearInterval(slideTimer);
-      const pause = document.getElementById('sliderPause');
-      pause.hidden = featuredProjects.length < 2;
-      pause.disabled = motionPreference.matches;
-      pause.textContent = motionPreference.matches ? 'Motion reduced' : slidePaused ? 'Play slideshow' : 'Pause slideshow';
-      pause.setAttribute('aria-pressed', String(slidePaused || motionPreference.matches));
-      updateSlideVisibility();
-      if (slidePaused || slideHovered || slideFocused || motionPreference.matches || document.hidden || featuredProjects.length < 2) return;
       slideTimer = setInterval(() => goToSlide(currentSlide + 1), 6000);
     }
 
@@ -1333,15 +1236,14 @@
         list = list.filter(p => state.saved.has(p.id));
       }
 
-      syncSearchControls(false);
-      const countText = list.length === 1 ? '1 home' : `${list.length} homes`;
+      const countText = list.length === 1 ? '1 luxury home' : `${list.length} luxury homes`;
       const locationText = state.locality ? `in ${state.locality}` : 'across Bengaluru';
-      document.getElementById('resultsCounter').textContent = `${state.showingSavedOnly ? 'Saved: ' : ''}${countText} ${locationText}`;
+      document.getElementById('resultsCounter').innerHTML = `Showing <strong>${countText}</strong> ${locationText}`;
 
       if (!list.length) {
         grid.innerHTML = `
           <div style="grid-column:1/-1;text-align:center;padding:60px 20px;background:white;border-radius:14px;border:1px dashed var(--border);">
-
+            <div style="font-size:32px;margin-bottom:10px;">🏠</div>
             <h3 style="font-size:18px;font-weight:700;">No properties match your current search</h3>
             <p style="color:var(--ink-muted);font-size:14px;margin-top:6px;">Try adjusting your budget, BHK filter, or area selection.</p>
             <button class="btn btn-outline btn-sm" style="margin-top:16px;" onclick="resetAllFilters()">Reset Filters</button>
@@ -1362,11 +1264,11 @@
             <div class="card-photo-wrap">
               <img src="${p.image}" alt="${p.title}" loading="lazy">
               <span class="card-status-badge">
-                ${p.status === 'New' ? 'New Launch' : p.status === 'Villa' ? 'Luxury Villa' : (p.status === 'Ready' || p.status === 'Ready to Move') ? 'Ready to Move' : 'Resale'}
+                ${p.status === 'New' ? '✨ New Launch' : p.status === 'Villa' ? '👑 Luxury Villa' : (p.status === 'Ready' || p.status === 'Ready to Move') ? '🏡 Ready to Move' : '🔑 Resale Ready'}
               </span>
               ${p.images && p.images.length > 1 ? `<span style="position:absolute;bottom:12px;left:12px;background:rgba(15,23,42,0.85);color:white;padding:3px 8px;border-radius:14px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;backdrop-filter:blur(4px);z-index:2;">📷 ${p.images.length} Photos</span>` : ''}
-              ${p.video_url ? `<span style="position:absolute;bottom:12px;right:12px;background:rgba(15,23,42,0.85);color:#e0f2fe;padding:4px 9px;border-radius:20px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;backdrop-filter:blur(4px);z-index:2;">Video Tour</span>` : ''}
-              <button class="card-heart-btn ${isSaved ? 'saved' : ''}" data-save-id="${p.id}" onclick="toggleSave(event, '${p.id}')" aria-label="${isSaved ? 'Remove saved home' : 'Save home'}" aria-pressed="${isSaved}" title="${isSaved ? 'Remove saved home' : 'Save home'}">
+              ${p.video_url ? `<span style="position:absolute;top:12px;left:12px;background:rgba(15,23,42,0.85);color:#38bdf8;padding:4px 9px;border-radius:20px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;backdrop-filter:blur(4px);z-index:2;">▶ Video Tour</span>` : ''}
+              <button class="card-heart-btn ${isSaved ? 'saved' : ''}" onclick="toggleSave(event, '${p.id}')" title="Save home">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
               </button>
             </div>
@@ -1375,7 +1277,7 @@
                 <div class="card-price">${p.priceLabel}</div>
                 <div class="card-price-sqft">₹${pricePerSqft.toLocaleString('en-IN')}/sqft</div>
               </div>
-              <h3 class="card-title"><a href="#property/${p.id}">${escapeText(p.title)}</a></h3>
+              <h3 class="card-title">${p.title}</h3>
               <div class="card-loc">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                 ${p.location}
@@ -1401,7 +1303,6 @@
 
     function toggleSave(e, id) {
       e.stopPropagation();
-      const restoreFocus = document.activeElement === e.currentTarget;
       if (state.saved.has(id)) {
         state.saved.delete(id);
         showToast('Property removed from favorites');
@@ -1411,10 +1312,6 @@
       }
       updateFavCounter();
       renderProperties();
-      if (restoreFocus) {
-        const target = document.querySelector(`[data-save-id="${CSS.escape(String(id))}"]`) || document.getElementById('favTrigger');
-        target.focus({ preventScroll: true });
-      }
     }
 
     function resetAllFilters() {
@@ -1423,13 +1320,10 @@
       state.bhk = "any";
       state.budget = "any";
       state.showingSavedOnly = false;
-      state.sort = 'recommended';
       document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
       document.querySelector('.nav-links a[data-tab-filter="any"]')?.classList.add('active');
       loadProperties();
     }
-
-    document.getElementById('clearFilters').addEventListener('click', resetAllFilters);
 
     // --- Navigation Category Filter & EMI Buttons ---
     document.querySelectorAll('[data-tab-filter]').forEach(link => {
@@ -1454,7 +1348,7 @@
         state.showingSavedOnly = false;
         loadProperties();
         
-        document.getElementById('propertiesSection')?.scrollIntoView({ behavior: scrollBehavior() });
+        document.getElementById('propertiesSection')?.scrollIntoView({ behavior: 'smooth' });
       });
     });
 
@@ -1467,7 +1361,7 @@
         state.locality = loc;
         state.showingSavedOnly = false;
         loadProperties();
-        document.getElementById('propertiesSection')?.scrollIntoView({ behavior: scrollBehavior() });
+        document.getElementById('propertiesSection')?.scrollIntoView({ behavior: 'smooth' });
       });
     });
 
@@ -1487,7 +1381,7 @@
         state.budget = document.getElementById('budgetSelect')?.value || 'any';
         state.showingSavedOnly = false;
         loadProperties();
-        document.getElementById('propertiesSection')?.scrollIntoView({ behavior: scrollBehavior() });
+        document.getElementById('propertiesSection')?.scrollIntoView({ behavior: 'smooth' });
       });
     }
 
@@ -1925,18 +1819,17 @@
     // Mobile Navigation Triggers
     document.getElementById('mobTabHome').addEventListener('click', () => {
       location.hash = "";
-      window.scrollTo({ top: 0, behavior: scrollBehavior() });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
     document.getElementById('mobTabSearch').addEventListener('click', () => {
       location.hash = "";
-      document.getElementById('searchForm').scrollIntoView({ behavior: scrollBehavior() });
-      document.getElementById('locInput').focus({ preventScroll: true });
+      document.getElementById('propertiesSection')?.scrollIntoView({ behavior: 'smooth' });
     });
     document.getElementById('mobTabSaved').addEventListener('click', () => {
       location.hash = "";
       state.showingSavedOnly = true;
       renderProperties();
-      document.getElementById('propertiesSection').scrollIntoView({ behavior: scrollBehavior() });
+      document.getElementById('propertiesSection').scrollIntoView({ behavior: 'smooth' });
     });
 
     // Startup Initialization
