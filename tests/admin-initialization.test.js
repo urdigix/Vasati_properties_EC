@@ -24,7 +24,9 @@ function loadAdmin(logoutStatus) {
   }]));
   const calls = [];
   const navigations = [];
+  const editorLoads = [];
   const context = {
+    PropertyDetailsEditor: { load(property) { editorLoads.push(property); } },
     document: {
       getElementById(id) { return elements.get(id) || null; },
       querySelectorAll() { return []; },
@@ -41,7 +43,7 @@ function loadAdmin(logoutStatus) {
   };
   context.window = context;
   vm.runInNewContext(source, context, { filename: 'admin.html' });
-  return { listeners, elements, calls, navigations, context };
+  return { listeners, elements, calls, navigations, context, editorLoads };
 }
 
 test('add and edit property actions open their dialogs against actual markup', () => {
@@ -53,6 +55,8 @@ test('add and edit property actions open their dialogs against actual markup', (
   assert.equal(page.elements.get('propertyModal').open, true);
   assert.equal(page.elements.get('formTitle').value, 'Existing home');
   assert.equal(page.elements.get('formPublished').checked, true);
+  assert.equal(page.editorLoads.length, 2);
+  assert.equal(page.editorLoads[1].id, 'edit-test');
 });
 
 test('admin script initializes against the actual markup and sign-out posts before redirecting', async () => {

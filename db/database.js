@@ -2,6 +2,7 @@
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { DatabaseSync } = require('node:sqlite');
+const { normalizeDetails, readDetails } = require('../server/property-details');
 
 const dataDir = path.resolve(process.env.DATA_DIR || path.join(__dirname, '..', 'data'));
 fs.mkdirSync(dataDir, { recursive: true });
@@ -49,6 +50,7 @@ function formatProperty(property) {
 
   return {
     ...property,
+    ...readDetails(property),
     priceLabel: property.price_label || (property.price >= 100 ? `₹${(property.price / 100).toFixed(2)} Cr` : `₹${property.price} L`),
     image: property.image || (imageList[0] || ''),
     images: imageList,
@@ -278,6 +280,8 @@ function initializeDatabase() {
   const shouldSeed = !existingDatabase && !db.prepare('SELECT 1 FROM schema_migrations WHERE name = ?').get('initial-sample-data');
 
   ensureColumn('properties', 'published', 'INTEGER NOT NULL DEFAULT 1');
+  ensureColumn('properties', 'project_details', "TEXT NOT NULL DEFAULT '{}'");
+  ensureColumn('properties', 'floor_plans', "TEXT NOT NULL DEFAULT '[]'");
   ensureColumn('otp_verifications', 'attempt_count', 'INTEGER NOT NULL DEFAULT 0');
   ensureColumn('otp_verifications', 'last_sent_at', 'INTEGER NOT NULL DEFAULT 0');
   ensureColumn('otp_verifications', 'analytics_consent', 'INTEGER NOT NULL DEFAULT 0');
@@ -414,6 +418,7 @@ function getPropertyById(id, includeUnpublished = false) {
 
 function createProperty(prop) {
   validateProperty(prop);
+  const details = normalizeDetails(prop);
   const id = prop.id || `prop_${Date.now().toString(36)}_${crypto.randomUUID()}`;
   const price = Number(prop.price ?? 0);
   const title = String(prop.title || 'Untitled Property');
@@ -459,6 +464,7 @@ function createProperty(prop) {
     Number(Boolean(prop.published))
   );
   db.prepare('UPDATE properties SET admin_note = ? WHERE id = ?').run(String(prop.admin_note || ''), id);
+  db.prepare('UPDATE properties SET project_details = ?, floor_plans = ? WHERE id = ?').run(JSON.stringify(details.project_details), JSON.stringify(details.floor_plans), id);
   return id;
 }
 
@@ -466,6 +472,7 @@ function updateProperty(id, prop) {
   validateProperty(prop, true);
   const current = getPropertyById(id, true);
   if (!current) return false;
+  const details = normalizeDetails(prop, current);
 
   const next = {
     ...current,
@@ -536,6 +543,7 @@ function updateProperty(id, prop) {
     id
   );
   db.prepare('UPDATE properties SET admin_note = ? WHERE id = ?').run(String(next.admin_note || ''), id);
+  db.prepare('UPDATE properties SET project_details = ?, floor_plans = ? WHERE id = ?').run(JSON.stringify(details.project_details), JSON.stringify(details.floor_plans), id);
   return true;
 }
 
