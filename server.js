@@ -304,7 +304,7 @@ app.post('/api/properties', async (req, res) => {
     res.status(201).json({ success: true, message: 'Property created successfully', data: created });
   } catch (error) {
     console.error('Error creating property:', error);
-    res.status(error.message.includes('no more than 4 images') ? 400 : 500).json({ success: false, message: error.message || 'Server error creating property' });
+    res.status(error.status || (error.message.includes('no more than 4 images') ? 400 : 500)).json({ success: false, message: error.message || 'Server error creating property' });
   }
 });
 
@@ -323,7 +323,7 @@ app.put('/api/properties/:id', async (req, res) => {
     res.json({ success: true, message: 'Property updated successfully', data: updated });
   } catch (error) {
     console.error('Error updating property:', error);
-    res.status(error.message.includes('no more than 4 images') ? 400 : 500).json({ success: false, message: error.message || 'Server error updating property' });
+    res.status(error.status || (error.message.includes('no more than 4 images') ? 400 : 500)).json({ success: false, message: error.message || 'Server error updating property' });
   }
 });
 

@@ -7,7 +7,7 @@
     "dev": "node --watch server.js",
     "start": "node server.js",
     "server": "node server.js",
-    "check": "node --check server.js && node --check server/ga4-analytics.js && node --check server/admin-auth.js && node --check db/database.js",
+    "check": "node --check server.js && node --check server/ga4-analytics.js && node --check server/admin-auth.js && node --check db/database.js && node --check server/property-details.js && node --check public/property-details.js && node --check public/admin-property-details.js",
     "build": "npm run check",
     "lint": "npm run check",
     "test": "node --test",

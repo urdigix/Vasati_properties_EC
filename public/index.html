@@ -1000,6 +1000,8 @@
   <div class="toast-box" id="toastBox"></div>
 
   <!-- APPLICATION CLIENT JAVASCRIPT -->
+  <link rel="stylesheet" href="/property-details.css">
+  <script src="/property-details.js"></script>
   <script>
     const state = {
       kind: "any",
@@ -1445,194 +1447,16 @@
       const detailView = document.getElementById('propertyDetailView');
       detailView.classList.add('active');
 
-      const areaNum = Number(String(p.area || '').replace(/[^0-9.]/g, '')) || 1200;
-      const pricePerSqft = Math.round((p.price * 100000) / areaNum);
-
-      const galleryList = (Array.isArray(p.images) && p.images.length) ? p.images : [p.image];
-      const mainPhoto = galleryList[0];
-      const thumbsList = galleryList.length > 1 ? galleryList.slice(1) : [
-        'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=75',
-        'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=800&q=75'
-      ];
-
-      const thumbsHtml = thumbsList.map((thumbUrl, idx) => `
-        <img src="${thumbUrl}" alt="Photo ${idx+2}" onclick="document.getElementById('mainDetailPhoto').src = '${thumbUrl}'" style="cursor:pointer;" title="Click to view full photo">
-      `).join('');
-
-      // Amenities handling
-      const defaultAmenities = [
-        '🏊 Temperature Controlled Pool',
-        '🏋️ High-Tech Gymnasium',
-        '🌳 3 Acres Landscaped Gardens',
-        '🛡️ 24/7 Gated Multi-tier Security',
-        '⚡ 100% Power Backup',
-        '🚗 Dedicated Covered Parking'
-      ];
-      const amenitiesList = (Array.isArray(p.amenities) && p.amenities.length > 0) ? p.amenities : defaultAmenities;
-      const amenitiesHtml = amenitiesList.map(item => {
-        let text = typeof item === 'string' ? item : (item.name || item.title || '');
-        let icon = '✦';
-        const match = text.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic}|\p{Emoji})\s*(.*)$/u);
-        if (match) {
-          icon = match[1];
-          text = match[2];
-        }
-        return `<div class="amenity-item"><div class="amenity-icon">${icon}</div> <span>${text}</span></div>`;
-      }).join('');
-
-      // Proximity highlights handling
-      const defaultProximity = [
-        { title: '🚇 Metro Station', time: '5 Minutes Walk' },
-        { title: '🏢 IT Tech Parks', time: '10 Minutes Drive' },
-        { title: '🏥 Multi-Specialty Hospital', time: '8 Minutes Drive' }
-      ];
-      const proximityList = (Array.isArray(p.proximity) && p.proximity.length > 0) ? p.proximity : defaultProximity;
-      const proximityColors = ['var(--primary)', 'var(--emerald)', 'var(--accent)', '#8b5cf6', '#ec4899', '#06b6d4'];
-      const proximityHtml = proximityList.map((item, idx) => {
-        const color = proximityColors[idx % proximityColors.length];
-        const title = typeof item === 'object' && item.title ? item.title : (typeof item === 'string' ? item : '');
-        const time = typeof item === 'object' && item.time ? item.time : '';
-        return `
-          <div style="padding:12px 14px;border-left:3.5px solid ${color};background:#f8fafc;border-radius:0 8px 8px 0;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
-            <strong style="display:block;font-size:13.5px;color:#0f172a;">${title}</strong>
-            ${time ? `<div style="font-size:12px;color:var(--ink-muted);margin-top:2px;font-weight:600;">${time}</div>` : ''}
-          </div>
-        `;
-      }).join('');
-
       trackAnalytics('property_view', p.id);
-      document.getElementById('propertyDetailContent').innerHTML = `
-        <div class="detail-gallery-grid">
-          <img src="${mainPhoto}" id="mainDetailPhoto" class="gallery-main" alt="${p.title}">
-          <div class="gallery-thumbs">
-            ${thumbsHtml}
-          </div>
-        </div>
-
-        <div class="detail-layout">
-          <div>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
-              <div>
-                <span class="card-status-badge" style="position:static;margin-bottom:8px;">${(p.status === 'Ready' || p.status === 'Ready to Move') ? 'Ready to Move' : p.status} · Verified</span>
-                <h1 style="font-size:32px;font-weight:800;letter-spacing:-0.8px;">${p.title}</h1>
-                <div style="display:flex;align-items:center;gap:6px;color:var(--ink-muted);font-size:14px;margin-top:6px;">
-                  📍 ${p.location} · ${p.kind || 'Apartment'} · ${p.possession || 'Ready to Move'}
-                </div>
-              </div>
-              <div style="text-align:right;">
-                <div style="font-size:34px;font-weight:800;color:var(--primary);">${p.priceLabel}</div>
-                <div style="font-size:13px;color:var(--ink-muted);font-weight:600;">≈ ₹${pricePerSqft.toLocaleString('en-IN')}/sqft</div>
-              </div>
-            </div>
-
-            <!-- Overview Specs Card -->
-            <div class="detail-card">
-              <h3>Property Overview</h3>
-              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:16px;text-align:center;">
-                <div style="background:#f8fafc;padding:14px;border-radius:10px;">
-                  <span style="font-size:12px;color:var(--ink-light);display:block;">Bedrooms</span>
-                  <strong style="font-size:16px;">${p.bhk} BHK</strong>
-                </div>
-                <div style="background:#f8fafc;padding:14px;border-radius:10px;">
-                  <span style="font-size:12px;color:var(--ink-light);display:block;">Super Built-up</span>
-                  <strong style="font-size:16px;">${p.area}</strong>
-                </div>
-                <div style="background:#f8fafc;padding:14px;border-radius:10px;">
-                  <span style="font-size:12px;color:var(--ink-light);display:block;">Bathrooms</span>
-                  <strong style="font-size:16px;">${p.baths || 2} Baths</strong>
-                </div>
-                <div style="background:#f8fafc;padding:14px;border-radius:10px;">
-                  <span style="font-size:12px;color:var(--ink-light);display:block;">Possession</span>
-                  <strong style="font-size:16px;">${p.possession || 'Ready'}</strong>
-                </div>
-              </div>
-            </div>
-
-            ${p.brochure_url ? `<div class="detail-card" style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:14px;padding:20px;">
-              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
-                <div style="display:flex;align-items:center;gap:14px;">
-                  <div style="font-size:36px;line-height:1;">📄</div>
-                  <div>
-                    <h3 style="margin:0;font-size:17px;font-weight:800;color:#166534;">Official Project Brochure (PDF)</h3>
-                    <p style="margin:4px 0 0;font-size:13.5px;color:#15803d;">Includes comprehensive floor plans, master layout, premium specifications & price sheet.</p>
-                  </div>` : ''}
-                </div>
-                <button type="button" class="btn btn-primary" onclick="initiateBrochureDownload(event, '${p.id}')" style="background:linear-gradient(135deg, #16a34a, #15803d);border-color:#16a34a;font-weight:700;padding:12px 22px;border-radius:10px;display:flex;align-items:center;gap:8px;">
-                  <span>📥 Download Brochure</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Description -->
-            <div class="detail-card">
-              <h3>About this Property</h3>
-              <div class="property-description-box">${formatDescription(p.description)}</div>
-            </div>
-
-            ${p.video_url ? `
-            <!-- Video Walkthrough Tour -->
-            <div class="detail-card">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-                <h3 style="margin:0;">🎥 Property Video Walkthrough Tour</h3>
-                <a href="${p.video_url}" target="_blank" style="font-size:12.5px;color:var(--primary);font-weight:700;text-decoration:none;">Open Video Link ↗</a>
-              </div>
-              <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;background:#000;box-shadow:var(--shadow-sm);">
-                <iframe src="${formatEmbedUrl(p.video_url)}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-              </div>
-            </div>
-            ` : ''}
-
-            <!-- Amenities -->
-            <div class="detail-card">
-              <h3>Community Amenities & Features</h3>
-              <div class="amenities-grid">
-                ${amenitiesHtml}
-              </div>
-            </div>
-
-            <!-- Locality Highlights -->
-            <div class="detail-card">
-              <h3>Proximity & Travel Times</h3>
-              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;">
-                ${proximityHtml}
-              </div>
-            </div>
-          </div>
-
-          <!-- Sticky Schedule Visit / Lead Form -->
-          <aside class="booking-card">
-            <div class="booking-price">${p.priceLabel}</div>
-            <button type="button" class="btn btn-outline" onclick="initiateBrochureDownload(event, '${p.id}')" style="width:100%;margin-top:14px;margin-bottom:8px;border-color:#16a34a;color:#15803d;background:#f0fdf4;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;border-radius:10px;" title="Download PDF Brochure">
-              📄 Download Project Brochure (PDF)
-            </button>
-            
-            <form id="scheduleVisitForm" class="booking-form" style="margin-top:16px;">
-              <input type="hidden" name="property_id" value="${p.id}">
-              <input type="hidden" name="property_title" value="${p.title}">
-              
-              <label for="visitName" style="font-size:12px;font-weight:700;">Your Full Name *</label>
-              <input type="text" id="visitName" name="name" placeholder="E.g. Vikram Sharma" autocomplete="name" required>
-              
-              <label for="visitPhone" style="font-size:12px;font-weight:700;">Phone Number *</label>
-              <input type="tel" id="visitPhone" name="phone" placeholder="E.g. 9876543210" autocomplete="tel" required>
-              
-              <label for="visitDate" style="font-size:12px;font-weight:700;">Preferred Inspection Date *</label>
-              <input type="date" id="visitDate" name="preferred_date" autocomplete="off" aria-describedby="visitScheduleHelp" required>
-
-              <label for="visitTime" style="font-size:12px;font-weight:700;">Preferred Inspection Time (IST) *</label>
-              <input type="time" id="visitTime" name="preferred_time" autocomplete="off" aria-describedby="visitScheduleHelp" required>
-              <p id="visitScheduleHelp" class="booking-help">Choose a future date and time. The button enables after your contact details and both visit selections are complete.</p>
-              
-              <button type="submit" class="btn btn-primary" id="submitLeadBtn" style="width:100%;margin-top:6px;" aria-describedby="visitScheduleHelp" disabled>Schedule Site Visit</button>
-              
-              ${String(siteSettings.whatsapp_number || '').replace(/[^0-9]/g, '') ? `<a href="https://wa.me/${String(siteSettings.whatsapp_number || '').replace(/[^0-9]/g, '')}?text=Hello,%20I%20would%20like%20to%20inquire%20about%20${encodeURIComponent(p.title)}%20(${p.priceLabel})" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:10px;">
-                ${WHATSAPP_ICON_SVG}
-                <span>Direct WhatsApp Chat</span>
-              </a>` : ''}
-            </form>
-          </aside>
-        </div>
-      `;
+      document.getElementById('propertyDetailContent').innerHTML = PropertyDetails.render(p, {
+        whatsapp: siteSettings.whatsapp_number,
+        description: formatDescription(p.description || 'Contact Vasati Properties for more details about this property.')
+      });
+      PropertyDetails.bind(document.getElementById('propertyDetailContent'), p, {
+        brochure: event => initiateBrochureDownload(event, p.id),
+        toast: showToast,
+        track: () => trackAnalytics('enquiry', p.id)
+      });
 
       // Form handler
       const visitForm = document.getElementById('scheduleVisitForm');

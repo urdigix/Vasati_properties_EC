@@ -954,6 +954,7 @@
 
   <div class="toast" id="toast"></div>
 
+  <script src="/admin-property-details.js"></script>
   <script>
     let properties = [];
     let slides = [];
@@ -1342,6 +1343,7 @@
 
     document.getElementById('openAddModalBtn').addEventListener('click', () => {
       propForm.reset();
+      PropertyDetailsEditor.load();
       document.getElementById('editPropId').value = '';
       document.getElementById('modalTitle').textContent = 'Add New Property';
       currentGalleryImages = [
@@ -1356,7 +1358,6 @@
       document.getElementById('formPublished').checked = false;
       document.getElementById('formVideoUrl').value = '';
       document.getElementById('formBrochureUrl').value = '';
-      document.getElementById('imageUploadStatus').textContent = '';
       document.getElementById('videoUploadStatus').textContent = '';
       document.getElementById('brochureUploadStatus').textContent = '';
       document.getElementById('formAdminNote').value = '';
@@ -1382,7 +1383,7 @@
       document.getElementById('formLocation').value = p.location;
       document.getElementById('formLocality').value = p.locality || '';
       document.getElementById('formPrice').value = p.price;
-      document.getElementById('formPriceLabel').value = p.priceLabel;
+      document.getElementById('formPriceLabel').value = p.priceLabel || p.price_label || '';
       document.getElementById('formBhk').value = p.bhk;
       document.getElementById('formArea').value = p.area;
       document.getElementById('formBaths').value = p.baths || 2;
@@ -1390,6 +1391,7 @@
       document.getElementById('formPublished').checked = Boolean(p.published);
       document.getElementById('formAdminNote').value = p.admin_note || '';
       
+      PropertyDetailsEditor.load(p);
       currentGalleryImages = (Array.isArray(p.images) && p.images.length) ? [...p.images] : (p.image ? [p.image] : []);
       renderGalleryGrid();
       document.getElementById('galleryUploadStatus').textContent = `${currentGalleryImages.length} photo${currentGalleryImages.length === 1 ? '' : 's'} loaded. Click Choose Photos to add more.`;
@@ -1397,7 +1399,6 @@
 
       document.getElementById('formVideoUrl').value = p.video_url || '';
       document.getElementById('formBrochureUrl').value = p.brochure_url || '';
-      document.getElementById('imageUploadStatus').textContent = (p.image || '').startsWith('/api/media/') ? `Stored in database: ${p.image}` : '';
       document.getElementById('videoUploadStatus').textContent = (p.video_url || '').startsWith('/api/media/') ? `Stored in database: ${p.video_url}` : '';
       document.getElementById('brochureUploadStatus').textContent = p.brochure_url ? `Attached: ${p.brochure_url}` : '';
       document.getElementById('formDescription').value = p.description || '';
@@ -1428,6 +1429,10 @@
         return;
       }
 
+      let detailFields;
+      try { detailFields = PropertyDetailsEditor.collect(); } catch (error) {
+        showToast(error.message); saveBtn.disabled = false; saveBtn.textContent = 'Save Property'; return;
+      }
       const id = document.getElementById('editPropId').value;
 
       // Collect amenities inputs directly from DOM so any rewritten values are captured
@@ -1452,6 +1457,7 @@
       const finalProximity = proximityData.length ? proximityData : currentProximity.filter(p => p.title && p.time);
 
       const payload = {
+        ...detailFields,
         title: document.getElementById('formTitle').value.trim(),
         location: document.getElementById('formLocation').value.trim(),
         locality: document.getElementById('formLocality').value.trim(),
@@ -1618,8 +1624,6 @@
       reader.readAsDataURL(file);
     }
 
-    document.getElementById('formImageFile').addEventListener('change', (e) =>
-      uploadMediaFile(e.target.files[0], 'formImage', 'imageUploadStatus', ['image/jpeg', 'image/png', 'image/webp'], 'Image'));
     document.getElementById('formVideoFile').addEventListener('change', (e) =>
       uploadMediaFile(e.target.files[0], 'formVideoUrl', 'videoUploadStatus', ['video/mp4', 'video/webm'], 'Video'));
 

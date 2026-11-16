@@ -101,6 +101,26 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
     });
     assert.equal(passwordChange.status, 200);
     assert.equal((await request('/api/admin/properties', { headers: { cookie } })).status, 200);
+    // New detail fields pass through authenticated CRUD and the public API.
+    for (const asset of ['/property-details.js', '/property-details.css', '/admin-property-details.js']) {
+      assert.equal((await request(asset)).status, 200);
+    }
+    const detailInput = { title: 'Details integration home', location: 'Bengaluru', price: 125, bhk: 3, area: '1800 sq.ft', published: true,
+      project_details: { builder_name: 'Test Builder', rera_id: 'TEST123' },
+      floor_plans: [{ label: '3 BHK', area: '1800 sq.ft', price: '₹1.25 Cr', image: '/api/media/plan' }] };
+    const detailCreate = await request('/api/properties', { method: 'POST', headers: { cookie, 'Content-Type': 'application/json' }, body: JSON.stringify(detailInput) });
+    assert.equal(detailCreate.status, 201);
+    const detailId = (await detailCreate.json()).data.id;
+    const detailPublic = (await (await request(`/api/properties/${detailId}`)).json()).data;
+    assert.equal(detailPublic.project_details.builder_name, 'Test Builder');
+    assert.deepEqual(detailPublic.floor_plans, detailInput.floor_plans);
+    const invalidPlan = await request(`/api/properties/${detailId}`, { method:'PUT', headers:{cookie,'Content-Type':'application/json'}, body:JSON.stringify({floor_plans:[{label:'Bad',image:'javascript:alert(1)'}]}) });
+    assert.equal(invalidPlan.status, 400);
+    const enquiry = await request('/api/enquiries', { method:'POST', ...json({ property_id:detailId, property_title:detailInput.title, name:'Local Test Visitor', phone:'9876543210', email:'visitor@example.test', message:'Please send floor plans.' }) });
+    assert.equal(enquiry.status, 201);
+    const enquiries = await (await request('/api/enquiries', {headers:{cookie}})).json();
+    assert.ok(enquiries.data.some(item => item.property_id === detailId && item.message === 'Please send floor plans.'));
+
     const analyticsResponse = await request('/api/admin/analytics', { headers: { cookie } });
     assert.equal(analyticsResponse.status, 200);
     const analyticsBody = await analyticsResponse.json();
