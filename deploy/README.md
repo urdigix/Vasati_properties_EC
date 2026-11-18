@@ -13,7 +13,7 @@ The router uses the deployment's literal temporary sslip.io hostname because Coo
 - `db/`: active SQLite database layer. The `database_data` named volume mounts at `/app/data`, containing `properties.db`. SQLite runs inside the backend process, not as an unused PostgreSQL container. Keep one backend replica.
 - `uploaded_media`: separate named volume at `/app/storage/uploads`. Admin images go into `properties/`; legacy brochures may go into `brochures/`. Public image URLs remain `/uploads/properties/...`; brochure URLs stay protected by Express. This storage is separate from the frontend's bundled `/images` branding assets. The frontend cannot write to either data volume.
 
-Set `APP_BASE_URL` to the frontend HTTPS origin, `ADMIN_DEFAULT_PASSWORD` to a unique bootstrap secret, `ADMIN_DEFAULT_EMAIL` to the administrator email, and `IP_HASH_SALT` to a random secret. Never commit secrets. Optional GA4/OAuth/Twilio variables are passed only to the backend. Initial sign-in requires a password change.
+Set `APP_BASE_URL` to the frontend HTTPS origin, `ADMIN_DEFAULT_PASSWORD` to a unique bootstrap secret, `ADMIN_DEFAULT_EMAIL` to the administrator email, and `IP_HASH_SALT` to a random secret. Never commit secrets. GA4, Twilio and Turnstile variables are passed only to the backend. Twilio and Turnstile are required to submit public site visits and request brochures; missing credentials leave these flows unavailable. The active Express routes do not use the legacy Google OAuth variables. Initial sign-in requires a password change.
 
 To explicitly rename an existing administrator account, set `ADMIN_EMAIL_MIGRATE_FROM` to its exact current email and `ADMIN_DEFAULT_EMAIL` to the new email, then redeploy. This updates only the matching admin account, preserves its password, role and ID, and records an audit event. Remove the migration-source value after verifying the change. Changing the bootstrap email alone does not rename existing users.
 
@@ -22,3 +22,5 @@ Health checks: frontend `/healthz`; backend `/api/health` also verifies a databa
 Both volumes survive deployments. Deleting a resource with volume deletion selected destroys their data. Back up both: stop backend writes briefly before copying the SQLite directory (or use SQLite's online backup API) and back up uploaded media alongside it. A redeploy is not a backup. No backup destination is configured by this Compose file.
 
 This split deployment starts a fresh database unless an existing SQLite database is deliberately restored. It does not migrate legacy Prisma/PostgreSQL schemas. Backend still contains protected admin templates and a static fallback for compatibility; the public landing page and branding assets are served by the separate frontend.
+
+The split Compose stack sets `TRUST_PROXY_HOPS=2` by default for the existing Traefik → Nginx → Express chain. Keep this in sync with the real proxy chain; set `0` when directly exposing Express.

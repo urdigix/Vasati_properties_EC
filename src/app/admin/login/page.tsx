@@ -13,7 +13,7 @@ import {
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('admin@example.com');
-  const [password, setPassword] = useState('VasatiProperties@2026!');
+  const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
