@@ -25,23 +25,23 @@
       --ink-light: #94a3b8;
       --border: #e2e8f0;
       --border-focus: #3b82f6;
-      
+
       --primary: #1d4ed8;
       --primary-hover: #1e40af;
       --primary-pale: #eff6ff;
       --primary-gradient: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-      
+
       --accent: #d97706;
       --accent-pale: #fef3c7;
-      
+
       --emerald: #059669;
       --emerald-pale: #ecfdf5;
-      
+
       --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
       --shadow-md: 0 4px 16px -2px rgba(15, 23, 42, 0.08);
       --shadow-lg: 0 16px 36px -6px rgba(15, 23, 42, 0.12);
       --shadow-glow: 0 0 24px rgba(37, 99, 235, 0.22);
-      
+
       --radius-sm: 8px;
       --radius-md: 14px;
       --radius-lg: 20px;
@@ -49,6 +49,7 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    [hidden] { display: none !important; }
     html { scroll-behavior: smooth; font-family: var(--font); color: var(--ink); background: var(--bg); text-rendering: optimizeLegibility; }
     body { min-height: 100vh; overflow-x: hidden; line-height: 1.5; }
     button, input, select, textarea { font-family: inherit; color: inherit; }
@@ -71,7 +72,7 @@
     }
     .topbar.scrolled { box-shadow: var(--shadow-sm); }
     .nav { height: 100%; display: flex; align-items: center; justify-content: space-between; }
-    
+
     .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
     .brand-logo-img {
       height: 48px; width: 48px; object-fit: contain; border-radius: 8px;
@@ -146,33 +147,86 @@
     .btn-whatsapp:hover { background: #20ba59; }
     .btn-sm { min-height: 38px; padding: 0 14px; font-size: 13px; }
 
+    .mobile-about-link { display: none; }
+    .about-section { scroll-margin-top: 100px; padding: 32px 0 56px; }
+    .about-card { padding: clamp(24px, 4vw, 48px); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+    .about-card h2 { font-size: clamp(26px, 3vw, 36px); letter-spacing: -.8px; margin-bottom: 16px; }
+    .about-card p { max-width: 760px; color: var(--ink-muted); line-height: 1.8; }
+    .about-card p + p { margin-top: 12px; }
+    .about-card h3 { margin: 24px 0 12px; font-size: 20px; line-height: 1.4; }
+    .about-card .about-tagline { margin: 0 0 20px; color: var(--primary); font-size: clamp(20px, 2.5vw, 26px); }
+    .about-benefits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 32px; padding-left: 22px; margin: 0 0 24px; color: var(--ink-muted); line-height: 1.8; }
+    .about-benefits strong, .about-card strong { color: var(--ink); }
+    .about-card .about-signoff { margin-top: 20px; }
+    @media (max-width: 640px) { .about-benefits { grid-template-columns: minmax(0, 1fr); } }
+    @media (min-width: 641px) and (max-width: 1150px) {
+      .nav-links { gap: 2px; font-size: 12px; }
+      .nav-links a { padding: 8px; }
+      .nav-actions > .btn { display: none; }
+    }
+    @media (max-width: 640px) {
+      .mobile-about-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; font-size: 14px; font-weight: 700; }
+      .nav-actions > .btn { display: none; }
+      .about-section { scroll-margin-top: 76px; padding-bottom: 32px; }
+    }
+
+    /* Property search */
+    .property-search {
+      display: grid; grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.35fr) minmax(0, 1fr) auto;
+      align-items: center; gap: 12px; max-width: 1060px; margin: 0 auto 24px;
+      padding: 16px; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 24px; box-shadow: var(--shadow-md);
+    }
+    .search-field { position: relative; min-width: 0; }
+    .search-field input, .search-field select {
+      width: 100%; min-height: 50px; padding: 0 14px; border: 1px solid #8290a3;
+      border-radius: 12px; background: #fff; font-size: 13px; font-weight: 600;
+    }
+    .search-field input { padding-left: 42px; font-weight: 500; background: #fafbfc; }
+    .search-field input::placeholder { color: var(--ink-muted); opacity: 1; }
+    .search-field input:hover, .search-field select:hover { border-color: var(--ink-muted); }
+    .search-field input:focus-visible, .search-field select:focus-visible {
+      border-color: var(--primary); outline: 2px solid var(--primary); outline-offset: 3px;
+    }
+    .search-field svg { position: absolute; left: 14px; top: 16px; width: 18px; height: 18px; color: var(--ink-muted); pointer-events: none; }
+    .search-button {
+      display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+      min-height: 50px; padding: 0 25px; border: 0; border-radius: 12px;
+      background: #b45309; color: white; font-size: 13px; font-weight: 800;
+      letter-spacing: 1px; cursor: pointer; box-shadow: 0 4px 12px rgba(217,119,6,.2);
+    }
+    .search-button:hover { background: #92400e; }
+    .search-button:active { background: #78350f; box-shadow: none; }
+    @media (prefers-reduced-motion: no-preference) {
+      .search-button { transition: background-color 160ms ease, box-shadow 160ms ease; }
+      .search-field input, .search-field select { transition: border-color 160ms ease; }
+    }
+    .search-button svg { width: 18px; height: 18px; }
+    .search-label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+    @media (max-width: 900px) {
+      .property-search { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .search-location { grid-column: 1 / -1; }
+      .search-button { grid-column: 1 / -1; }
+    }
+    @media (max-width: 640px) {
+      .property-search { padding: 12px; gap: 10px; margin-bottom: 16px; border-radius: 18px; }
+      .search-field input, .search-field select { font-size: 16px; }
+    }
+    @media (max-width: 480px) {
+      .property-search { grid-template-columns: minmax(0, 1fr); }
+    }
+
     /* Hero Section */
     .hero {
       position: relative;
-      padding: 16px 0;
+      padding: 20px 0 24px;
       background: radial-gradient(100% 80% at 50% 0%, rgba(239, 246, 255, 0.7) 0%, rgba(248, 250, 252, 0) 100%);
       overflow: hidden;
-    }
-    .hero-header { text-align: center; max-width: 760px; margin: 0 auto 18px; }
-    .hero-tag {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 6px 14px; border-radius: var(--radius-full);
-      background: var(--primary-pale); color: var(--primary);
-      font-size: 12px; font-weight: 700; letter-spacing: 0.2px;
-      margin-bottom: 14px; border: 1px solid rgba(191, 219, 254, 0.6);
-    }
-    .hero-header h1 {
-      font-size: clamp(28px, 4.2vw, 46px); font-weight: 800;
-      letter-spacing: -1.2px; line-height: 1.15; color: var(--ink);
-    }
-    .hero-header p {
-      margin-top: 10px; font-size: clamp(14px, 1.8vw, 16px);
-      color: var(--ink-muted); font-weight: 500;
     }
 
     /* Hero Carousel / Slider */
     .hero-slider-wrap {
-      max-width: 1160px; margin: 0 auto 20px;
+      max-width: 1160px; margin: 0 auto 36px;
       position: relative; border-radius: var(--radius-lg);
       overflow: hidden; box-shadow: var(--shadow-lg);
       border: 1px solid var(--border);
@@ -233,7 +287,7 @@
     /* Locality Selector / Chips */
     .localities-strip {
       display: flex; gap: 10px; overflow-x: auto;
-      padding: 10px 0 14px; scrollbar-width: none;
+      padding: 16px 0 24px; scrollbar-width: none;
       -webkit-overflow-scrolling: touch;
     }
     .localities-strip::-webkit-scrollbar { display: none; }
@@ -252,22 +306,22 @@
     /* Section Headers */
     .section-header {
       display: flex; justify-content: space-between; align-items: flex-end;
-      margin-bottom: 16px;
+      margin-bottom: 24px;
     }
     .section-header h2 { font-size: 24px; font-weight: 800; letter-spacing: -0.6px; }
     .section-header p { font-size: 14px; color: var(--ink-muted); margin-top: 4px; }
     .results-bar {
       display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 14px; font-size: 13px; color: var(--ink-muted);
+      margin-bottom: 20px; font-size: 13px; color: var(--ink-muted);
     }
     .results-bar strong { color: var(--ink); }
 
     /* Property Cards Grid */
     .property-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
-      gap: 18px;
-      margin-bottom: 0;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 26px;
+      margin-bottom: 50px;
     }
     .property-card {
       background: white; border-radius: var(--radius-md);
@@ -314,10 +368,10 @@
     .card-price-row { display: flex; justify-content: space-between; align-items: baseline; }
     .card-price { font-size: 23px; font-weight: 800; letter-spacing: -0.6px; color: var(--ink); }
     .card-price-sqft { font-size: 12px; color: var(--ink-muted); font-weight: 600; }
-    
+
     .card-title { font-size: 16px; font-weight: 700; color: var(--ink); margin: 6px 0 4px; line-height: 1.3; }
     .card-loc { display: flex; align-items: center; gap: 4px; font-size: 12.5px; color: var(--ink-muted); }
-    
+
     .card-specs-bar {
       display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
       margin: 16px 0; padding: 10px 0;
@@ -333,7 +387,7 @@
     .card-footer .btn { flex: 1; min-height: 40px; font-size: 13px; }
 
     /* Property Detail Page Container */
-    #propertyDetailView { display: none; padding: 16px 0 24px; }
+    #propertyDetailView { display: none; padding: 24px 0 60px; }
     #propertyDetailView.active { display: block; }
     .detail-back-btn {
       display: inline-flex; align-items: center; gap: 8px;
@@ -341,20 +395,119 @@
       background: none; border: none; cursor: pointer; margin-bottom: 20px;
     }
     .detail-gallery-grid {
-      display: grid; grid-template-columns: 2fr 1fr; gap: 14px;
+      display: grid; grid-template-columns: 1fr;
       height: 440px; border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 28px;
+    }
+    .detail-gallery-grid.single-photo { grid-template-columns: 1fr; }
+    .gallery-main-wrap, .gallery-tile {
+      position: relative; display: block; min-width: 0; min-height: 0;
+      width: 100%; height: 100%; overflow: hidden; border: 0; padding: 0;
+      background: #e2e8f0; cursor: pointer;
+    }
+    .gallery-main-open {
+      position: relative; flex: 0 0 100%; width: 100%; height: 100%;
+      border: 0; padding: 0; background: transparent; cursor: pointer;
+    }
+    .gallery-main-open img, .gallery-tile img {
+      width: 100%; height: 100%; object-fit: cover; transition: transform .3s ease;
+    }
+    .gallery-main-wrap:hover img, .gallery-tile:hover img { transform: scale(1.025); }
+    .property-photo-track { display: flex; width: 100%; height: 100%; transition: transform .35s ease; }
+    .gallery-main-wrap { touch-action: pan-y pinch-zoom; }
+    .property-photo-arrow { position: absolute; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--border); border-radius: 50%; background: #fff; color: #0f172a; font-size: 26px; box-shadow: var(--shadow-md); cursor: pointer; }
+    .property-photo-prev { left: 12px; }
+    .property-photo-next { right: 12px; }
+    .property-photo-count { position: absolute; bottom: 14px; left: 14px; padding: 6px 10px; border-radius: 8px; background: rgba(15,23,42,.85); color: #fff; font-size: 12px; font-weight: 700; pointer-events: none; }
+    .property-photo-dots { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); display: flex; padding: 0 4px; border-radius: 24px; background: rgba(15,23,42,.65); }
+    .property-photo-dot { display: grid; place-items: center; width: 32px; height: 44px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+    .property-photo-dot::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #fff; opacity: .5; }
+    .property-photo-dot[aria-pressed="true"]::before { width: 18px; border-radius: 8px; opacity: 1; }
+    @media (max-width: 480px) {
+      .property-photo-dots { left: auto; right: 8px; transform: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .property-photo-track, .gallery-main-open img { transition: none; }
+      .gallery-main-wrap:hover img { transform: none; }
+    }
+    .gallery-overlay {
+      position: absolute; inset: 0; display: flex; align-items: flex-start;
+      justify-content: space-between; padding: 16px; pointer-events: none;
+    }
+    .gallery-controls { display: flex; gap: 8px; pointer-events: auto; }
+    .gallery-action {
+      display: inline-flex; align-items: center; gap: 6px; min-height: 38px;
+      padding: 0 12px; border: 0; border-radius: 9px; background: #fff;
+      color: #0f172a; font-size: 12px; font-weight: 700; box-shadow: var(--shadow-md);
+      cursor: pointer;
+    }
+    .gallery-action.saved { color: #dc2626; }
+    .gallery-action.saved svg { fill: currentColor; }
+    .gallery-more {
+      position: absolute; inset: 0; display: grid; place-content: center;
+      background: rgba(15, 23, 42, .58); color: #fff; font-size: 16px;
+      font-weight: 800; text-align: center;
     }
     .gallery-main { width: 100%; height: 100%; object-fit: cover; }
     .gallery-thumbs { display: grid; grid-template-rows: 1fr 1fr; gap: 14px; height: 100%; }
+    .gallery-thumbs.single-thumb { grid-template-rows: 1fr; }
     .gallery-thumbs img { width: 100%; height: 100%; object-fit: cover; }
 
-    .detail-layout { display: grid; grid-template-columns: 1fr 360px; gap: 32px; align-items: flex-start; }
+    .detail-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 32px; align-items: flex-start; }
+    .detail-section-nav {
+      position: sticky; top: 76px; z-index: 50; display: flex; gap: 4px;
+      overflow-x: auto; margin: 0 0 22px; border: 1px solid var(--border);
+      border-radius: 10px; background: rgba(255,255,255,.97); box-shadow: var(--shadow-sm);
+      scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    }
+    .detail-section-nav::-webkit-scrollbar { display: none; }
+    .detail-section-nav button {
+      flex: 0 0 auto; min-height: 52px; padding: 0 17px; border: 0;
+      border-bottom: 3px solid transparent; background: transparent;
+      color: var(--ink-muted); font-size: 13px; font-weight: 700; cursor: pointer;
+    }
+    .detail-section-nav button:hover { color: var(--primary); border-bottom-color: var(--primary); }
+    .detail-section { scroll-margin-top: 144px; }
+    .detail-heading { margin-bottom: 16px; }
+    .detail-heading p { color: var(--ink-muted); font-size: 13px; margin-top: 4px; }
+    .detail-highlights { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 11px; }
+    .detail-highlight {
+      display: flex; align-items: flex-start; gap: 9px; padding: 12px;
+      border: 1px solid #e8edf4; border-radius: 9px; background: #f8fafc;
+      color: #334155; font-size: 13px; font-weight: 600;
+    }
+    .detail-plan-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 16px; border: 1px solid var(--border); border-radius: 10px;
+    }
+    .detail-photo-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .detail-photo-button {
+      position: relative; aspect-ratio: 4 / 3; overflow: hidden;
+      border: 0; border-radius: 9px; background: #e2e8f0; cursor: pointer;
+    }
+    .detail-photo-button img { width: 100%; height: 100%; object-fit: cover; transition: transform .25s ease; }
+    .detail-photo-button:hover img { transform: scale(1.04); }
+    .photo-lightbox {
+      position: fixed; inset: 0; z-index: 200; display: none; align-items: center;
+      justify-content: center; padding: 50px 70px; background: rgba(2, 6, 23, .96);
+    }
+    .photo-lightbox.open { display: flex; }
+    .photo-lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .lightbox-close, .lightbox-arrow {
+      position: absolute; display: grid; place-items: center; width: 44px; height: 44px;
+      border: 1px solid rgba(255,255,255,.22); border-radius: 50%;
+      background: rgba(255,255,255,.1); color: #fff; cursor: pointer;
+    }
+    .lightbox-close { top: 18px; right: 18px; }
+    .lightbox-arrow { top: 50%; transform: translateY(-50%); }
+    .lightbox-prev { left: 18px; }
+    .lightbox-next { right: 18px; }
+    .lightbox-count { position: absolute; bottom: 17px; color: #fff; font-size: 13px; }
     .detail-card {
       background: white; border: 1px solid var(--border); border-radius: var(--radius-md);
-      padding: 20px; margin-bottom: 14px;
+      padding: 26px; margin-bottom: 20px;
     }
     .detail-card h3 { font-size: 19px; font-weight: 800; margin-bottom: 16px; letter-spacing: -0.4px; }
-    
+
     .property-description-box {
       white-space: pre-wrap;
       word-break: break-word;
@@ -371,7 +524,7 @@
       color: #475569;
       font-style: italic;
     }
-    
+
     .amenities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
     .amenity-item { display: flex; align-items: center; gap: 10px; font-size: 13.5px; font-weight: 600; color: #334155; }
     .amenity-icon { width: 28px; height: 28px; border-radius: 6px; background: var(--emerald-pale); color: var(--emerald); display: grid; place-items: center; }
@@ -385,6 +538,11 @@
     .booking-form { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
     .booking-form input, .booking-form select, .booking-form textarea {
       padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13.5px;
+    }
+    .booking-form .booking-help { margin: -4px 0 2px; color: #475569; font-size: 12px; line-height: 1.5; }
+    .booking-form .btn:disabled {
+      background: #64748b; border-color: #64748b; color: #fff;
+      box-shadow: none; cursor: not-allowed; transform: none;
     }
 
     /* Mobile Bottom Navigation Bar */
@@ -410,7 +568,7 @@
       --footer-gold: #805c27;
       background: #f6f2e9;
       border-top: 1px solid #e4dccb;
-      padding: 28px 0 16px;
+      padding: 72px 0 28px;
       color: var(--footer-ink);
       font-size: 14px;
     }
@@ -419,8 +577,8 @@
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(340px, .9fr);
       align-items: center;
-      gap: 28px;
-      padding-bottom: 20px;
+      gap: 56px;
+      padding-bottom: 48px;
       border-bottom: 1px solid #ded5c4;
     }
     .footer-eyebrow {
@@ -448,7 +606,7 @@
       white-space: nowrap;
       border: 0;
     }
-    .footer-newsletter h2 { font-size: clamp(25px, 3vw, 32px); line-height: 1.12; letter-spacing: -.025em; }
+    .footer-newsletter h2 { font-size: clamp(30px, 4vw, 42px); line-height: 1.12; letter-spacing: -.025em; }
     .footer-newsletter-copy > p:last-child { margin-top: 12px; color: var(--footer-muted); line-height: 1.7; }
     .footer-form-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
     .footer-email-input {
@@ -481,7 +639,6 @@
     }
     .footer-submit:hover:not(:disabled) { background: #263d5a; border-color: #263d5a; transform: translateY(-1px); }
     .footer-submit:disabled { cursor: wait; opacity: .75; }
-    .booking-form button[type="submit"]:disabled { cursor: not-allowed; opacity: .5; }
     .footer-submit svg { width: 16px; height: 16px; }
     .footer-consent {
       display: flex;
@@ -493,7 +650,7 @@
       line-height: 1.55;
     }
     .footer-consent input { width: 16px; height: 16px; margin: 1px 0 0; accent-color: var(--footer-ink); flex: 0 0 auto; }
-    .footer-status { min-height: 0; margin-top: 8px; color: var(--footer-muted); font-size: 12px; line-height: 1.5; }
+    .footer-status { min-height: 22px; margin-top: 8px; color: var(--footer-muted); font-size: 12px; line-height: 1.5; }
     .footer-status.is-loading { color: var(--footer-muted); }
     .footer-status.is-success { color: var(--footer-ink); }
     .footer-status.is-error { color: #9b2929; }
@@ -508,11 +665,11 @@
     .footer-columns {
       display: grid;
       grid-template-columns: 1.15fr 1fr 1fr;
-      gap: 28px;
-      padding: 22px 0;
+      gap: 48px;
+      padding: 42px 0 36px;
     }
     .footer-column { min-width: 0; }
-    .footer-column h3 { margin-bottom: 10px; font-size: 20px; line-height: 1.2; }
+    .footer-column h3 { margin-bottom: 17px; font-size: 22px; line-height: 1.2; }
     .footer-column .footer-brand-name {
       margin: 0;
       font-family: inherit;
@@ -524,9 +681,9 @@
     .footer-logo { width: 52px; height: 52px; object-fit: contain; border-radius: 8px; }
     .footer-brand-name { color: var(--footer-ink); font-size: 14px; font-weight: 800; letter-spacing: .11em; }
     .footer-brand-copy { margin-top: 5px; color: var(--footer-muted); font-size: 12px; line-height: 1.65; }
-    .footer-powered { margin-top: 12px; color: #4b5868; font-size: 12px; }
+    .footer-powered { margin-top: 24px; color: #4b5868; font-size: 12px; }
     .footer-powered strong { color: var(--footer-gold); font-weight: 700; }
-    .footer-contact-list { display: grid; gap: 10px; list-style: none; }
+    .footer-contact-list { display: grid; gap: 15px; list-style: none; }
     .footer-contact-item { display: flex; min-width: 0; align-items: flex-start; gap: 11px; color: #344357; line-height: 1.55; overflow-wrap: anywhere; }
     .footer-icon { width: 19px; height: 19px; flex: 0 0 19px; color: var(--footer-gold); }
     .footer-contact-item a { color: inherit; text-decoration: none; }
@@ -554,7 +711,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 20px;
-      padding-top: 14px;
+      padding-top: 22px;
       border-top: 1px solid #ded5c4;
     }
     .footer-social-links { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -619,7 +776,7 @@
       .brand-name { font-size: 17px; }
       .brand-sub { font-size: 8px; letter-spacing: 2px; }
       .nav-links { display: none; }
-      
+
       .hero { padding: 8px 0 16px; }
       .hero-slider-wrap { margin-bottom: 16px; border-radius: var(--radius-md); }
       .slider-viewport { height: 450px; }
@@ -678,8 +835,8 @@
       /* Mobile Properties Grid */
       .property-grid {
         grid-template-columns: 1fr;
-        gap: 14px;
-        margin-bottom: 0;
+        gap: 18px;
+        margin-bottom: 30px;
       }
       .card-body { padding: 15px; }
       .card-price { font-size: 20px; }
@@ -688,8 +845,21 @@
       .card-footer .btn { min-height: 40px; font-size: 12.5px; }
 
       /* Mobile Detail View */
-      #propertyDetailView { padding: 12px 0 20px; }
-      .detail-gallery-grid { height: 230px; border-radius: var(--radius-md); }
+      #propertyDetailView { padding: 12px 0 40px; }
+      .detail-gallery-grid { grid-template-columns: 1fr; grid-template-rows: 230px; height: 230px; gap: 0; border-radius: var(--radius-md); }
+      .gallery-thumbs { display: none; }
+      .gallery-overlay { padding: 10px; }
+      .gallery-action { min-height: 34px; padding: 0 9px; }
+      .detail-section-nav { top: 76px; margin-inline: -12px; border-radius: 0; }
+      .detail-section-nav button { min-height: 46px; padding-inline: 13px; font-size: 12px; }
+      .detail-section { scroll-margin-top: 132px; }
+      .detail-layout { grid-template-columns: 1fr; gap: 8px; }
+      .detail-photo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .photo-lightbox { padding: 54px 46px; }
+      .lightbox-close { top: 10px; right: 10px; }
+      .lightbox-prev { left: 6px; }
+      .lightbox-next { right: 6px; }
+      .detail-plan-row { align-items: flex-start; flex-direction: column; }
       .detail-card { padding: 18px 16px; border-radius: var(--radius-md); }
       .booking-card { padding: 20px 16px; border-radius: var(--radius-md); position: static; margin-top: 16px; }
 
@@ -700,19 +870,18 @@
         padding-bottom: env(safe-area-inset-bottom, 0);
       }
       body { padding-bottom: 70px; }
-      footer { padding: 22px 0 14px; }
-      .footer-newsletter { grid-template-columns: 1fr; gap: 16px; padding-bottom: 18px; }
-      .footer-newsletter h2 { font-size: 27px; }
+      footer { padding: 48px 0 24px; }
+      .footer-newsletter { grid-template-columns: 1fr; gap: 24px; padding-bottom: 32px; }
+      .footer-newsletter h2 { font-size: 32px; }
       .footer-form-row { grid-template-columns: 1fr; }
       .footer-email-input, .footer-submit { width: 100%; }
-      .footer-columns { grid-template-columns: 1fr; gap: 20px; padding: 20px 0; }
+      .footer-columns { grid-template-columns: 1fr; gap: 30px; padding: 32px 0; }
       .footer-column h3 { margin-bottom: 12px; }
       .footer-bottom { align-items: flex-start; flex-direction: column; gap: 14px; }
       .footer-copyright { text-align: left; }
     }
   </style>
-  <link rel="stylesheet" href="/property-details.css">
-  <link rel="stylesheet" href="/responsive.css">
+  <link rel="stylesheet" href="/site-responsive.css">
 </head>
 <body>
 
@@ -733,9 +902,11 @@
         <li><a id="navReady" href="#propertiesSection" data-tab-filter="Ready">Ready to Move</a></li>
         <li><a id="navResale" href="#propertiesSection" data-tab-filter="Resale">Resale</a></li>
         <li><a id="navVilla" href="#propertiesSection" data-tab-filter="Villa">Luxury Villa</a></li>
+        <li><a id="navAbout" href="#about">About</a></li>
       </ul>
 
       <div class="nav-actions">
+        <a class="mobile-about-link" href="#about">About</a>
         <button class="icon-btn" id="favTrigger" title="View Saved Homes" aria-label="Favorites">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
@@ -749,15 +920,36 @@
 
   <!-- HOME VIEW SURFACE -->
   <div id="homeSurface">
-    
+
     <!-- Hero Section -->
     <section class="hero">
       <div class="wrap">
-        <div class="hero-header">
-          <span class="hero-tag" id="heroTag">✨ Premium Bengaluru Real Estate Portfolio</span>
-          <h1 id="heroTitle">Find Your Dream Space in the Silicon Valley of India</h1>
-          <p id="heroSubtitle">Verified builder developments, luxury gated communities, and prime resale apartments across Bengaluru's top tech corridors.</p>
-        </div>
+        <form id="searchForm" class="property-search" role="search" aria-label="Find a property">
+          <div class="search-field search-location">
+            <label class="search-label" for="locInput">Locality or project</label>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg>
+            <input id="locInput" name="search" type="search" placeholder="Locality or project">
+          </div>
+          <div class="search-field">
+            <label class="search-label" for="bhkSelect">Number of bedrooms</label>
+            <select id="bhkSelect" name="bhk">
+              <option value="any">Any BHK</option>
+              <option value="1">1 BHK</option><option value="2">2 BHK</option>
+              <option value="3">3 BHK</option><option value="4">4+ BHK</option>
+            </select>
+          </div>
+          <div class="search-field">
+            <label class="search-label" for="budgetSelect">Maximum budget</label>
+            <select id="budgetSelect" name="budget">
+              <option value="any">Max budget</option>
+              <option value="50">₹50 Lakh</option><option value="75">₹75 Lakh</option>
+              <option value="100">₹1 Crore</option><option value="150">₹1.5 Crore</option>
+              <option value="200">₹2 Crore</option><option value="300">₹3 Crore</option>
+              <option value="500">₹5 Crore</option>
+            </select>
+          </div>
+          <button class="search-button" type="submit">SEARCH <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></button>
+        </form>
         <!-- Featured Carousel -->
         <div class="hero-slider-wrap">
           <div class="slider-viewport" id="sliderViewport">
@@ -767,6 +959,7 @@
             <button class="slider-nav-btn slider-prev" id="sliderPrev" aria-label="Previous Project">‹</button>
             <button class="slider-nav-btn slider-next" id="sliderNext" aria-label="Next Project">›</button>
             <div class="slider-indicators" id="sliderIndicators"></div>
+            <button type="button" class="slider-playback" id="sliderPlayback" aria-label="Pause featured slideshow" aria-pressed="false">Pause</button>
           </div>
         </div>
 
@@ -777,10 +970,10 @@
 
     <!-- Main Content Grid -->
     <main class="wrap" id="propertiesSection">
-      
+
       <!-- Results Header -->
       <div class="results-bar">
-        <div id="resultsCounter">Loading properties...</div>
+        <div id="resultsCounter" role="status" aria-live="polite" aria-atomic="true">Loading properties...</div>
         <div style="display:flex;gap:10px;align-items:center;">
           <label style="font-size:12px;font-weight:600;">Sort By:</label>
           <select id="sortSelect" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:12.5px;font-weight:600;background:white;">
@@ -808,6 +1001,26 @@
     </button>
     <div id="propertyDetailContent"></div>
   </main>
+
+  <section id="about" class="about-section wrap" aria-labelledby="aboutTitle">
+    <div class="about-card">
+      <h2 id="aboutTitle">About Vasati Properties</h2>
+      <h3 class="about-tagline">Your Dream Home, Our Responsibility.</h3>
+      <p>At <strong>Vasati Properties</strong>, we believe finding your dream home should be simple, transparent and stress-free.</p>
+      <p>With <strong>5 years of experience in the real estate industry</strong>, we help you find the right property that matches your budget and lifestyle.</p>
+      <h3>Why Choose Us?</h3>
+      <ul class="about-benefits">
+        <li><strong>Zero Brokerage:</strong> Find your dream property without brokerage charges.</li>
+        <li><strong>Complete Assistance:</strong> Support from property selection to final handover.</li>
+        <li><strong>Home Loan Support:</strong> Guidance throughout the home loan process.</li>
+        <li><strong>Registration Assistance:</strong> Help with property documentation and registration.</li>
+        <li><strong>Trusted Builder Partnerships:</strong> Tie-ups with leading builders in Bangalore.</li>
+        <li><strong>Banking Partnerships:</strong> Assistance through our associated banking partners.</li>
+      </ul>
+      <p>We are committed to making your property-buying journey easy, transparent and hassle-free.</p>
+      <p class="about-signoff"><strong>Vasati Properties – Your Dream Home Starts Here.</strong></p>
+    </div>
+  </section>
 
   <!-- Mobile Bottom Navigation Bar -->
   <nav class="mobile-bar" aria-label="Mobile Controls">
@@ -924,23 +1137,24 @@
   </footer>
 
   <aside id="analyticsConsentNotice" hidden style="position:fixed;left:16px;bottom:16px;z-index:5000;max-width:400px;padding:16px;background:#0b192c;color:white;border:1px solid #334155;border-radius:12px;box-shadow:0 12px 30px #0004;">
-    <p style="font-size:13px;line-height:1.5;margin:0 0 12px;">We use Google Analytics only with your consent. Analytics are anonymous and cannot identify every visitor; we associate analytics with customer details only after you voluntarily submit them.</p>
+    <p style="font-size:13px;line-height:1.5;margin:0 0 12px;">Allow anonymous Google Analytics to help improve this website?</p>
+    <details class="analytics-consent-detail"><summary>How your data is used</summary><p>We use Google Analytics only with your consent. Analytics are anonymous and cannot identify every visitor; we associate analytics with customer details only after you voluntarily submit them.</p></details>
     <button type="button" id="acceptAnalytics" class="btn btn-primary btn-sm">Allow analytics</button>
     <button type="button" id="declineAnalytics" class="btn btn-outline btn-sm">Decline</button>
   </aside>
 
   <!-- Project Brochure Lead Gate Modal -->
-  <div id="brochureModal" class="brochure-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.75);backdrop-filter:blur(5px);z-index:9999;align-items:center;justify-content:center;padding:16px;">
-    <div style="background:white;border-radius:18px;max-width:440px;width:100%;box-shadow:0 25px 50px -12px rgba(0,0,0,0.35);border:1px solid #e2e8f0;overflow:hidden;">
+  <div id="brochureModal" class="brochure-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="brochureModalTitle" tabindex="-1" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.75);backdrop-filter:blur(5px);z-index:9999;align-items:center;justify-content:center;padding:16px;overflow-y:auto;">
+    <div style="background:white;border-radius:18px;max-width:440px;width:100%;max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain;box-shadow:0 25px 50px -12px rgba(0,0,0,0.35);border:1px solid #e2e8f0;">
       <div style="background:linear-gradient(135deg, #0b192c, #1e3a8a);color:white;padding:22px 24px;position:relative;">
-        <button type="button" onclick="closeBrochureModal()" style="position:absolute;top:18px;right:18px;background:rgba(255,255,255,0.15);border:none;color:white;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.2s;">✕</button>
+        <button type="button" onclick="closeBrochureModal()" aria-label="Close brochure form" style="position:absolute;top:18px;right:18px;background:rgba(255,255,255,0.15);border:none;color:white;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.2s;">✕</button>
         <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.18);padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:8px;">
           📄 Official Project Brochure
         </div>
-        <h3 style="margin:0;font-size:20px;font-weight:800;letter-spacing:-0.5px;">Download PDF Brochure</h3>
+        <h3 id="brochureModalTitle" style="margin:0;font-size:20px;font-weight:800;letter-spacing:-0.5px;">Download PDF Brochure</h3>
         <p id="brochureModalPropertyTitle" style="margin:6px 0 0;font-size:13px;color:#93c5fd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Property Name</p>
       </div>
-      
+
       <form id="brochureLeadForm" style="padding:24px;">
         <input type="hidden" id="brochurePropertyId" name="property_id">
         <input type="hidden" id="brochurePropertyTitle" name="property_title">
@@ -950,21 +1164,19 @@
           <span style="font-size:18px;">🔒</span>
           <span>Provide your contact details, accept the privacy notice, and verify your chosen contact method before downloading.</span>
         </div>
-        <p style="font-size:12px;margin:0 0 14px;color:#475569;">Optional account sign-in (separate from OTP verification): <a href="/auth/google" style="color:#1d4ed8;text-decoration:underline;">Continue with Google</a>. You must still verify the selected contact method below.</p>
-
         <div style="margin-bottom:14px;">
-          <label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px;">Your Full Name *</label>
-          <input type="text" id="brochureLeadName" name="name" required placeholder="e.g. Ramesh Kumar" style="width:100%;padding:12px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;">
+          <label for="brochureLeadName" style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px;">Your Full Name *</label>
+          <input type="text" id="brochureLeadName" name="name" autocomplete="name" required maxlength="120" placeholder="e.g. Ramesh Kumar" style="width:100%;padding:12px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;">
         </div>
 
         <div style="margin-bottom:18px;">
-          <label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px;">Email address *</label>
-          <input type="email" id="brochureLeadEmail" name="email" required autocomplete="email" placeholder="you@example.com" style="width:100%;padding:12px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;">
+          <label id="brochureLeadEmailLabel" for="brochureLeadEmail" style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px;">Email address *</label>
+          <input type="email" id="brochureLeadEmail" name="email" autocomplete="email" placeholder="you@example.com" style="width:100%;padding:12px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;">
         </div>
 
         <div style="margin-bottom:18px;">
-          <label style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px;">Phone number *</label>
-          <input type="tel" id="brochureLeadPhone" name="phone" required autocomplete="tel" placeholder="e.g. +91 9876543210" style="width:100%;padding:12px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;">
+          <label id="brochureLeadPhoneLabel" for="brochureLeadPhone" style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px;">Phone number (optional)</label>
+          <input type="tel" id="brochureLeadPhone" name="phone" autocomplete="tel" placeholder="e.g. +91 9876543210" style="width:100%;padding:12px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;">
         </div>
 
         <fieldset style="border:0;padding:0;margin:0 0 16px;">
@@ -978,18 +1190,22 @@
           <span>I agree to the <a href="/privacy" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:underline;">privacy notice</a> and understand Vasati will use these details to verify access and record this brochure request.</span>
         </label>
 
+        <div id="brochureCaptcha" style="margin:0 0 12px;" aria-label="Security check"></div>
+        <div id="brochureCaptchaHelp" role="status" aria-live="polite" style="font-size:12px;color:#475569;margin-bottom:12px;"></div>
+
         <div id="brochureOtpStep" hidden style="margin-bottom:16px;">
           <label for="brochureOtpCode" style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px;">One-time verification code *</label>
-          <input type="text" id="brochureOtpCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{4,10}" maxlength="10" style="width:100%;padding:12px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;">
+          <input type="text" id="brochureOtpCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{4,10}" maxlength="10" aria-describedby="brochureOtpStatus brochureOtpCountdown" style="width:100%;padding:12px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;outline-offset:2px;">
           <div id="brochureOtpStatus" role="status" aria-live="polite" style="font-size:12px;color:#475569;margin-top:6px;"></div>
+          <div id="brochureOtpCountdown" role="timer" aria-live="off" style="font-size:12px;color:#475569;margin-top:4px;"></div>
           <button type="button" id="resendBrochureOtp" class="btn btn-outline btn-sm" disabled style="margin-top:8px;">Resend code in 60s</button>
         </div>
 
         <button type="button" id="brochureSubmitBtn" class="btn btn-primary" style="width:100%;padding:13px;font-size:15px;font-weight:700;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg, #16a34a, #15803d);border:none;color:white;cursor:pointer;">
           <span>Send verification code</span>
         </button>
-        <button type="button" id="brochureVerifyBtn" class="btn btn-primary" hidden style="width:100%;margin-top:8px;padding:13px;">Verify code</button>
-        <a id="brochureDownloadAction" class="btn btn-primary" hidden style="width:100%;margin-top:8px;padding:13px;text-align:center;">Download verified brochure</a>
+        <button type="button" id="brochureVerifyBtn" class="btn btn-primary" hidden style="width:100%;margin-top:8px;padding:13px;">Verify &amp; Download Brochure</button>
+        <a id="brochureDownloadAction" class="btn btn-primary" hidden style="width:100%;margin-top:8px;padding:13px;text-align:center;">Download brochure</a>
       </form>
     </div>
   </div>
@@ -1014,13 +1230,150 @@
     let featuredProjects = [];
     let currentSlide = 0;
     let slideTimer;
+    let featuredAutoPaused = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let liveSearchTimer;
+    let propertyLoadSequence = 0;
     let siteSettings = {};
     let activeBrochureVerificationId = '';
-    let brochureResendTimer;
+    let activeSiteVisitVerificationId = '';
+    const otpTimers = {
+      brochure: { resend: null, expiry: null },
+      visit: { resend: null, expiry: null }
+    };
+    let brochureCaptchaToken = '';
+    let siteVisitCaptchaToken = '';
+    let turnstileSiteKey = '';
+    let turnstileReady = false;
+    let brochureWidgetId = null;
+    let siteVisitWidgetId = null;
+    let lastBrochureTrigger = null;
     let analyticsMeasurementId = '';
     let analyticsSessionId = '';
     let analyticsRefreshTimer;
     const WHATSAPP_ICON_SVG = `<svg viewBox="0 0 24 24" width="20" height="20" fill="#ffffff" style="display:inline-block;vertical-align:middle;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
+
+    function renderTurnstileWidget(containerId, action) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const help = document.getElementById(action === 'brochure' ? 'brochureCaptchaHelp' : 'siteVisitCaptchaHelp');
+      if (!turnstileSiteKey) {
+        if (help) help.textContent = 'Security verification is not configured. Please contact the site administrator.';
+        return;
+      }
+      if (!turnstileReady || !window.turnstile) {
+        if (help) help.textContent = 'Loading security verification…';
+        return;
+      }
+      const currentId = action === 'brochure' ? brochureWidgetId : siteVisitWidgetId;
+      if (currentId !== null) window.turnstile.remove(currentId);
+      const tokenCallback = action === 'brochure'
+        ? token => { brochureCaptchaToken = token; }
+        : token => {
+            siteVisitCaptchaToken = token;
+            document.getElementById('visitPhone')?.dispatchEvent(new Event('input', { bubbles: true }));
+          };
+      const widgetId = window.turnstile.render(container, {
+        sitekey: turnstileSiteKey,
+        action,
+        callback: tokenCallback,
+        'expired-callback': () => {
+          if (action === 'brochure') brochureCaptchaToken = '';
+          else {
+            siteVisitCaptchaToken = '';
+            document.getElementById('visitPhone')?.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+        },
+        'error-callback': () => {
+          if (action === 'brochure') {
+            brochureCaptchaToken = '';
+            document.getElementById('brochureCaptchaHelp').textContent = 'Security check failed. Refresh the challenge and try again.';
+          } else {
+            siteVisitCaptchaToken = '';
+            document.getElementById('siteVisitCaptchaHelp').textContent = 'Security check failed. Refresh the challenge and try again.';
+            document.getElementById('visitPhone')?.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+        }
+      });
+      if (action === 'brochure') brochureWidgetId = widgetId;
+      else siteVisitWidgetId = widgetId;
+    }
+
+    function resetTurnstileWidget(action) {
+      if (action === 'brochure') {
+        brochureCaptchaToken = '';
+        if (brochureWidgetId !== null && window.turnstile) window.turnstile.reset(brochureWidgetId);
+      } else {
+        siteVisitCaptchaToken = '';
+        if (siteVisitWidgetId !== null && window.turnstile) window.turnstile.reset(siteVisitWidgetId);
+      }
+    }
+
+    function startOtpCountdown(countdownId, resendButtonId, expiresInSeconds, resendAfterSeconds, kind) {
+      const timers = otpTimers[kind];
+      const countdown = document.getElementById(countdownId);
+      const resendButton = document.getElementById(resendButtonId);
+      if (expiresInSeconds) clearInterval(timers.expiry);
+      clearInterval(timers.resend);
+      if (expiresInSeconds) {
+        let expiryRemaining = expiresInSeconds;
+        const updateExpiry = () => {
+          if (expiryRemaining <= 0) {
+            clearInterval(timers.expiry);
+            countdown.textContent = 'Code expired. Request a new code to continue.';
+            const verifyButton = document.getElementById(kind === 'brochure' ? 'brochureVerifyBtn' : 'verifyVisitOtp');
+            if (verifyButton) verifyButton.disabled = true;
+            return;
+          }
+          countdown.textContent = `Code expires in ${Math.floor(expiryRemaining / 60)}:${String(expiryRemaining % 60).padStart(2, '0')}.`;
+          expiryRemaining -= 1;
+        };
+        updateExpiry();
+        timers.expiry = setInterval(updateExpiry, 1000);
+        const verifyButton = document.getElementById(kind === 'brochure' ? 'brochureVerifyBtn' : 'verifyVisitOtp');
+        if (verifyButton) verifyButton.disabled = false;
+      }
+      let resendRemaining = resendAfterSeconds || 0;
+      const updateResend = () => {
+        if (resendRemaining <= 0) {
+          clearInterval(timers.resend);
+          resendButton.disabled = false;
+          resendButton.textContent = 'Resend code';
+          return;
+        }
+        resendButton.disabled = true;
+        resendButton.textContent = `Resend code in ${resendRemaining}s`;
+        resendRemaining -= 1;
+      };
+      updateResend();
+      if (resendRemaining > 0) timers.resend = setInterval(updateResend, 1000);
+    }
+
+    function configureTurnstile(siteKey) {
+      turnstileSiteKey = siteKey || '';
+      const brochureHelp = document.getElementById('brochureCaptchaHelp');
+      const visitHelp = document.getElementById('siteVisitCaptchaHelp');
+      if (!turnstileSiteKey) {
+        if (brochureHelp) brochureHelp.textContent = 'Security verification is not configured. Please contact the site administrator.';
+        if (visitHelp) visitHelp.textContent = 'Security verification is not configured. Please contact the site administrator.';
+        return;
+      }
+      if (document.getElementById('turnstileScript')) return;
+      window.onTurnstileLoaded = () => {
+        turnstileReady = true;
+        renderTurnstileWidget('brochureCaptcha', 'brochure');
+        renderTurnstileWidget('siteVisitCaptcha', 'site_visit');
+      };
+      const script = document.createElement('script');
+      script.id = 'turnstileScript';
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoaded&render=explicit';
+      script.async = true;
+      script.defer = true;
+      script.onerror = () => {
+        if (brochureHelp) brochureHelp.textContent = 'Security verification could not load. Check your connection and try again.';
+        if (visitHelp) visitHelp.textContent = 'Security verification could not load. Check your connection and try again.';
+      };
+      document.head.appendChild(script);
+    }
 
     function formatEmbedUrl(url) {
       if (!url) return '';
@@ -1067,15 +1420,6 @@
             if (link && siteSettings[key]) link.textContent = siteSettings[key];
           });
 
-          if (siteSettings.hero_tag && document.getElementById('heroTag')) {
-            document.getElementById('heroTag').textContent = siteSettings.hero_tag;
-          }
-          if (siteSettings.hero_title && document.getElementById('heroTitle')) {
-            document.getElementById('heroTitle').textContent = siteSettings.hero_title;
-          }
-          if (siteSettings.hero_subtitle && document.getElementById('heroSubtitle')) {
-            document.getElementById('heroSubtitle').textContent = siteSettings.hero_subtitle;
-          }
           if (siteSettings.stat_active_listings && document.getElementById('statActiveListings')) {
             document.getElementById('statActiveListings').textContent = siteSettings.stat_active_listings;
           }
@@ -1133,25 +1477,31 @@
 
     // --- Dynamic API Ingestion ---
     async function loadProperties() {
+      const sequence = ++propertyLoadSequence;
+      const grid = document.getElementById('propertyGrid');
+      grid.setAttribute('aria-busy', 'true');
       try {
-        const grid = document.getElementById('propertyGrid');
-        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:50px;color:var(--ink-muted);">Loading verified properties...</div>';
+        grid.innerHTML = '<div class="load-message" role="status">Loading properties...</div>';
 
         const params = new URLSearchParams();
         if (state.kind !== 'any') params.set('status', state.kind);
-        if (state.locality) params.set('locality', state.locality);
+        if (state.locality) params.set('search', state.locality);
         if (state.bhk !== 'any') params.set('bhk', state.bhk);
         if (state.budget !== 'any') params.set('budget', state.budget);
         if (state.sort) params.set('sort', state.sort);
 
         const res = await fetch(`/api/properties?${params.toString()}`);
         const data = await res.json();
-        if (data.success) {
-          allProperties = data.data;
-          renderProperties();
-        }
+        if (sequence !== propertyLoadSequence) return;
+        if (!res.ok || !data.success || !Array.isArray(data.data)) throw new Error('Property request failed');
+        allProperties = data.data;
+        renderProperties();
       } catch (err) {
-        showToast('❌ Unable to connect to backend server');
+        if (sequence !== propertyLoadSequence) return;
+        document.getElementById('resultsCounter').textContent = 'Properties could not be loaded.';
+        grid.innerHTML = '<div class="load-message" role="alert">Unable to load properties. Check your connection.<br><button type="button" class="btn btn-outline" onclick="loadProperties()">Try again</button></div>';
+      } finally {
+        if (sequence === propertyLoadSequence) grid.setAttribute('aria-busy', 'false');
       }
     }
 
@@ -1183,7 +1533,7 @@
             <div class="slide-specs">${p.bhk_types}</div>
             <div class="slide-price">${p.price_range}</div>
             <div class="slide-offer">✦ ${p.offer_text}</div>
-            <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
+            <div class="slide-actions">
               <a href="#propertiesSection" class="btn btn-primary btn-sm">Explore Homes</a>
               ${waNum ? `<a href="https://wa.me/${waNum}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(p.name)}" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-sm" style="display:inline-flex;align-items:center;gap:6px;">
                 ${WHATSAPP_ICON_SVG}
@@ -1199,24 +1549,76 @@
       `).join('');
 
       indicators.innerHTML = featuredProjects.map((_, i) => `
-        <button class="indicator-dot ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})"></button>
+        <button type="button" class="indicator-dot ${i === currentSlide ? 'active' : ''}" onclick="goToSlide(${i})" aria-label="Show featured project ${i + 1}" aria-pressed="${i === currentSlide}"></button>
       `).join('');
 
+      goToSlide(Math.min(currentSlide, featuredProjects.length - 1));
       startSlideAutoPlay();
     }
 
+    function syncFeaturedHeight() {
+      const slide = document.getElementById('sliderTrack')?.children[currentSlide];
+      const height = slide?.getBoundingClientRect().height;
+      if (height > 0) document.getElementById('sliderViewport').style.height = `${Math.ceil(height)}px`;
+    }
+
     function goToSlide(index) {
+      if (!featuredProjects.length) return;
       currentSlide = (index + featuredProjects.length) % featuredProjects.length;
       document.getElementById('sliderTrack').style.transform = `translateX(-${currentSlide * 100}%)`;
+      [...document.getElementById('sliderTrack').children].forEach((slide, i) => {
+        slide.inert = i !== currentSlide;
+        slide.setAttribute('aria-hidden', String(i !== currentSlide));
+      });
       document.querySelectorAll('.indicator-dot').forEach((dot, i) => {
         dot.classList.toggle('active', i === currentSlide);
+        dot.setAttribute('aria-pressed', String(i === currentSlide));
       });
+      requestAnimationFrame(syncFeaturedHeight);
     }
 
     function startSlideAutoPlay() {
       clearInterval(slideTimer);
+      const playback = document.getElementById('sliderPlayback');
+      playback.hidden = featuredProjects.length < 2;
+      playback.textContent = featuredAutoPaused ? 'Play' : 'Pause';
+      playback.setAttribute('aria-pressed', String(featuredAutoPaused));
+      playback.setAttribute('aria-label', `${featuredAutoPaused ? 'Play' : 'Pause'} featured slideshow`);
+      if (featuredAutoPaused || document.hidden || featuredProjects.length < 2 || document.getElementById('homeSurface').style.display === 'none' || document.getElementById('sliderViewport').matches(':hover, :focus-within')) return;
       slideTimer = setInterval(() => goToSlide(currentSlide + 1), 6000);
     }
+
+    document.getElementById('sliderPlayback').addEventListener('click', () => {
+      featuredAutoPaused = !featuredAutoPaused;
+      startSlideAutoPlay();
+    });
+    const featuredViewport = document.getElementById('sliderViewport');
+    featuredViewport.addEventListener('mouseenter', () => clearInterval(slideTimer));
+    featuredViewport.addEventListener('mouseleave', startSlideAutoPlay);
+    featuredViewport.addEventListener('focusin', () => clearInterval(slideTimer));
+    featuredViewport.addEventListener('focusout', () => requestAnimationFrame(startSlideAutoPlay));
+    document.addEventListener('visibilitychange', startSlideAutoPlay);
+    window.addEventListener('resize', () => requestAnimationFrame(syncFeaturedHeight));
+    document.fonts?.ready.then(syncFeaturedHeight);
+    window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', event => {
+      featuredAutoPaused = event.matches;
+      startSlideAutoPlay();
+    });
+    let featuredTouchStart = null;
+    featuredViewport.addEventListener('touchstart', event => {
+      featuredTouchStart = event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null;
+    }, { passive: true });
+    featuredViewport.addEventListener('touchend', event => {
+      if (!featuredTouchStart || !event.changedTouches.length) return;
+      const dx = event.changedTouches[0].clientX - featuredTouchStart.x;
+      const dy = event.changedTouches[0].clientY - featuredTouchStart.y;
+      featuredTouchStart = null;
+      if (Math.abs(dx) < 45 || Math.abs(dx) <= Math.abs(dy)) return;
+      event.preventDefault();
+      goToSlide(currentSlide + (dx < 0 ? 1 : -1));
+      startSlideAutoPlay();
+    }, { passive: false });
+    featuredViewport.addEventListener('touchcancel', () => { featuredTouchStart = null; });
 
     document.getElementById('sliderPrev').addEventListener('click', () => {
       goToSlide(currentSlide - 1);
@@ -1238,7 +1640,9 @@
 
       const countText = list.length === 1 ? '1 luxury home' : `${list.length} luxury homes`;
       const locationText = state.locality ? `in ${state.locality}` : 'across Bengaluru';
-      document.getElementById('resultsCounter').innerHTML = `Showing <strong>${countText}</strong> ${locationText}`;
+      const count = document.createElement('strong');
+      count.textContent = countText;
+      document.getElementById('resultsCounter').replaceChildren('Showing ', count, ` ${locationText}`);
 
       if (!list.length) {
         grid.innerHTML = `
@@ -1267,14 +1671,14 @@
                 ${p.status === 'New' ? '✨ New Launch' : p.status === 'Villa' ? '👑 Luxury Villa' : (p.status === 'Ready' || p.status === 'Ready to Move') ? '🏡 Ready to Move' : '🔑 Resale Ready'}
               </span>
               ${p.images && p.images.length > 1 ? `<span style="position:absolute;bottom:12px;left:12px;background:rgba(15,23,42,0.85);color:white;padding:3px 8px;border-radius:14px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;backdrop-filter:blur(4px);z-index:2;">📷 ${p.images.length} Photos</span>` : ''}
-              ${p.video_url ? `<span style="position:absolute;top:12px;left:12px;background:rgba(15,23,42,0.85);color:#38bdf8;padding:4px 9px;border-radius:20px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;backdrop-filter:blur(4px);z-index:2;">▶ Video Tour</span>` : ''}
+              ${p.video_url ? `<span style="position:absolute;top:46px;left:12px;background:rgba(15,23,42,0.85);color:#38bdf8;padding:4px 9px;border-radius:20px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;backdrop-filter:blur(4px);z-index:2;">▶ Video Tour</span>` : ''}
               <button class="card-heart-btn ${isSaved ? 'saved' : ''}" onclick="toggleSave(event, '${p.id}')" title="Save home">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
               </button>
             </div>
             <div class="card-body">
               <div class="card-price-row">
-                <div class="card-price">${p.priceLabel}</div>
+                <div class="card-price">${escapeDetailHtml(p.price_label || p.priceLabel || 'Contact for price')}</div>
                 <div class="card-price-sqft">₹${pricePerSqft.toLocaleString('en-IN')}/sqft</div>
               </div>
               <h3 class="card-title">${p.title}</h3>
@@ -1291,7 +1695,7 @@
                 ${p.brochure_url ? `<button type="button" class="btn btn-outline btn-sm" onclick="initiateBrochureDownload(event, '${p.id}')" style="border-color:#16a34a;color:#15803d;background:#f0fdf4;font-weight:700;display:inline-flex;align-items:center;gap:4px;" title="Download Project Brochure PDF">
                   📄 Brochure
                 </button>` : ''}
-                ${waNum ? `<a href="https://wa.me/${waNum}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(p.title)}%20(${p.priceLabel})" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="btn btn-whatsapp btn-sm" style="flex:0 0 46px;width:46px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;" title="Chat on WhatsApp" aria-label="Chat on WhatsApp">
+                ${waNum ? `<a href="https://wa.me/${waNum}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(p.title)}%20(${encodeURIComponent(p.price_label || p.priceLabel || 'Contact for price')})" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="btn btn-whatsapp btn-sm" style="flex:0 0 46px;width:46px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;" title="Chat on WhatsApp" aria-label="Chat on WhatsApp">
                   ${WHATSAPP_ICON_SVG}
                 </a>` : ''}
               </div>
@@ -1315,11 +1719,13 @@
     }
 
     function resetAllFilters() {
+      clearTimeout(liveSearchTimer);
       state.kind = "any";
       state.locality = "";
       state.bhk = "any";
       state.budget = "any";
       state.showingSavedOnly = false;
+      document.getElementById('searchForm')?.reset();
       document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
       document.querySelector('.nav-links a[data-tab-filter="any"]')?.classList.add('active');
       loadProperties();
@@ -1330,7 +1736,7 @@
       link.addEventListener('click', (e) => {
         e.preventDefault();
         const filterVal = link.getAttribute('data-tab-filter');
-        
+
         // Update active class on nav links
         document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
         link.classList.add('active');
@@ -1347,7 +1753,7 @@
         state.kind = filterVal;
         state.showingSavedOnly = false;
         loadProperties();
-        
+
         document.getElementById('propertiesSection')?.scrollIntoView({ behavior: 'smooth' });
       });
     });
@@ -1369,6 +1775,7 @@
     if (searchFormEl) {
       searchFormEl.addEventListener('submit', (e) => {
         e.preventDefault();
+        clearTimeout(liveSearchTimer);
         const statusSel = document.getElementById('statusSelect');
         if (statusSel) {
           state.kind = statusSel.value;
@@ -1383,6 +1790,21 @@
         loadProperties();
         document.getElementById('propertiesSection')?.scrollIntoView({ behavior: 'smooth' });
       });
+      const updateLiveSearch = () => {
+        state.locality = document.getElementById('locInput').value.trim();
+        state.bhk = document.getElementById('bhkSelect').value;
+        state.budget = document.getElementById('budgetSelect').value;
+        state.showingSavedOnly = false;
+        loadProperties();
+      };
+      document.getElementById('locInput').addEventListener('input', () => {
+        clearTimeout(liveSearchTimer);
+        liveSearchTimer = setTimeout(updateLiveSearch, 350);
+      });
+      ['bhkSelect', 'budgetSelect'].forEach(id => document.getElementById(id).addEventListener('change', () => {
+        clearTimeout(liveSearchTimer);
+        updateLiveSearch();
+      }));
     }
 
     document.getElementById('sortSelect').addEventListener('change', (e) => {
@@ -1401,7 +1823,7 @@
     // --- Single Property Detail Routing & View ---
     function formatDescription(desc) {
       if (!desc) {
-        return 'Stunning architectural residence situated in one of Bengaluru’s most coveted tech enclaves. Features expansive natural light, world-class specifications, and landscaped community spaces.';
+        return 'Contact our team for more information about this property.';
       }
 
       let safe = desc
@@ -1419,6 +1841,129 @@
 
       return safe;
     }
+
+    function escapeDetailHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      })[character]);
+    }
+
+    function safeDetailImageUrl(value) {
+      try {
+        const url = new URL(String(value || ''), location.origin);
+        return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : '';
+      } catch {
+        return '';
+      }
+    }
+
+    let detailGalleryImages = [];
+    let detailGalleryIndex = 0;
+    let detailSliderIndex = 0;
+
+    function showPropertyPhoto(index) {
+      if (!detailGalleryImages.length) return;
+      detailSliderIndex = (index + detailGalleryImages.length) % detailGalleryImages.length;
+      const track = document.getElementById('propertyPhotoTrack');
+      if (!track) return;
+      track.style.transform = `translateX(-${detailSliderIndex * 100}%)`;
+      track.querySelectorAll('.gallery-main-open').forEach((slide, i) => {
+        slide.inert = i !== detailSliderIndex;
+        slide.setAttribute('aria-hidden', String(i !== detailSliderIndex));
+      });
+      document.querySelectorAll('.property-photo-dot').forEach((dot, i) => {
+        dot.setAttribute('aria-pressed', String(i === detailSliderIndex));
+      });
+      document.getElementById('propertyPhotoCount').textContent = `${detailSliderIndex + 1} / ${detailGalleryImages.length} ${detailGalleryImages.length === 1 ? 'photo' : 'photos'}`;
+    }
+
+    function movePropertyPhoto(direction) {
+      showPropertyPhoto(detailSliderIndex + direction);
+    }
+
+    function scrollDetailTo(sectionId) {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function openGalleryLightbox(index) {
+      if (!detailGalleryImages.length) return;
+      detailGalleryIndex = (index + detailGalleryImages.length) % detailGalleryImages.length;
+      const lightbox = document.getElementById('photoLightbox');
+      const image = document.getElementById('lightboxImage');
+      if (!lightbox || !image) return;
+      image.src = detailGalleryImages[detailGalleryIndex];
+      image.alt = `Property photo ${detailGalleryIndex + 1}`;
+      document.getElementById('lightboxCount').textContent =
+        `${detailGalleryIndex + 1} / ${detailGalleryImages.length}`;
+      lightbox.classList.add('open');
+      lightbox.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function moveGalleryImage(direction) {
+      openGalleryLightbox(detailGalleryIndex + direction);
+    }
+
+    function closeGalleryLightbox() {
+      const lightbox = document.getElementById('photoLightbox');
+      if (!lightbox) return;
+      lightbox.classList.remove('open');
+      lightbox.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    async function shareCurrentProperty(id) {
+      const property = allProperties.find(item => String(item.id) === String(id));
+      const shareData = {
+        title: property?.title || document.title,
+        text: property ? `Take a look at ${property.title}.` : document.title,
+        url: window.location.href
+      };
+      try {
+        if (navigator.share) {
+          await navigator.share(shareData);
+        } else {
+          await navigator.clipboard.writeText(shareData.url);
+          showToast('Property link copied');
+        }
+      } catch (error) {
+        if (error.name !== 'AbortError') showToast('Unable to share this property. Please try again.');
+      }
+    }
+
+    function toggleDetailSave(event, id) {
+      event.stopPropagation();
+      const button = document.getElementById('detailSaveButton');
+      if (state.saved.has(id)) {
+        state.saved.delete(id);
+        if (button) {
+          button.classList.remove('saved');
+          button.setAttribute('aria-pressed', 'false');
+          button.querySelector('span').textContent = 'Save';
+        }
+        showToast('Property removed from favorites');
+      } else {
+        state.saved.add(id);
+        if (button) {
+          button.classList.add('saved');
+          button.setAttribute('aria-pressed', 'true');
+          button.querySelector('span').textContent = 'Saved';
+        }
+        showToast('Property saved to your favorites');
+      }
+      updateFavCounter();
+    }
+
+    document.addEventListener('keydown', event => {
+      if (!document.getElementById('photoLightbox')?.classList.contains('open')) return;
+      if (event.key === 'Escape') closeGalleryLightbox();
+      if (event.key === 'ArrowRight') moveGalleryImage(1);
+      if (event.key === 'ArrowLeft') moveGalleryImage(-1);
+    });
 
     async function openDetail(id) {
       location.hash = `#property/${id}`;
@@ -1441,82 +1986,486 @@
       }
 
       document.getElementById('homeSurface').style.display = 'none';
+      clearInterval(slideTimer);
       const detailView = document.getElementById('propertyDetailView');
       detailView.classList.add('active');
 
+      const areaMatch = /^([\d,]+(?:\.\d+)?)\s*(?:sq\.?\s*ft\.?|sqft|ft²)$/i.exec(String(p.area || '').trim());
+      const areaNum = areaMatch ? Number(areaMatch[1].replace(/,/g, '')) : 0;
+      const savedDetails = PropertyDetails.renderSavedDetails(p);
+      const priceLabel = escapeDetailHtml(p.price_label || p.priceLabel || 'Contact for price');
+      const isRent = /\/\s*month|monthly|rent/i.test(`${priceLabel} ${p.status || ''}`);
+      const pricePerSqft = areaNum > 0 && Number(p.price) > 0 ? Math.round((Number(p.price) * 100000) / areaNum) : null;
+      const pricePerSqftLabel = pricePerSqft === null
+        ? 'Ask for price'
+        : `≈ ₹${pricePerSqft.toLocaleString('en-IN')}/sqft${isRent ? '/month' : ''}`;
+      const configuration = Number(p.bhk) > 0 ? `${Number(p.bhk)} BHK` : escapeDetailHtml(p.kind || 'Property');
+      const safeTitle = escapeDetailHtml(p.title);
+      const safeStatus = escapeDetailHtml(p.status || 'Property');
+      const safeKind = escapeDetailHtml(p.kind || 'Property');
+      const safeLocation = escapeDetailHtml(p.location || p.locality || 'Bengaluru');
+      const safeListed = escapeDetailHtml(p.listed || '');
+      const safeArea = escapeDetailHtml(p.area || 'Not listed');
+      const safePossession = escapeDetailHtml(p.possession || 'Not listed');
+      const propertyKind = escapeDetailHtml(p.kind || 'Property');
+      const propertyStatus = escapeDetailHtml(p.status || 'Current listing');
+      const propertyIdArg = JSON.stringify(String(p.id)).replace(/"/g, '&quot;');
+      const sourceImages = (Array.isArray(p.images) && p.images.length ? p.images : [p.image])
+        .map(safeDetailImageUrl)
+        .filter(Boolean).slice(0, 4);
+      const galleryList = sourceImages.length ? sourceImages : ['https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1200&q=80'];
+      detailGalleryImages = galleryList;
+      detailSliderIndex = 0;
+      const gallerySlides = galleryList.map((src, index) => `
+        <button type="button" class="gallery-main-open" onclick="openGalleryLightbox(${index})" aria-label="Open property photo ${index + 1}" aria-hidden="${index !== 0}" ${index ? 'inert' : ''}>
+          <img src="${escapeDetailHtml(src)}" class="gallery-main" alt="${safeTitle} photo ${index + 1}" ${index ? 'loading="lazy"' : 'fetchpriority="high"'} draggable="false">
+        </button>
+      `).join('');
+
+      const amenitiesList = Array.isArray(p.amenities) ? p.amenities : [];
+      const amenitiesHtml = amenitiesList.map(item => {
+        const text = escapeDetailHtml(typeof item === 'string' ? item : (item.name || item.title || ''));
+        return `<div class="detail-highlight"><span style="color:var(--emerald);font-weight:800;">✓</span><span>${text}</span></div>`;
+      }).join('');
+      const photoGridHtml = galleryList.map((src, index) => `
+        <button type="button" class="detail-photo-button" onclick="openGalleryLightbox(${index})" aria-label="View property photo ${index + 1}">
+          <img src="${escapeDetailHtml(src)}" alt="${safeTitle} photo ${index + 1}" loading="lazy">
+        </button>
+      `).join('');
+      const brochureCard = p.brochure_url ? `
+        <div class="detail-card" style="background:#f0fdf4;border-color:#bbf7d0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;">
+            <div><h3 style="margin:0 0 4px;">Project brochure</h3><p style="font-size:13px;color:#475569;">Request the brochure for official floor plans and current pricing.</p></div>
+            <button type="button" class="btn btn-primary" onclick="initiateBrochureDownload(event,${propertyIdArg})">Download brochure</button>
+          </div>
+        </div>
+      ` : '';
+
       trackAnalytics('property_view', p.id);
-      document.getElementById('propertyDetailContent').innerHTML = PropertyDetails.render(p, {
-        whatsapp: siteSettings.whatsapp_number,
-        description: formatDescription(p.description || 'Contact Vasati Properties for more details about this property.')
+      document.getElementById('propertyDetailContent').innerHTML = `
+        <div class="detail-gallery-grid" role="region" aria-roledescription="carousel" aria-label="Property photos">
+          <div class="gallery-main-wrap" id="propertyPhotoSlider">
+            <div class="property-photo-track" id="propertyPhotoTrack">${gallerySlides}</div>
+            <span class="gallery-overlay">
+              <span class="card-status-badge" style="position:static;">${safeStatus}</span>
+              <span class="gallery-controls">
+                <button type="button" class="gallery-action" onclick="event.stopPropagation();shareCurrentProperty(${propertyIdArg})">↗ <span>Share</span></button>
+                <button type="button" class="gallery-action ${state.saved.has(p.id) ? 'saved' : ''}" id="detailSaveButton" aria-pressed="${state.saved.has(p.id)}" onclick="toggleDetailSave(event,${propertyIdArg})">♡ <span>${state.saved.has(p.id) ? 'Saved' : 'Save'}</span></button>
+              </span>
+            </span>
+            ${galleryList.length > 1 ? `
+              <button type="button" class="property-photo-arrow property-photo-prev" onclick="movePropertyPhoto(-1)" aria-label="Previous property photo">‹</button>
+              <button type="button" class="property-photo-arrow property-photo-next" onclick="movePropertyPhoto(1)" aria-label="Next property photo">›</button>
+              <div class="property-photo-dots" aria-label="Choose property photo">${galleryList.map((_, index) => `<button type="button" class="property-photo-dot" aria-label="Go to photo ${index + 1}" aria-pressed="${index === 0}" onclick="showPropertyPhoto(${index})"></button>`).join('')}</div>
+            ` : ''}
+            <span class="property-photo-count" id="propertyPhotoCount" role="status" aria-live="polite" aria-atomic="true">1 / ${galleryList.length} ${galleryList.length === 1 ? 'photo' : 'photos'}</span>
+          </div>
+        </div>
+
+        <div class="detail-header" style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin:0 0 20px;">
+          <div>
+            <span class="card-status-badge" style="position:static;margin-bottom:8px;">${safeStatus} · ${safeKind}</span>
+            <h1 style="font-size:clamp(24px,3vw,34px);font-weight:800;letter-spacing:-.8px;line-height:1.2;">${safeTitle}</h1>
+            <p style="margin-top:7px;color:var(--ink-muted);font-size:14px;">📍 ${safeLocation} · ${safeListed}</p>
+            ${(p.developer_name || p.project_details?.builder_name) ? `<p style="margin-top:5px;color:var(--ink-muted);font-size:13px;">By <strong style="color:var(--ink);">${escapeDetailHtml(p.developer_name || p.project_details?.builder_name)}</strong></p>` : ''}
+          </div>
+          <div class="detail-price-block" style="text-align:right;">
+            <span style="font-size:11px;color:var(--ink-muted);font-weight:700;">${isRent ? 'MONTHLY RENT' : 'LISTED PRICE'}</span>
+            <div style="font-size:clamp(24px,3vw,34px);font-weight:800;color:var(--ink);">${priceLabel}</div>
+            <div style="font-size:13px;color:var(--ink-muted);font-weight:600;">${pricePerSqftLabel}</div>
+          </div>
+        </div>
+
+        <div class="detail-card" style="padding:0;overflow:hidden;">
+          <div class="detail-summary-grid">
+            <div style="padding:16px 10px;text-align:center;border-right:1px solid var(--border);"><strong style="display:block;">${configuration}</strong><span style="font-size:12px;color:var(--ink-muted);">Configuration</span></div>
+            <div style="padding:16px 10px;text-align:center;border-right:1px solid var(--border);"><strong style="display:block;">${safePossession}</strong><span style="font-size:12px;color:var(--ink-muted);">Possession</span></div>
+            <div style="padding:16px 10px;text-align:center;border-right:1px solid var(--border);"><strong style="display:block;">${safeArea}</strong><span style="font-size:12px;color:var(--ink-muted);">Built-up area</span></div>
+            <div style="padding:16px 10px;text-align:center;"><strong style="display:block;">${pricePerSqftLabel}</strong><span style="font-size:12px;color:var(--ink-muted);">Approx. rate</span></div>
+          </div>
+        </div>
+
+        <nav class="detail-section-nav" aria-label="Property sections">
+          <button type="button" onclick="scrollDetailTo('detail-overview')">Overview / Home</button>
+          <button type="button" onclick="scrollDetailTo('detail-highlights')">Highlights</button>
+          <button type="button" onclick="scrollDetailTo('detail-about')">More about project</button>
+          <button type="button" onclick="scrollDetailTo('detail-floor-plans')">Floor plans & pricing</button>
+          <button type="button" onclick="scrollDetailTo('detail-photos')">Photos & videos</button>
+        </nav>
+
+        <div class="detail-layout">
+          <div>
+            <section id="detail-overview" class="detail-card detail-section">
+              <div class="detail-heading"><h3>Property Overview</h3><p>Key details for this listing.</p></div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:16px;text-align:center;">
+                <div style="background:#f8fafc;padding:14px;border-radius:10px;">
+                  <span style="font-size:12px;color:var(--ink-light);display:block;">Configuration</span>
+                  <strong style="font-size:16px;">${configuration}</strong>
+                </div>
+                <div style="background:#f8fafc;padding:14px;border-radius:10px;">
+                  <span style="font-size:12px;color:var(--ink-light);display:block;">Super Built-up</span>
+                  <strong style="font-size:16px;">${safeArea}</strong>
+                </div>
+                <div style="background:#f8fafc;padding:14px;border-radius:10px;">
+                  <span style="font-size:12px;color:var(--ink-light);display:block;">Bathrooms</span>
+                  <strong style="font-size:16px;">${p.baths > 0 ? `${p.baths} Baths` : 'Not listed'}</strong>
+                </div>
+                <div style="background:#f8fafc;padding:14px;border-radius:10px;">
+                  <span style="font-size:12px;color:var(--ink-light);display:block;">Possession</span>
+                  <strong style="font-size:16px;">${safePossession}</strong>
+                </div>
+              </div>
+            </section>
+
+            <section id="detail-highlights" class="detail-card detail-section">
+              <div class="detail-heading"><h3>Property highlights</h3><p>Features and amenities listed for this property.</p></div>
+              <div class="detail-highlights">
+                ${amenitiesHtml || `<div class="detail-highlight">No amenities have been added to this listing yet.</div>`}
+              </div>
+            </section>
+
+            <section id="detail-about" class="detail-card detail-section">
+              <div class="detail-heading"><h3>More about this property</h3><p>${propertyKind} · ${propertyStatus}</p></div>
+              <div class="property-description-box">${formatDescription(p.description)}</div>
+              ${savedDetails.facts ? `<div class="detail-highlights saved-project-facts">${savedDetails.facts}</div>` : ''}
+            </section>
+
+            <section id="detail-floor-plans" class="detail-card detail-section">
+              <div class="detail-heading"><h3>Floor plans & pricing</h3><p>Unit details currently available for this listing.</p></div>
+              ${savedDetails.plans ? `<div class="saved-floor-plans">${savedDetails.plans}</div>` : `              <div class="detail-plan-row">
+                <div>
+                  <strong style="font-size:16px;">${configuration} · ${safeArea}</strong>
+                  <p style="margin-top:4px;color:var(--ink-muted);font-size:12px;">${isRent ? 'Monthly rent' : 'Listed price'}</p>
+                  <strong style="display:block;margin-top:4px;font-size:20px;">${priceLabel}</strong>
+                </div>
+                ${p.brochure_url ? `<button type="button" class="btn btn-outline" onclick="initiateBrochureDownload(event,${propertyIdArg})">Request floor plan</button>` : `<button type="button" class="btn btn-outline" onclick="scrollDetailTo('sellerCard')">Ask seller for floor plan</button>`}
+              </div>
+              <p style="margin-top:12px;color:var(--ink-muted);font-size:12px;">A floor-plan image and unit-wise price breakdown are not available in this listing. Contact the seller for the latest details.</p>`}
+            </section>
+
+            ${brochureCard}
+
+            <section id="detail-photos" class="detail-card detail-section">
+              <div class="detail-heading"><h3>Photos & videos</h3><p>Project tour and property photos.</p></div>
+              <div class="detail-photo-grid">${photoGridHtml}</div>
+              ${p.video_url ? `
+                <div style="margin-top:22px;border-top:1px solid var(--border);padding-top:18px;">
+                  <h4 style="font-size:15px;font-weight:800;margin-bottom:12px;">Video walkthrough</h4>
+                  <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;background:#000;">
+                    <iframe src="${escapeDetailHtml(formatEmbedUrl(p.video_url))}" title="${safeTitle} video walkthrough" style="position:absolute;inset:0;width:100%;height:100%;border:0;" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                  </div>
+                </div>
+              ` : ''}
+            </section>
+          </div>
+
+          <!-- Sticky Schedule Visit / Lead Form -->
+          <aside class="booking-card" id="sellerCard">
+            <p style="color:var(--ink-muted);font-size:12px;font-weight:700;">CONTACT THE SELLER</p>
+            <h2 style="margin-top:4px;font-size:20px;font-weight:800;">Interested in this property?</h2>
+            <p style="margin-top:5px;color:var(--ink-muted);font-size:12px;">Ask about availability, floor plans, and the latest pricing.</p>
+            <div class="booking-price" style="margin-top:16px;">${priceLabel}</div>
+            ${p.brochure_url ? `<button type="button" class="btn btn-outline" onclick="initiateBrochureDownload(event,${propertyIdArg})" style="width:100%;margin-top:14px;margin-bottom:8px;border-color:#16a34a;color:#15803d;background:#f0fdf4;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;border-radius:10px;" title="Download PDF Brochure">📄 Download Project Brochure (PDF)</button>` : ''}
+
+            <form id="scheduleVisitForm" class="booking-form" style="margin-top:16px;">
+              <input type="hidden" name="property_id" value="${escapeDetailHtml(p.id)}">
+              <input type="hidden" name="property_title" value="${safeTitle}">
+
+              <label for="visitName" style="font-size:12px;font-weight:700;">Your Full Name *</label>
+              <input type="text" id="visitName" name="name" placeholder="E.g. Vikram Sharma" autocomplete="name" maxlength="120" required>
+
+              <label for="visitPhone" style="font-size:12px;font-weight:700;">Phone Number *</label>
+              <div style="display:grid;grid-template-columns:minmax(86px,0.35fr) minmax(0,1fr);gap:8px;">
+                <input type="tel" id="visitCountryCode" name="country_code" value="+91" inputmode="tel" pattern="[+][1-9][0-9]{0,3}" aria-label="Country calling code, default India plus 91" required>
+                <input type="tel" id="visitPhone" name="phone" placeholder="98765 43210" autocomplete="tel-national" inputmode="tel" required>
+              </div>
+
+              <label for="visitDate" style="font-size:12px;font-weight:700;">Preferred Inspection Date *</label>
+              <input type="date" id="visitDate" name="preferred_date" autocomplete="off" aria-describedby="visitScheduleHelp" required>
+
+              <label for="visitTime" style="font-size:12px;font-weight:700;">Preferred Inspection Time (IST) *</label>
+              <input type="time" id="visitTime" name="preferred_time" autocomplete="off" aria-describedby="visitScheduleHelp" required>
+              <p id="visitScheduleHelp" class="booking-help" aria-live="polite" aria-atomic="true">Enter your name and phone number, then choose a visit date and time.</p>
+
+              <div id="siteVisitCaptcha" aria-label="Security check"></div>
+              <p id="siteVisitCaptchaHelp" class="booking-help" role="status" aria-live="polite"></p>
+              <div id="siteVisitOtpStep" hidden>
+                <label for="visitOtpCode" style="font-size:12px;font-weight:700;">SMS verification code *</label>
+                <input type="text" id="visitOtpCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{4,10}" maxlength="10" aria-describedby="visitOtpStatus visitOtpCountdown">
+                <p id="visitOtpStatus" class="booking-help" role="status" aria-live="polite"></p>
+                <p id="visitOtpCountdown" class="booking-help" role="timer" aria-live="off"></p>
+                <button type="button" class="btn btn-outline btn-sm" id="resendVisitOtp" disabled>Resend code in 60s</button>
+                <button type="button" class="btn btn-primary" id="verifyVisitOtp" style="width:100%;margin-top:8px;">Verify &amp; Schedule Visit</button>
+              </div>
+              <div id="siteVisitSuccess" hidden role="status" aria-live="polite" style="padding:12px;border:1px solid #bbf7d0;border-radius:10px;background:#f0fdf4;color:#166534;font-size:13px;"></div>
+              <button type="submit" class="btn btn-primary" id="submitLeadBtn" style="width:100%;margin-top:6px;" aria-describedby="visitScheduleHelp" disabled>Verify Phone &amp; Schedule Visit</button>
+            </form>
+
+            ${String(siteSettings.whatsapp_number || '').replace(/[^0-9]/g, '') ? `<a href="https://wa.me/${String(siteSettings.whatsapp_number || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello, I would like to inquire about ${p.title} (${priceLabel})`)}" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:10px;margin-top:12px;">
+                ${WHATSAPP_ICON_SVG}
+                <span>Direct WhatsApp Chat</span>
+              </a>` : ''}
+            <p style="display:flex;gap:7px;margin-top:14px;color:var(--ink-muted);font-size:11px;line-height:1.5;"><span>🔒</span><span>Your details are used only to respond to this enquiry.</span></p>
+          </aside>
+        </div>
+
+        <div class="photo-lightbox" id="photoLightbox" role="dialog" aria-modal="true" aria-label="Property photos" aria-hidden="true" onclick="if(event.target===this)closeGalleryLightbox()">
+          <button type="button" class="lightbox-close" onclick="closeGalleryLightbox()" aria-label="Close photo viewer">✕</button>
+          ${galleryList.length > 1 ? `<button type="button" class="lightbox-arrow lightbox-prev" onclick="moveGalleryImage(-1)" aria-label="Previous photo">‹</button><button type="button" class="lightbox-arrow lightbox-next" onclick="moveGalleryImage(1)" aria-label="Next photo">›</button>` : ''}
+          <img id="lightboxImage" src="${escapeDetailHtml(galleryList[0])}" alt="${safeTitle}">
+          <span class="lightbox-count" id="lightboxCount">1 / ${galleryList.length}</span>
+        </div>
+      `;
+
+      const photoSlider = document.getElementById('propertyPhotoSlider');
+      photoSlider.addEventListener('keydown', event => {
+        if (document.getElementById('photoLightbox')?.classList.contains('open')) return;
+        if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+        event.preventDefault();
+        movePropertyPhoto(event.key === 'ArrowLeft' ? -1 : 1);
       });
-      PropertyDetails.bind(document.getElementById('propertyDetailContent'), p, {
-        brochure: event => initiateBrochureDownload(event, p.id),
-        toast: showToast,
-        track: () => trackAnalytics('enquiry', p.id)
-      });
+      let photoTouchStart = null;
+      photoSlider.addEventListener('touchstart', event => {
+        photoTouchStart = event.touches.length === 1
+          ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null;
+      }, { passive: true });
+      photoSlider.addEventListener('touchend', event => {
+        if (!photoTouchStart || !event.changedTouches.length) return;
+        const dx = event.changedTouches[0].clientX - photoTouchStart.x;
+        const dy = event.changedTouches[0].clientY - photoTouchStart.y;
+        photoTouchStart = null;
+        if (Math.abs(dx) < 45 || Math.abs(dx) <= Math.abs(dy) || detailGalleryImages.length < 2) return;
+        event.preventDefault();
+        movePropertyPhoto(dx < 0 ? 1 : -1);
+      }, { passive: false });
+      photoSlider.addEventListener('touchcancel', () => { photoTouchStart = null; });
 
       // Form handler
       const visitForm = document.getElementById('scheduleVisitForm');
-      const btn = document.getElementById('submitLeadBtn');
-      let submittingVisit = false;
-      const indiaDateTime = () => {
-        const parts = new Intl.DateTimeFormat('en-CA', {
-          timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit',
-          hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
-        }).formatToParts(new Date());
-        const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
-        return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}`;
+      if (activeSiteVisitVerificationId) cancelVerification(activeSiteVisitVerificationId, 'SITE_VISIT');
+      activeSiteVisitVerificationId = '';
+      const visitNameInput = visitForm.querySelector('[name="name"]');
+      const visitPhoneInput = visitForm.querySelector('[name="phone"]');
+      const visitCountryCodeInput = visitForm.querySelector('[name="country_code"]');
+      const visitDateInput = visitForm.querySelector('[name="preferred_date"]');
+      const visitTimeInput = visitForm.querySelector('[name="preferred_time"]');
+      const submitLeadButton = document.getElementById('submitLeadBtn');
+      const visitScheduleHelp = document.getElementById('visitScheduleHelp');
+      const visitOtpStep = document.getElementById('siteVisitOtpStep');
+      const visitOtpStatus = document.getElementById('visitOtpStatus');
+      const visitOtpCode = document.getElementById('visitOtpCode');
+      const visitSuccess = document.getElementById('siteVisitSuccess');
+      let isSubmittingVisit = false;
+      const istDateFormatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit'
+      });
+      const istTimeFormatter = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+      });
+      const formatDateParts = (formatter, date) => Object.fromEntries(
+        formatter.formatToParts(date).filter(part => part.type !== 'literal').map(part => [part.type, part.value])
+      );
+      const getISTDate = date => {
+        const parts = formatDateParts(istDateFormatter, date);
+        return `${parts.year}-${parts.month}-${parts.day}`;
       };
-      function updateVisitSubmitState() {
-        const now = indiaDateTime();
-        visitForm.preferred_date.min = now.slice(0, 10);
-        const selected = `${visitForm.preferred_date.value}T${visitForm.preferred_time.value}`;
-        visitForm.preferred_time.setCustomValidity(
-          visitForm.preferred_date.value && visitForm.preferred_time.value && selected <= now
-            ? 'Choose a future visit date and time (IST).' : ''
-        );
-        btn.disabled = submittingVisit || !visitForm.name.value.trim() || !visitForm.phone.value.trim() || !visitForm.checkValidity();
-      }
-      visitForm.addEventListener('input', updateVisitSubmitState);
-      visitForm.addEventListener('change', updateVisitSubmitState);
+      const getISTTime = date => {
+        const parts = formatDateParts(istTimeFormatter, date);
+        return `${parts.hour}:${parts.minute}`;
+      };
+      visitDateInput.value = '';
+      visitTimeInput.value = '';
+      const getVisitFormStatus = () => {
+        const now = new Date();
+        const today = getISTDate(now);
+        const nextMinute = new Date(now.getTime() + 60_000);
+        const selectedDate = visitDateInput.value;
+        const selectedTime = visitTimeInput.value;
+        const minimumTime = getISTTime(nextMinute);
+        visitDateInput.min = today;
+        visitTimeInput.min = selectedDate === today ? minimumTime : '';
+        if (!visitNameInput.value.trim()) {
+          return { ready: false, message: 'Enter your full name to continue.' };
+        }
+        if (!visitCountryCodeInput.checkValidity() || !visitPhoneInput.value.replace(/\D/g, '').length) {
+          return { ready: false, message: 'Enter a country calling code and phone number.' };
+        }
+        if (!selectedDate) {
+          return { ready: false, message: 'Choose your preferred inspection date.' };
+        }
+        if (selectedDate < today) {
+          return { ready: false, message: 'Choose today or a future date for your inspection.' };
+        }
+        if (!selectedTime) {
+          return { ready: false, message: 'Choose your preferred inspection time.' };
+        }
+        if (selectedDate === today &&
+            (getISTDate(nextMinute) !== today || selectedTime < minimumTime)) {
+          return {
+            ready: false,
+            message: `That time has passed. Choose a time at or after ${minimumTime} IST, or select a future date.`
+          };
+        }
+        if (!turnstileSiteKey) {
+          return { ready: false, message: 'Security verification is not configured. Please contact the site administrator.' };
+        }
+        if (!siteVisitCaptchaToken) {
+          return { ready: false, message: 'Complete the security check before requesting a code.' };
+        }
+        return { ready: true, message: 'Your details are ready. Verify your phone to schedule the site visit.' };
+      };
+      const updateVisitSubmitState = () => {
+        const status = getVisitFormStatus();
+        submitLeadButton.disabled = isSubmittingVisit || !status.ready || Boolean(activeSiteVisitVerificationId);
+        const message = isSubmittingVisit ? 'Submitting your site visit request...' : status.message;
+        if (visitScheduleHelp.textContent !== message) visitScheduleHelp.textContent = message;
+      };
+      const invalidateVisitCode = () => {
+        if (activeSiteVisitVerificationId) {
+          fetch('/api/verification/cancel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ verification_id: activeSiteVisitVerificationId, purpose: 'SITE_VISIT' })
+          }).catch(() => {});
+          activeSiteVisitVerificationId = '';
+          clearInterval(otpTimers.visit.expiry);
+          clearInterval(otpTimers.visit.resend);
+          visitOtpStep.hidden = true;
+          visitOtpCode.value = '';
+          submitLeadButton.hidden = false;
+          visitScheduleHelp.textContent = 'Your details changed. Request a new verification code.';
+        }
+        updateVisitSubmitState();
+      };
+      [visitNameInput, visitCountryCodeInput, visitPhoneInput, visitDateInput, visitTimeInput].forEach(input => {
+        input.addEventListener('input', invalidateVisitCode);
+        input.addEventListener('change', invalidateVisitCode);
+      });
+      renderTurnstileWidget('siteVisitCaptcha', 'site_visit');
       updateVisitSubmitState();
+
       visitForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (isSubmittingVisit || activeSiteVisitVerificationId) return;
+        const visitStatus = getVisitFormStatus();
+        if (!visitStatus.ready) {
+          visitForm.reportValidity();
+          updateVisitSubmitState();
+          if (visitNameInput.value.trim() && visitPhoneInput.value.trim() &&
+              visitDateInput.value && visitTimeInput.value) {
+            showToast(visitStatus.message);
+          }
+          return;
+        }
+        isSubmittingVisit = true;
         updateVisitSubmitState();
-        if (btn.disabled) return;
-        submittingVisit = true;
-        btn.disabled = true;
-        btn.textContent = 'Submitting Request...';
+        submitLeadButton.textContent = 'Sending verification code...';
 
         try {
           const payload = {
             property_id: p.id,
-            property_title: p.title,
-            name: visitForm.name.value.trim(),
-            phone: visitForm.phone.value.trim(),
-            message: `Requested visit date: ${visitForm.preferred_date.value}; time: ${visitForm.preferred_time.value} IST`,
+            name: visitNameInput.value.trim(),
+            phone: `${visitCountryCodeInput.value.trim()}${visitPhoneInput.value.replace(/\D/g, '')}`,
+            preferred_date: visitDateInput.value,
+            preferred_time: visitTimeInput.value,
+            captcha_token: siteVisitCaptchaToken,
             analytics_consent: localStorage.getItem('vasati_analytics_consent') === 'accepted'
           };
 
-          const res = await fetch('/api/enquiries', {
+          const res = await fetch('/api/site-visits/verification/start', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
           const resData = await res.json();
-          if (resData.success) {
-            trackAnalytics('enquiry', p.id);
-            showToast('✅ Site visit request sent! Our agent will call to confirm your preferred date and time.');
-            visitForm.reset();
-          } else {
-            showToast('❌ ' + (resData.message || 'Error scheduling visit'));
-          }
-        } catch(err) {
-          showToast('❌ Connection error');
+          if (!res.ok) throw new Error(resData.message || 'Could not send the verification code.');
+          activeSiteVisitVerificationId = resData.verificationId;
+          visitOtpStep.hidden = false;
+          submitLeadButton.hidden = true;
+          visitOtpStatus.textContent = `A code was sent to ${resData.maskedDestination}. Enter it to confirm this visit.`;
+          visitOtpCode.focus();
+          startOtpCountdown('visitOtpCountdown', 'resendVisitOtp', resData.expiresInSeconds, resData.resendAfterSeconds, 'visit');
+          resetTurnstileWidget('site_visit');
+        } catch (error) {
+          visitScheduleHelp.textContent = error.message || 'Could not send the verification code.';
+          resetTurnstileWidget('site_visit');
         } finally {
-          submittingVisit = false;
+          isSubmittingVisit = false;
+          submitLeadButton.textContent = 'Verify Phone & Schedule Visit';
           updateVisitSubmitState();
-          btn.textContent = 'Schedule Site Visit';
+        }
+      });
+
+      document.getElementById('resendVisitOtp').addEventListener('click', async () => {
+        const button = document.getElementById('resendVisitOtp');
+        if (!activeSiteVisitVerificationId || button.disabled) return;
+        button.disabled = true;
+        try {
+          const response = await fetch('/api/site-visits/verification/resend', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ verification_id: activeSiteVisitVerificationId })
+          });
+          const result = await response.json();
+          if (!response.ok) {
+            const error = new Error(result.message || 'Could not resend the code.');
+            error.status = response.status;
+            error.retryAfter = Number(response.headers.get('Retry-After') || 0);
+            throw error;
+          }
+          visitOtpStatus.textContent = 'A new code was sent. The previous code will no longer work.';
+          startOtpCountdown('visitOtpCountdown', 'resendVisitOtp', result.expiresInSeconds, result.resendAfterSeconds, 'visit');
+        } catch (error) {
+          visitOtpStatus.textContent = error.message || 'Could not resend the code.';
+          const seconds = Number(error.retryAfter || 0);
+          if (seconds > 0) startOtpCountdown('visitOtpCountdown', 'resendVisitOtp', null, seconds, 'visit');
+          else if (error.status === 400) invalidateVisitCode();
+          else button.disabled = false;
+        }
+      });
+
+      document.getElementById('verifyVisitOtp').addEventListener('click', async () => {
+        const verifyButton = document.getElementById('verifyVisitOtp');
+        if (!activeSiteVisitVerificationId || isSubmittingVisit) return;
+        if (!/^[0-9]{4,10}$/.test(visitOtpCode.value.trim())) {
+          visitOtpStatus.textContent = 'Enter the verification code from your SMS.';
+          visitOtpCode.focus();
+          return;
+        }
+        isSubmittingVisit = true;
+        verifyButton.disabled = true;
+        verifyButton.textContent = 'Verifying...';
+        try {
+          const response = await fetch('/api/site-visits/verification/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              verification_id: activeSiteVisitVerificationId,
+              code: visitOtpCode.value.trim(),
+              property_id: p.id,
+              name: visitNameInput.value.trim(),
+              phone: `${visitCountryCodeInput.value.trim()}${visitPhoneInput.value.replace(/\D/g, '')}`,
+              preferred_date: visitDateInput.value,
+              preferred_time: visitTimeInput.value
+            })
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.message || 'Could not verify the code.');
+          clearInterval(otpTimers.visit.expiry);
+          clearInterval(otpTimers.visit.resend);
+          visitOtpStep.hidden = true;
+          submitLeadButton.hidden = true;
+          visitSuccess.hidden = false;
+          visitSuccess.textContent = `Site visit request confirmed. Reference ${result.referenceId}; phone ${result.maskedPhone}; ${visitDateInput.value} at ${visitTimeInput.value} IST. Our coordinator will contact you to confirm the visit.`;
+          visitForm.querySelectorAll('input,button').forEach(input => { input.disabled = true; });
+          trackAnalytics('enquiry', p.id);
+        } catch (error) {
+          visitOtpStatus.textContent = error.message || 'Verification failed. Check the code or request a new one.';
+        } finally {
+          isSubmittingVisit = false;
+          verifyButton.disabled = false;
+          verifyButton.textContent = 'Verify & Schedule Visit';
+          updateVisitSubmitState();
         }
       });
     }
@@ -1533,6 +2482,8 @@
       } else {
         document.getElementById('propertyDetailView').classList.remove('active');
         document.getElementById('homeSurface').style.display = 'block';
+        requestAnimationFrame(syncFeaturedHeight);
+        startSlideAutoPlay();
       }
     }
     window.addEventListener('hashchange', handleRoute);
@@ -1556,29 +2507,75 @@
       document.getElementById('brochurePropertyId').value = p.id;
       document.getElementById('brochurePropertyTitle').value = p.title;
       document.getElementById('brochureModalPropertyTitle').textContent = `${p.title} · ${p.location}`;
+      lastBrochureTrigger = event?.currentTarget || document.activeElement;
+      if (activeBrochureVerificationId) cancelVerification(activeBrochureVerificationId, 'BROCHURE');
       activeBrochureVerificationId = '';
-      clearInterval(brochureResendTimer);
+      clearInterval(otpTimers.brochure.resend);
+      clearInterval(otpTimers.brochure.expiry);
       document.getElementById('brochureOtpStep').hidden = true;
       document.getElementById('brochureVerifyBtn').hidden = true;
       document.getElementById('brochureDownloadAction').hidden = true;
       document.getElementById('brochureSubmitBtn').hidden = false;
       document.getElementById('brochureLeadForm').reset();
+      document.getElementById('brochureOtpCode').value = '';
+      document.getElementById('brochureOtpStatus').textContent = '';
+      document.getElementById('brochureOtpCountdown').textContent = '';
+      resetTurnstileWidget('brochure');
+      updateBrochureContactRequirements();
 
       const modal = document.getElementById('brochureModal');
       modal.style.display = 'flex';
-      fetch('/api/customer/session').then(response => response.json()).then(session => {
-        if (session.authenticated) {
-          if (session.name) document.getElementById('brochureLeadName').value = session.name;
-          if (session.email) document.getElementById('brochureLeadEmail').value = session.email;
-        }
-      }).catch(() => {});
+      document.body.dataset.previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
       setTimeout(() => {
         document.getElementById('brochureLeadName')?.focus();
       }, 50);
     }
 
     function closeBrochureModal() {
-      document.getElementById('brochureModal').style.display = 'none';
+      const modal = document.getElementById('brochureModal');
+      modal.style.display = 'none';
+      document.body.style.overflow = document.body.dataset.previousOverflow || '';
+      if (activeBrochureVerificationId) cancelVerification(activeBrochureVerificationId, 'BROCHURE');
+      activeBrochureVerificationId = '';
+      clearInterval(otpTimers.brochure.resend);
+      clearInterval(otpTimers.brochure.expiry);
+      lastBrochureTrigger?.focus?.();
+    }
+
+    function cancelVerification(verificationId, purpose) {
+      fetch('/api/verification/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ verification_id: verificationId, purpose })
+      }).catch(() => {});
+    }
+
+    function updateBrochureContactRequirements() {
+      const method = document.querySelector('input[name="verification_method"]:checked')?.value || 'email';
+      const email = document.getElementById('brochureLeadEmail');
+      const phone = document.getElementById('brochureLeadPhone');
+      email.required = method === 'email';
+      phone.required = method === 'sms';
+      email.setAttribute('aria-required', String(email.required));
+      phone.setAttribute('aria-required', String(phone.required));
+      document.getElementById('brochureLeadEmailLabel').textContent = `Email address${email.required ? ' *' : ' (optional)'}`;
+      document.getElementById('brochureLeadPhoneLabel').textContent = `Phone number${phone.required ? ' *' : ' (optional)'}`;
+    }
+
+    function invalidateBrochureCode() {
+      if (!activeBrochureVerificationId) return;
+      cancelVerification(activeBrochureVerificationId, 'BROCHURE');
+      activeBrochureVerificationId = '';
+      clearInterval(otpTimers.brochure.resend);
+      clearInterval(otpTimers.brochure.expiry);
+      document.getElementById('brochureOtpStep').hidden = true;
+      document.getElementById('brochureVerifyBtn').hidden = true;
+      document.getElementById('brochureDownloadAction').hidden = true;
+      document.getElementById('brochureSubmitBtn').hidden = false;
+      document.getElementById('brochureOtpCode').value = '';
+      document.getElementById('brochureOtpStatus').textContent = 'Your contact details changed. Request a new code.';
+      resetTurnstileWidget('brochure');
     }
 
     document.getElementById('brochureModal').addEventListener('click', (e) => {
@@ -1586,24 +2583,20 @@
         closeBrochureModal();
       }
     });
-
-    function beginBrochureResendCooldown(seconds) {
-      const resendButton = document.getElementById('resendBrochureOtp');
-      let remaining = seconds;
-      clearInterval(brochureResendTimer);
-      resendButton.disabled = true;
-      resendButton.textContent = `Resend code in ${remaining}s`;
-      brochureResendTimer = setInterval(() => {
-        remaining -= 1;
-        if (remaining <= 0) {
-          clearInterval(brochureResendTimer);
-          resendButton.disabled = false;
-          resendButton.textContent = 'Resend code';
-        } else {
-          resendButton.textContent = `Resend code in ${remaining}s`;
-        }
-      }, 1000);
-    }
+    document.getElementById('brochureModal').addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeBrochureModal();
+    });
+    document.querySelectorAll('input[name="verification_method"]').forEach(input => {
+      input.addEventListener('change', () => {
+        updateBrochureContactRequirements();
+        invalidateBrochureCode();
+      });
+    });
+    ['brochureLeadName', 'brochureLeadEmail', 'brochureLeadPhone', 'brochurePrivacyConsent'].forEach(id => {
+      document.getElementById(id).addEventListener('input', invalidateBrochureCode);
+      document.getElementById(id).addEventListener('change', invalidateBrochureCode);
+    });
+    document.getElementById('brochureLeadForm').addEventListener('submit', event => event.preventDefault());
 
     function trackAnalytics(eventName, propertyId = '', source = '') {
       if (localStorage.getItem('vasati_analytics_consent') !== 'accepted') return;
@@ -1643,8 +2636,10 @@
         const response = await fetch('/api/public-config');
         const config = await response.json();
         analyticsMeasurementId = config.analyticsMeasurementId || '';
+        configureTurnstile(config.turnstileSiteKey);
       } catch {
         analyticsMeasurementId = '';
+        configureTurnstile('');
       }
       const consent = localStorage.getItem('vasati_analytics_consent');
       if (consent === 'accepted') enableGoogleAnalytics();
@@ -1712,7 +2707,10 @@
       if (link && !link.hidden) trackAnalytics('social_click', '', link.id);
     });
 
-    document.getElementById('brochureSubmitBtn').addEventListener('click', async () => {
+    let isStartingBrochureVerification = false;
+    let isCheckingBrochureCode = false;
+
+    async function sendBrochureCode() {
       const btn = document.getElementById('brochureSubmitBtn');
       const propId = document.getElementById('brochurePropertyId').value;
       const name = document.getElementById('brochureLeadName').value.trim();
@@ -1720,13 +2718,16 @@
       const phone = document.getElementById('brochureLeadPhone').value.trim();
       const method = document.querySelector('input[name="verification_method"]:checked')?.value;
 
+      if (isStartingBrochureVerification || activeBrochureVerificationId) return;
+      updateBrochureContactRequirements();
       if (!document.getElementById('brochureLeadForm').reportValidity()) return;
-      if (!document.getElementById('brochurePrivacyConsent').checked) {
-        showToast('Please accept the privacy notice to continue.');
+      if (!brochureCaptchaToken) {
+        document.getElementById('brochureCaptchaHelp').textContent = 'Complete the security check before requesting a code.';
         return;
       }
+      isStartingBrochureVerification = true;
       btn.disabled = true;
-      btn.textContent = 'Sending verification code...';
+      btn.textContent = 'Sending verification code…';
       try {
         const response = await fetch('/api/brochures/verification/start', {
           method: 'POST',
@@ -1738,6 +2739,7 @@
             phone,
             method,
             privacy_consent: true,
+            captcha_token: brochureCaptchaToken,
             analytics_consent: localStorage.getItem('vasati_analytics_consent') === 'accepted'
           })
         });
@@ -1747,20 +2749,26 @@
         document.getElementById('brochureOtpStep').hidden = false;
         document.getElementById('brochureVerifyBtn').hidden = false;
         document.getElementById('brochureSubmitBtn').hidden = true;
-        document.getElementById('brochureOtpStatus').textContent = `A code was sent using ${method === 'sms' ? 'SMS' : 'email'}. It expires in 10 minutes.`;
+        document.getElementById('brochureOtpStatus').textContent = `A code was sent to ${result.maskedDestination} by ${method === 'sms' ? 'SMS' : 'email'}.`;
         document.getElementById('brochureOtpCode').focus();
-        beginBrochureResendCooldown(result.resendAfterSeconds || 60);
+        startOtpCountdown('brochureOtpCountdown', 'resendBrochureOtp', result.expiresInSeconds, result.resendAfterSeconds, 'brochure');
+        resetTurnstileWidget('brochure');
       } catch (error) {
         document.getElementById('brochureOtpStatus').textContent = error.message || 'Could not send the verification code.';
-        showToast(error.message || 'Could not send verification code.');
+        document.getElementById('brochureCaptchaHelp').textContent = error.message || 'Could not send the verification code.';
+        resetTurnstileWidget('brochure');
       } finally {
+        isStartingBrochureVerification = false;
         btn.disabled = false;
         btn.textContent = 'Send verification code';
       }
-    });
+    }
+
+    document.getElementById('brochureSubmitBtn').addEventListener('click', sendBrochureCode);
 
     document.getElementById('resendBrochureOtp').addEventListener('click', async () => {
       const resendButton = document.getElementById('resendBrochureOtp');
+      if (!activeBrochureVerificationId || resendButton.disabled) return;
       resendButton.disabled = true;
       try {
         const response = await fetch('/api/brochures/verification/resend', {
@@ -1769,31 +2777,46 @@
           body: JSON.stringify({ verification_id: activeBrochureVerificationId })
         });
         const result = await response.json();
-        if (!response.ok) throw new Error(result.message || 'Could not resend code.');
-        document.getElementById('brochureOtpStatus').textContent = 'A new verification code was sent.';
-        beginBrochureResendCooldown(result.resendAfterSeconds || 60);
+        if (!response.ok) {
+          const error = new Error(result.message || 'Could not resend code.');
+          error.status = response.status;
+          error.retryAfter = Number(response.headers.get('Retry-After') || 0);
+          throw error;
+        }
+        document.getElementById('brochureOtpStatus').textContent = 'A new code was sent. The previous code will no longer work.';
+        startOtpCountdown('brochureOtpCountdown', 'resendBrochureOtp', result.expiresInSeconds, result.resendAfterSeconds, 'brochure');
       } catch (error) {
         document.getElementById('brochureOtpStatus').textContent = error.message || 'Could not resend code.';
-        if (error.message.includes('Wait ')) {
-          const seconds = Number(error.message.match(/\d+/)?.[0]) || 60;
-          beginBrochureResendCooldown(seconds);
-        } else {
-          resendButton.disabled = false;
-        }
+        if (error.retryAfter) startOtpCountdown('brochureOtpCountdown', 'resendBrochureOtp', null, error.retryAfter, 'brochure');
+        else if (error.status === 400) invalidateBrochureCode();
+        else resendButton.disabled = false;
       }
     });
 
-    document.getElementById('brochureVerifyBtn').addEventListener('click', async () => {
+    async function verifyBrochureCode() {
       const verifyButton = document.getElementById('brochureVerifyBtn');
+      if (isCheckingBrochureCode || !activeBrochureVerificationId) return;
+      if (!/^[0-9]{4,10}$/.test(document.getElementById('brochureOtpCode').value.trim())) {
+        document.getElementById('brochureOtpStatus').textContent = 'Enter the verification code from your selected contact method.';
+        document.getElementById('brochureOtpCode').focus();
+        return;
+      }
+      isCheckingBrochureCode = true;
       verifyButton.disabled = true;
-      verifyButton.textContent = 'Checking code...';
+      verifyButton.textContent = 'Verifying & preparing download…';
       try {
         const response = await fetch('/api/brochures/verification/complete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             verification_id: activeBrochureVerificationId,
-            code: document.getElementById('brochureOtpCode').value.trim()
+            code: document.getElementById('brochureOtpCode').value.trim(),
+            property_id: document.getElementById('brochurePropertyId').value,
+            name: document.getElementById('brochureLeadName').value.trim(),
+            email: document.getElementById('brochureLeadEmail').value.trim(),
+            phone: document.getElementById('brochureLeadPhone').value.trim(),
+            method: document.querySelector('input[name="verification_method"]:checked')?.value,
+            privacy_consent: document.getElementById('brochurePrivacyConsent').checked
           })
         });
         const result = await response.json();
@@ -1802,14 +2825,28 @@
         download.href = result.downloadUrl;
         download.hidden = false;
         verifyButton.hidden = true;
-        document.getElementById('brochureOtpStatus').textContent = 'Contact verified. Your secure download link expires in 5 minutes and works once.';
+        document.getElementById('brochureOtpStatus').textContent = `${result.verifiedMethod === 'sms' ? 'Phone' : 'Email'} verified (${result.maskedDestination}). Your private download link expires in 5 minutes and works once.`;
+        clearInterval(otpTimers.brochure.expiry);
+        clearInterval(otpTimers.brochure.resend);
+        activeBrochureVerificationId = '';
+        document.getElementById('brochureLeadForm').querySelectorAll('input').forEach(input => { input.disabled = true; });
         trackAnalytics('verification_completed', document.getElementById('brochurePropertyId').value);
       } catch (error) {
         document.getElementById('brochureOtpStatus').textContent = error.message || 'Verification failed.';
       } finally {
-        verifyButton.disabled = false;
-        verifyButton.textContent = 'Verify code';
+        isCheckingBrochureCode = false;
+        if (!verifyButton.hidden) {
+          verifyButton.disabled = false;
+          verifyButton.textContent = 'Verify & Download Brochure';
+        }
       }
+    }
+
+    document.getElementById('brochureVerifyBtn').addEventListener('click', verifyBrochureCode);
+    document.getElementById('brochureLeadForm').addEventListener('submit', event => {
+      event.preventDefault();
+      if (activeBrochureVerificationId) verifyBrochureCode();
+      else sendBrochureCode();
     });
 
     document.getElementById('brochureDownloadAction').addEventListener('click', () => {
@@ -1823,7 +2860,10 @@
     });
     document.getElementById('mobTabSearch').addEventListener('click', () => {
       location.hash = "";
-      document.getElementById('propertiesSection')?.scrollIntoView({ behavior: 'smooth' });
+      requestAnimationFrame(() => {
+        document.getElementById('searchForm')?.scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('locInput')?.focus({ preventScroll: true });
+      });
     });
     document.getElementById('mobTabSaved').addEventListener('click', () => {
       location.hash = "";

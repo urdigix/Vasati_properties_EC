@@ -291,6 +291,7 @@
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
   </style>
+  <link rel="stylesheet" href="/admin-responsive.css">
 </head>
 <body>
   <!-- Sidebar -->
@@ -442,10 +443,6 @@
         <form id="settingsForm" style="padding:24px;">
           <h3 style="font-size:15px;color:#38bdf8;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px;">1. Hero Banner Content</h3>
           <div class="form-grid" style="margin-bottom:24px;">
-            <div class="form-group form-full">
-              <label>Hero Tagline / Pill</label>
-              <input type="text" id="settingHeroTag" placeholder="E.g. ✨ Premium Bengaluru Real Estate Portfolio">
-            </div>
             <div class="form-group form-full">
               <label>Main Headline Title</label>
               <input type="text" id="settingHeroTitle" placeholder="E.g. Find Your Dream Space in the Silicon Valley of India">
@@ -755,6 +752,7 @@
               <span id="galleryCountBadge" style="font-size:12px;font-weight:700;color:#38bdf8;background:rgba(56,189,248,0.12);padding:2px 8px;border-radius:12px;">0 photos</span>
             </div>
             <div style="background:#0c1220;border:1px dashed var(--card-border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px;">
+              <p style="margin:0;font-size:12px;color:var(--muted);">Add up to 4 photos for the property image slider. Photos appear in the order shown below; the first photo is the cover.</p>
               <div id="galleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(110px, 1fr));gap:10px;"></div>
               <div style="display:flex;align-items:center;gap:10px;background:#111827;padding:10px 14px;border-radius:8px;border:1px solid var(--card-border);flex-wrap:wrap;">
                 <label class="btn btn-primary btn-sm" style="cursor:pointer;margin:0;display:inline-flex;align-items:center;gap:6px;font-weight:700;white-space:nowrap;">
@@ -834,26 +832,6 @@
               <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
                 <input type="text" id="customAmenityInput" placeholder="Add custom amenity (e.g. 🏸 Badminton Court, ☕ Sky Lounge)..." style="flex:1;font-size:12.5px;padding:8px 12px;">
                 <button type="button" class="btn btn-outline btn-sm" id="addCustomAmenityBtn" style="white-space:nowrap;font-size:12px;">➕ Add Amenity</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Proximity & Travel Times Editor -->
-          <div class="form-group form-full">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
-              <label style="margin:0;">Proximity & Travel Times</label>
-              <button type="button" class="btn btn-outline btn-sm" id="addProximityRowBtn" style="font-size:11.5px;padding:4px 10px;color:#38bdf8;border-color:#38bdf8;">➕ Add Location</button>
-            </div>
-            
-            <div style="background:#0c1220;border:1px solid var(--card-border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;">
-              <div style="font-size:12px;color:#38bdf8;display:flex;align-items:center;gap:6px;">
-                ✏️ <span>Directly edit or rewrite landmark names and travel times below:</span>
-              </div>
-              <div id="proximityRowsContainer" style="display:flex;flex-direction:column;gap:8px;">
-                <!-- Populated dynamically -->
-              </div>
-              <div style="font-size:11.5px;color:var(--muted);margin-top:2px;">
-                💡 Specify landmark or destination name (e.g. 🚇 Metro Station) and distance or commute duration (e.g. 5 Minutes Walk).
               </div>
             </div>
           </div>
@@ -1248,51 +1226,6 @@
       renderAmenitiesUI();
     }
 
-    // Proximity State & Defaults
-    const defaultProximityList = [
-      { title: '🚇 Metro Station', time: '5 Minutes Walk' },
-      { title: '🏢 IT Tech Parks', time: '10 Minutes Drive' },
-      { title: '🏥 Multi-Specialty Hospital', time: '8 Minutes Drive' }
-    ];
-
-    let currentProximity = [];
-
-    function renderProximityUI() {
-      const container = document.getElementById('proximityRowsContainer');
-      if (!container) return;
-
-      if (!currentProximity.length) {
-        container.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:8px;">No proximity locations added yet. Click "+ Add Location" above.</div>';
-        return;
-      }
-
-      container.innerHTML = currentProximity.map((item, idx) => `
-        <div style="display:flex;gap:8px;align-items:center;" class="proximity-row">
-          <input type="text" class="prox-title" placeholder="Landmark (e.g. 🚇 Metro Station)" value="${item.title || ''}" oninput="updateProximityItem(${idx}, 'title', this.value)" style="flex:1;font-size:13px;padding:8px 12px;">
-          <input type="text" class="prox-time" placeholder="Commute Time (e.g. 5 Minutes Walk)" value="${item.time || ''}" oninput="updateProximityItem(${idx}, 'time', this.value)" style="flex:1;font-size:13px;padding:8px 12px;">
-          <button type="button" class="btn btn-outline btn-sm" onclick="removeProximityRow(${idx})" style="color:#f87171;border-color:rgba(239,68,68,0.3);padding:8px 12px;" title="Remove this landmark">✕</button>
-        </div>
-      `).join('');
-    }
-
-    function updateProximityItem(idx, key, val) {
-      if (currentProximity[idx]) {
-        currentProximity[idx][key] = val;
-      }
-    }
-
-    function removeProximityRow(idx) {
-      if (idx >= 0 && idx < currentProximity.length) {
-        currentProximity.splice(idx, 1);
-        renderProximityUI();
-      }
-    }
-
-    function addProximityRow(title = '', time = '') {
-      currentProximity.push({ title, time });
-      renderProximityUI();
-    }
-
     function renderGalleryGrid() {
       const grid = document.getElementById('galleryGrid');
       const countBadge = document.getElementById('galleryCountBadge');
@@ -1381,9 +1314,6 @@
       currentAmenities = [...defaultAmenitiesList];
       renderAmenitiesUI();
 
-      currentProximity = defaultProximityList.map(item => ({ ...item }));
-      renderProximityUI();
-
       propModal.showModal();
     });
 
@@ -1422,9 +1352,6 @@
       currentAmenities = Array.isArray(p.amenities) ? [...p.amenities] : [];
       renderAmenitiesUI();
 
-      currentProximity = Array.isArray(p.proximity) ? p.proximity.map(item => ({ ...item })) : [];
-      renderProximityUI();
-
       propModal.showModal();
     }
 
@@ -1456,18 +1383,6 @@
       });
       const finalAmenities = amenitiesData.length ? amenitiesData : currentAmenities.filter(Boolean);
 
-      // Collect proximity inputs directly from DOM so any rewritten values are captured
-      const proxRows = document.querySelectorAll('.proximity-row');
-      const proximityData = [];
-      proxRows.forEach(row => {
-        const title = row.querySelector('.prox-title')?.value.trim();
-        const time = row.querySelector('.prox-time')?.value.trim();
-        if (title && time) {
-          proximityData.push({ title, time });
-        }
-      });
-      const finalProximity = proximityData.length ? proximityData : currentProximity.filter(p => p.title && p.time);
-
       const payload = {
         ...detailFields,
         title: document.getElementById('formTitle').value.trim(),
@@ -1482,7 +1397,6 @@
         image: currentGalleryImages[0],
         images: currentGalleryImages,
         amenities: finalAmenities,
-        proximity: finalProximity,
         video_url: document.getElementById('formVideoUrl').value.trim(),
         brochure_url: document.getElementById('formBrochureUrl').value.trim(),
         description: document.getElementById('formDescription').value.trim(),
@@ -1540,11 +1454,6 @@
       });
       input.value = '';
       showToast('Amenity added');
-    });
-
-    // Add Proximity row button listener
-    document.getElementById('addProximityRowBtn')?.addEventListener('click', () => {
-      addProximityRow('', '');
     });
 
     // Multi-photo upload for property gallery
@@ -1895,7 +1804,6 @@
         const data = await res.json();
         if (data.success && data.data) {
           siteSettings = data.data;
-          document.getElementById('settingHeroTag').value = siteSettings.hero_tag || '';
           document.getElementById('settingHeroTitle').value = siteSettings.hero_title || '';
           document.getElementById('settingHeroSubtitle').value = siteSettings.hero_subtitle || '';
           document.getElementById('settingSeoTitle').value = siteSettings.seo_title || '';
@@ -1930,7 +1838,6 @@
       bottomBtn.textContent = 'Saving Changes...';
 
       const payload = {
-        hero_tag: document.getElementById('settingHeroTag').value.trim(),
         hero_title: document.getElementById('settingHeroTitle').value.trim(),
         hero_subtitle: document.getElementById('settingHeroSubtitle').value.trim(),
         seo_title: document.getElementById('settingSeoTitle').value.trim(),

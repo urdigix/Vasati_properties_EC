@@ -62,7 +62,6 @@ function formatProperty(property) {
 }
 
 const defaultSettings = {
-  hero_tag: '✨ Premium Bengaluru Real Estate Portfolio',
   hero_title: 'Find Your Dream Space in the Silicon Valley of India',
   hero_subtitle: "Verified builder developments, luxury gated communities, and prime resale apartments across Bengaluru's top tech corridors.",
   contact_phone: '+91 6303420048',
@@ -145,6 +144,12 @@ function initializeDatabase() {
       phone TEXT NOT NULL,
       email TEXT,
       message TEXT,
+      preferred_date TEXT,
+      preferred_time TEXT,
+      verified_contact_method TEXT,
+      verified_at TEXT,
+      verification_id TEXT,
+      privacy_notice_acknowledged INTEGER NOT NULL DEFAULT 0,
       status TEXT DEFAULT 'New',
       feedback TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -213,7 +218,15 @@ function initializeDatabase() {
       analytics_consent INTEGER NOT NULL DEFAULT 0,
       attempt_count INTEGER NOT NULL DEFAULT 0,
       last_sent_at INTEGER NOT NULL DEFAULT 0,
-      created_at INTEGER NOT NULL
+      created_at INTEGER NOT NULL,
+      purpose TEXT NOT NULL DEFAULT 'BROCHURE',
+      session_hash TEXT NOT NULL DEFAULT '',
+      contact_hash TEXT NOT NULL DEFAULT '',
+      expires_at INTEGER NOT NULL DEFAULT 0,
+      preferred_date TEXT,
+      preferred_time TEXT,
+      lead_id INTEGER,
+      privacy_acknowledged INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS brochure_downloads (
@@ -286,6 +299,22 @@ function initializeDatabase() {
   ensureColumn('otp_verifications', 'last_sent_at', 'INTEGER NOT NULL DEFAULT 0');
   ensureColumn('otp_verifications', 'analytics_consent', 'INTEGER NOT NULL DEFAULT 0');
   ensureColumn('otp_verifications', 'customer_id', 'INTEGER');
+  ensureColumn('otp_verifications', 'purpose', "TEXT NOT NULL DEFAULT 'BROCHURE'");
+  ensureColumn('otp_verifications', 'session_hash', "TEXT NOT NULL DEFAULT ''");
+  ensureColumn('otp_verifications', 'contact_hash', "TEXT NOT NULL DEFAULT ''");
+  ensureColumn('otp_verifications', 'expires_at', 'INTEGER NOT NULL DEFAULT 0');
+  ensureColumn('otp_verifications', 'preferred_date', 'TEXT');
+  ensureColumn('otp_verifications', 'preferred_time', 'TEXT');
+  ensureColumn('otp_verifications', 'lead_id', 'INTEGER');
+  ensureColumn('otp_verifications', 'privacy_acknowledged', 'INTEGER NOT NULL DEFAULT 0');
+  ensureColumn('enquiries', 'preferred_date', 'TEXT');
+  ensureColumn('enquiries', 'preferred_time', 'TEXT');
+  ensureColumn('enquiries', 'verified_contact_method', 'TEXT');
+  ensureColumn('enquiries', 'verified_at', 'TEXT');
+  ensureColumn('enquiries', 'verification_id', 'TEXT');
+  ensureColumn('enquiries', 'privacy_notice_acknowledged', 'INTEGER NOT NULL DEFAULT 0');
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS enquiries_verification_id_unique ON enquiries (verification_id) WHERE verification_id IS NOT NULL;');
+  db.exec('CREATE INDEX IF NOT EXISTS otp_verifications_session_purpose_idx ON otp_verifications (session_hash, purpose, expires_at);');
   for (const property of db.prepare('SELECT id, image, images FROM properties WHERE images IS NOT NULL').all()) {
     const images = parseJsonField(property.images, property.image ? [property.image] : []).filter(Boolean);
     if (images.length > 4) {
@@ -633,8 +662,10 @@ function getAllEnquiries(statusFilter = null) {
 
 function createEnquiry(enquiry) {
   const stmt = db.prepare(`
-    INSERT INTO enquiries (property_id, property_title, name, phone, email, message, status)
-    VALUES (?, ?, ?, ?, ?, ?, 'New')
+    INSERT INTO enquiries (
+      property_id, property_title, name, phone, email, message, preferred_date, preferred_time,
+      verified_contact_method, verified_at, verification_id, privacy_notice_acknowledged, status
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'New')
   `);
   const result = stmt.run(
     enquiry.property_id || null,
@@ -642,7 +673,13 @@ function createEnquiry(enquiry) {
     enquiry.name || 'Customer',
     enquiry.phone || '',
     enquiry.email || '',
-    enquiry.message || ''
+    enquiry.message || '',
+    enquiry.preferred_date || null,
+    enquiry.preferred_time || null,
+    enquiry.verified_contact_method || null,
+    enquiry.verified_at || null,
+    enquiry.verification_id || null,
+    Number(enquiry.privacy_notice_acknowledged === true)
   );
   return result.lastInsertRowid;
 }

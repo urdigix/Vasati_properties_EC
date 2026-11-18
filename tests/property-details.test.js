@@ -6,6 +6,25 @@ const path = require('node:path');
 const { normalizeDetails } = require('../server/property-details');
 const ui = require('../public/property-details');
 
+test('current detail layout keeps saved project facts and floor plans without the removed neighbourhood section', () => {
+  const result = ui.renderSavedDetails({
+    project_details: { builder_name: 'Example Builder', rera_id: 'RERA123', project_units: '40' },
+    floor_plans: [{ label: '3 BHK', area: '1800 sqft', price: '₹1.25 Cr', image: '/images/plan.webp' }]
+  });
+  assert.match(result.facts, /Example Builder/);
+  assert.match(result.facts, /RERA123/);
+  assert.match(result.plans, /src="\/images\/plan.webp"/);
+  assert.match(result.plans, /₹1.25 Cr/);
+  assert.doesNotMatch(result.facts + result.plans, /neighbourhood|iframe/);
+  const unsafe = ui.renderSavedDetails({
+    project_details: { builder_name: '<script>bad</script>' },
+    floor_plans: [{ label: '<img onerror=bad>', image: 'javascript:bad' }]
+  });
+  assert.doesNotMatch(unsafe.facts + unsafe.plans, /<script>|src="javascript:/);
+  assert.match(unsafe.plans, /&lt;img onerror=bad&gt;/);
+  assert.deepEqual(ui.renderSavedDetails({}), { facts: '', plans: '' });
+});
+
 test('project fields and floor plans survive save, partial update, reopen, and explicit clearing', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vasati-details-'));
   process.env.DATA_DIR = dir;

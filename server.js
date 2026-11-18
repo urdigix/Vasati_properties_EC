@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors');
 const path = require('node:path');
 const fs = require('node:fs');
 const crypto = require('node:crypto');
@@ -8,8 +7,6 @@ const adminAuth = require('./server/admin-auth');
 const { ALLOWED_RANGES, Ga4AnalyticsClient, LOCATION_MAP_NOTICE } = require('./server/ga4-analytics');
 
 const app = express();
-// Only internal reverse proxies may supply the client address used by rate limits.
-app.set('trust proxy', 'loopback, linklocal, uniquelocal');
 const ga4Analytics = new Ga4AnalyticsClient();
 const requestedPort = Number.parseInt(process.env.PORT || '3000', 10);
 const PORT = Number.isInteger(requestedPort) && requestedPort >= 0 && requestedPort <= 65535 ? requestedPort : 3000;
@@ -18,7 +15,8 @@ fs.mkdirSync(path.join(uploadsDir, 'properties'), { recursive: true });
 fs.mkdirSync(path.join(uploadsDir, 'brochures'), { recursive: true });
 
 // Middlewares
-app.use(cors());
+const trustedProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS || '0', 10);
+app.set('trust proxy', Number.isInteger(trustedProxyHops) && trustedProxyHops >= 0 ? trustedProxyHops : 0);
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use((req, res, next) => {
@@ -83,139 +81,6 @@ function cookieValue(req, name) {
   }
   return null;
 }
-
-function currentCustomer(req) {
-  const token = cookieValue(req, 'vasati_customer_session');
-  if (!token) return null;
-  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-  return db.db.prepare(`
-    SELECT customers.id, customers.email, customers.name
-    FROM customer_sessions JOIN customers ON customers.id = customer_sessions.customer_id
-    WHERE customer_sessions.token_hash = ? AND customer_sessions.expires_at > ?
-  `).get(tokenHash, Date.now()) || null;
-}
-
-let googleJwks;
-let googleJwksExpiresAt = 0;
-async function verifyGoogleIdToken(idToken, expectedNonce) {
-  const parts = String(idToken || '').split('.');
-  if (parts.length !== 3) throw new Error('Invalid Google identity token.');
-  const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'));
-  const claims = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
-  if (!googleJwks || Date.now() >= googleJwksExpiresAt) {
-    const response = await fetch('https://www.googleapis.com/oauth2/v3/certs');
-    if (!response.ok) throw new Error('Google signing keys are unavailable.');
-    googleJwks = (await response.json()).keys;
-    googleJwksExpiresAt = Date.now() + 60 * 60_000;
-  }
-  const jwk = googleJwks.find(key => key.kid === header.kid);
-  if (!jwk || header.alg !== 'RS256') throw new Error('Unrecognized Google identity token signature.');
-  const publicKey = crypto.createPublicKey({ key: jwk, format: 'jwk' });
-  const verified = crypto.verify(
-    'RSA-SHA256',
-    Buffer.from(`${parts[0]}.${parts[1]}`),
-    publicKey,
-    Buffer.from(parts[2], 'base64url')
-  );
-  if (!verified || claims.aud !== process.env.GOOGLE_CLIENT_ID ||
-      !['accounts.google.com', 'https://accounts.google.com'].includes(claims.iss) ||
-      Number(claims.exp) * 1000 <= Date.now() ||
-      claims.nonce !== expectedNonce || claims.email_verified !== true ||
-      typeof claims.sub !== 'string' || typeof claims.email !== 'string') {
-    throw new Error('Google identity validation failed.');
-  }
-  return claims;
-}
-
-app.get('/auth/google', (req, res) => {
-  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.GOOGLE_REDIRECT_URI) {
-    return res.status(503).send('Google sign-in is unavailable until the owner configures Google OAuth credentials.');
-  }
-  const rate = db.consumeRateLimit(`google-oauth:${req.ip}`, 20, 15 * 60_000);
-  if (!rate.allowed) return res.status(429).send('Too many sign-in requests. Try again later.');
-  const state = crypto.randomBytes(32).toString('base64url');
-  const nonce = crypto.randomBytes(32).toString('base64url');
-  db.db.prepare('INSERT INTO oauth_states (state_hash, nonce, expires_at) VALUES (?, ?, ?)')
-    .run(crypto.createHash('sha256').update(state).digest('hex'), nonce, Date.now() + 10 * 60_000);
-  const cookie = [`vasati_oauth_state=${encodeURIComponent(state)}`, 'HttpOnly', 'SameSite=Lax', 'Path=/auth/google', 'Max-Age=600'];
-  if (process.env.NODE_ENV === 'production') cookie.push('Secure');
-  res.setHeader('Set-Cookie', cookie.join('; '));
-  const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-  url.search = new URLSearchParams({
-    client_id: process.env.GOOGLE_CLIENT_ID,
-    redirect_uri: process.env.GOOGLE_REDIRECT_URI,
-    response_type: 'code',
-    scope: 'openid email profile',
-    state,
-    nonce,
-    prompt: 'select_account'
-  }).toString();
-  res.redirect(url.toString());
-});
-
-app.get('/auth/google/callback', async (req, res) => {
-  try {
-    const state = String(req.query.state || '');
-    const storedState = cookieValue(req, 'vasati_oauth_state');
-    if (!state || !storedState || state !== storedState) return res.status(400).send('Sign-in request expired or invalid.');
-    const stateHash = crypto.createHash('sha256').update(state).digest('hex');
-    const oauthState = db.db.prepare('SELECT * FROM oauth_states WHERE state_hash = ? AND expires_at > ?').get(stateHash, Date.now());
-    if (!oauthState) return res.status(400).send('Sign-in request expired or invalid.');
-    db.db.prepare('DELETE FROM oauth_states WHERE state_hash = ?').run(stateHash);
-    if (req.query.error || !req.query.code) return res.redirect('/?google_login=cancelled');
-
-    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        code: String(req.query.code),
-        client_id: process.env.GOOGLE_CLIENT_ID,
-        client_secret: process.env.GOOGLE_CLIENT_SECRET,
-        redirect_uri: process.env.GOOGLE_REDIRECT_URI,
-        grant_type: 'authorization_code'
-      })
-    });
-    const tokenResult = await tokenResponse.json();
-    if (!tokenResponse.ok || !tokenResult.id_token) return res.status(401).send('Google sign-in failed.');
-    const claims = await verifyGoogleIdToken(tokenResult.id_token, oauthState.nonce);
-    db.db.prepare(`
-      INSERT INTO customers (google_subject, email, name) VALUES (?, ?, ?)
-      ON CONFLICT(google_subject) DO UPDATE SET email = excluded.email, name = excluded.name
-    `).run(claims.sub, claims.email.toLowerCase(), String(claims.name || '').slice(0, 120));
-    const customer = db.db.prepare('SELECT id FROM customers WHERE google_subject = ?').get(claims.sub);
-    const customerToken = crypto.randomBytes(32).toString('base64url');
-    const customerTokenHash = crypto.createHash('sha256').update(customerToken).digest('hex');
-    const expiresAt = Date.now() + 30 * 24 * 60 * 60_000;
-    db.db.prepare('INSERT INTO customer_sessions (token_hash, customer_id, expires_at, created_at) VALUES (?, ?, ?, ?)')
-      .run(customerTokenHash, customer.id, expiresAt, Date.now());
-    const customerCookie = [`vasati_customer_session=${encodeURIComponent(customerToken)}`, 'HttpOnly', 'SameSite=Lax', 'Path=/', `Max-Age=${30 * 24 * 60 * 60}`];
-    if (process.env.NODE_ENV === 'production') customerCookie.push('Secure');
-    res.setHeader('Set-Cookie', [
-      customerCookie.join('; '),
-      'vasati_oauth_state=; HttpOnly; SameSite=Lax; Path=/auth/google; Max-Age=0'
-    ]);
-    res.redirect('/?google_login=success');
-  } catch (error) {
-    console.error('Google sign-in failed:', error.message);
-    res.status(401).send('Google sign-in could not be completed. Please try again.');
-  }
-});
-
-app.get('/api/customer/session', (req, res) => {
-  const customer = currentCustomer(req);
-  if (!customer) return res.json({ authenticated: false });
-  res.json({ authenticated: true, name: customer.name, email: customer.email });
-});
-
-app.post('/api/customer/logout', (req, res) => {
-  const token = cookieValue(req, 'vasati_customer_session');
-  if (token) db.db.prepare('DELETE FROM customer_sessions WHERE token_hash = ?')
-    .run(crypto.createHash('sha256').update(token).digest('hex'));
-  const cookie = ['vasati_customer_session=', 'HttpOnly', 'SameSite=Lax', 'Path=/', 'Max-Age=0'];
-  if (process.env.NODE_ENV === 'production') cookie.push('Secure');
-  res.setHeader('Set-Cookie', cookie.join('; '));
-  res.json({ success: true });
-});
 
 app.get('/admin/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin-login.html')));
 app.get('/unsubscribe', (req, res) => res.sendFile(path.join(__dirname, 'public', 'unsubscribe.html')));
@@ -521,44 +386,12 @@ app.get('/api/media/:id', async (req, res) => {
 
 // ----------------- ENQUIRIES / LEADS APIS -----------------
 
-// Submit new enquiry (Public)
-app.post('/api/enquiries', async (req, res) => {
-  try {
-    const { message, property_id, property_title } = req.body;
-    const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
-    const phone = normalizedPhone(req.body.phone);
-    const email = req.body.email ? validEmail(req.body.email) : '';
-    if (!name || name.length > 120 || !phone || (req.body.email && !email)) {
-      return res.status(400).json({ success: false, message: 'Name and Phone number are required' });
-    }
-    const requestLimit = db.consumeRateLimit(`enquiry:${req.ip}`, 8, 60 * 60_000);
-    if (!requestLimit.allowed) {
-      res.setHeader('Retry-After', String(requestLimit.retryAfter));
-      return res.status(429).json({ success: false, message: 'Too many requests. Please try again later.' });
-    }
-
-    const id = await db.createEnquiry({
-      name,
-      phone,
-      email,
-      message,
-      property_id,
-      property_title
-    });
-    if (req.body.analytics_consent === true) {
-      db.db.prepare('INSERT INTO analytics_events (event_name, property_id) VALUES (?, ?)')
-        .run('enquiry', property_id || null);
-    }
-
-    res.status(201).json({
-      success: true,
-      message: 'Thank you! Your viewing request has been recorded. Our agent will contact you shortly.',
-      enquiryId: id
-    });
-  } catch (error) {
-    console.error('Error submitting enquiry:', error);
-    res.status(500).json({ success: false, message: 'Server error submitting enquiry' });
-  }
+// Public leads are created only after the SMS verification flow completes.
+app.post('/api/enquiries', (_req, res) => {
+  res.status(410).json({
+    success: false,
+    message: 'Phone verification is required before a site visit can be scheduled.'
+  });
 });
 
 // Get all enquiries (Admin)
@@ -614,9 +447,10 @@ app.delete('/api/enquiries/:id', async (req, res) => {
 });
 
 function normalizedPhone(value) {
-  const digits = String(value || '').replace(/[^\d+]/g, '');
-  if (/^\d{10}$/.test(digits)) return `+91${digits}`;
-  if (/^\+[1-9]\d{7,14}$/.test(digits)) return digits;
+  const phone = String(value || '').trim();
+  const compact = phone.replace(/[\s()-]/g, '');
+  if (/^\d{10}$/.test(compact)) return `+91${compact}`;
+  if (/^\+[1-9]\d{7,14}$/.test(compact)) return compact;
   return null;
 }
 
@@ -625,149 +459,549 @@ function validEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
 }
 
+const OTP_LIFETIME_MS = 5 * 60_000;
+const OTP_RESEND_COOLDOWN_MS = 60_000;
+const rateLimitSalt = process.env.IP_HASH_SALT || crypto.randomBytes(32).toString('hex');
+const publicSessionCookie = 'vasati_form_session';
+
+function hashRateLimitValue(value) {
+  return crypto.createHmac('sha256', rateLimitSalt).update(String(value || '')).digest('hex');
+}
+
+function getPublicSession(req, res, create = true) {
+  const token = cookieValue(req, publicSessionCookie);
+  if (token && /^[a-f0-9]{64}$/.test(token)) {
+    return { token, hash: crypto.createHash('sha256').update(token).digest('hex') };
+  }
+  if (!create) return null;
+
+  const newToken = crypto.randomBytes(32).toString('hex');
+  const cookie = [
+    `${publicSessionCookie}=${newToken}`,
+    'HttpOnly',
+    'SameSite=Lax',
+    'Path=/',
+    'Max-Age=86400'
+  ];
+  if (process.env.NODE_ENV === 'production') cookie.push('Secure');
+  res.append('Set-Cookie', cookie.join('; '));
+  return { token: newToken, hash: crypto.createHash('sha256').update(newToken).digest('hex') };
+}
+
+function rateLimitResponse(res, result, message) {
+  if (result.allowed) return false;
+  res.setHeader('Retry-After', String(result.retryAfter));
+  res.status(429).json({ success: false, message });
+  return true;
+}
+
+function consumePublicLimit(res, key, limit, windowMs, message) {
+  return rateLimitResponse(res, db.consumeRateLimit(key, limit, windowMs), message);
+}
+
+function currentClientIp(req) {
+  return req.ip || req.socket.remoteAddress || 'unknown';
+}
+
+async function verifyTurnstile(token, req, expectedAction) {
+  const secretKey = process.env.TURNSTILE_SECRET_KEY;
+  if (!secretKey) {
+    return { success: false, status: 503, message: 'Bot protection is not configured. Please contact the site administrator.' };
+  }
+  if (typeof token !== 'string' || token.length < 1 || token.length > 2048) {
+    return { success: false, status: 403, message: 'Complete the security check and try again.' };
+  }
+
+  try {
+    const body = new URLSearchParams({ secret: secretKey, response: token });
+    const ip = currentClientIp(req);
+    if (ip) body.set('remoteip', ip);
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+      signal: AbortSignal.timeout(8_000)
+    });
+    if (!response.ok) {
+      return { success: false, status: 503, message: 'Security verification is temporarily unavailable. Please try again.' };
+    }
+
+    const result = await response.json();
+    const expectedHost = process.env.APP_BASE_URL ? new URL(process.env.APP_BASE_URL).hostname : '';
+    const hostMatches = process.env.NODE_ENV !== 'production' ||
+      !expectedHost || result.hostname === expectedHost;
+    if (result.success && result.action === expectedAction && hostMatches) {
+      return { success: true };
+    }
+    return { success: false, status: 403, message: 'Security check expired or invalid. Please try again.' };
+  } catch {
+    return { success: false, status: 503, message: 'Security verification is temporarily unavailable. Please try again.' };
+  }
+}
+
+function maskContact(method, target) {
+  if (method === 'email') {
+    const [local, domain] = target.split('@');
+    return `${local.slice(0, 1)}${'*'.repeat(Math.max(2, local.length - 1))}@${domain}`;
+  }
+  return `${target.slice(0, -4).replace(/\d/g, '*')}${target.slice(-4)}`;
+}
+
+function currentIndiaDateTime(now = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23'
+  }).formatToParts(now);
+  const values = Object.fromEntries(parts.filter(part => part.type !== 'literal').map(part => [part.type, part.value]));
+  return { date: `${values.year}-${values.month}-${values.day}`, time: `${values.hour}:${values.minute}` };
+}
+
+function validVisitDateTime(date, time, now = new Date()) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) return false;
+  const [year, month, day] = date.split('-').map(Number);
+  const [hour, minute] = time.split(':').map(Number);
+  const parsedDate = new Date(Date.UTC(year, month - 1, day));
+  if (parsedDate.getUTCFullYear() !== year || parsedDate.getUTCMonth() !== month - 1 ||
+      parsedDate.getUTCDate() !== day || hour > 23 || minute > 59) return false;
+  const current = currentIndiaDateTime(now);
+  return date > current.date || (date === current.date && time > current.time);
+}
+
+function getVerification(id, purpose, sessionHash) {
+  return db.db.prepare(`
+    SELECT * FROM otp_verifications
+    WHERE id = ? AND purpose = ? AND session_hash = ?
+  `).get(id, purpose, sessionHash);
+}
+
 async function twilioVerify(pathname, payload) {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const serviceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
   if (!accountSid || !authToken || !serviceSid) {
-    const error = new Error('OTP delivery is not configured. Configure Twilio Verify to enable brochure access.');
+    const error = new Error('OTP delivery is not configured. Configure Twilio Verify to enable contact verification.');
     error.status = 503;
     throw error;
   }
-  const response = await fetch(`https://verify.twilio.com/v2/Services/${encodeURIComponent(serviceSid)}${pathname}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`,
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body: new URLSearchParams(payload)
-  });
-  const result = await response.json();
-  if (!response.ok) {
-    console.error('Twilio Verify request failed:', response.status, result.code || result.message);
-    const error = new Error('Could not send or verify the code. Check the contact information and try again.');
-    error.status = response.status === 429 ? 429 : 502;
-    throw error;
+  try {
+    const response = await fetch(`https://verify.twilio.com/v2/Services/${encodeURIComponent(serviceSid)}${pathname}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams(payload),
+      signal: AbortSignal.timeout(10_000)
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      console.error('Twilio Verify request failed:', response.status, result.code || 'provider_error');
+      const error = new Error('Could not send or verify the code. Check the contact information and try again.');
+      error.status = response.status === 429 ? 429 : 502;
+      throw error;
+    }
+    return result;
+  } catch (error) {
+    if (error.status) throw error;
+    const unavailable = new Error('OTP delivery is temporarily unavailable. Please try again.');
+    unavailable.status = 502;
+    throw unavailable;
   }
-  return result;
 }
 
-app.post('/api/brochures/verification/start', async (req, res) => {
+async function startOtpVerification(req, res, options) {
   try {
-    const name = String(req.body.name || '').trim();
-    const email = validEmail(req.body.email);
-    const phone = normalizedPhone(req.body.phone);
-    const propertyId = String(req.body.property_id || '').trim();
-    const method = req.body.method;
-    if (!name || name.length > 120 || !email || !phone || !propertyId || !['email', 'sms'].includes(method) || req.body.privacy_consent !== true) {
-      return res.status(400).json({ success: false, message: 'Enter your name, valid email and phone, choose a verification method, and accept the privacy notice.' });
-    }
+    const { purpose, action, method, target, property, name, email, phone, preferredDate, preferredTime, privacyAcknowledged } = options;
+    const session = getPublicSession(req, res);
+    const ipHash = hashRateLimitValue(currentClientIp(req));
+    if (consumePublicLimit(res, `otp-start-ip:${ipHash}`, 20, 60 * 60_000, 'Too many verification requests from this connection. Try again later.')) return;
+    if (consumePublicLimit(res, `otp-start-session:${session.hash}`, 20, 60 * 60_000, 'Too many verification requests in this session. Try again later.')) return;
 
-    const property = db.getPropertyById(propertyId);
-    if (!property || !property.brochure_url) return res.status(404).json({ success: false, message: 'No brochure is currently available for this property.' });
+    const captcha = await verifyTurnstile(req.body.captcha_token, req, action);
+    if (!captcha.success) return res.status(captcha.status).json({ success: false, message: captcha.message });
 
-    const target = method === 'sms' ? phone : email;
-    const addressLimit = db.consumeRateLimit(`otp-start:${method}:${target}`, 1, 60_000);
-    const ipLimit = db.consumeRateLimit(`otp-ip:${req.ip}`, 10, 60 * 60_000);
-    if (!addressLimit.allowed || !ipLimit.allowed) {
-      res.setHeader('Retry-After', String(Math.max(addressLimit.retryAfter, ipLimit.retryAfter)));
-      return res.status(429).json({ success: false, message: 'A code was recently sent or the request limit was reached. Please wait before trying again.' });
-    }
+    const contactHash = hashRateLimitValue(`${method}:${target}`);
+    if (consumePublicLimit(res, `otp-start-contact:${contactHash}`, 5, 60 * 60_000, 'Too many codes have been sent to this contact. Try again later.')) return;
+    if (consumePublicLimit(res, `otp-start-cooldown:${contactHash}`, 1, OTP_RESEND_COOLDOWN_MS, 'A code was recently sent. Wait before requesting another.')) return;
+
+    const now = Date.now();
+    db.db.prepare(`
+      UPDATE otp_verifications SET expires_at = ?
+      WHERE contact_hash = ? AND verified_at IS NULL AND expires_at > ?
+    `).run(now, contactHash, now);
 
     await twilioVerify('/Verifications', { To: target, Channel: method });
     const id = crypto.randomUUID();
-    const now = Date.now();
-    const customer = currentCustomer(req);
+    const expiresAt = now + OTP_LIFETIME_MS;
     db.db.prepare(`
-      INSERT INTO otp_verifications (id, property_id, customer_id, name, email, phone, method, consent_at, analytics_consent, last_sent_at, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, propertyId, customer?.id || null, name, email, phone, method, new Date().toISOString(), Number(req.body.analytics_consent === true), now, now);
-    res.status(201).json({ success: true, verificationId: id, expiresInSeconds: 600, resendAfterSeconds: 60 });
+      INSERT INTO otp_verifications (
+        id, property_id, customer_id, name, email, phone, method, consent_at,
+        analytics_consent, last_sent_at, created_at, purpose, session_hash,
+        contact_hash, expires_at, preferred_date, preferred_time, privacy_acknowledged
+      ) VALUES (?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id,
+      property.id,
+      name,
+      email || '',
+      phone || '',
+      method,
+      new Date(now).toISOString(),
+      Number(req.body.analytics_consent === true),
+      now,
+      now,
+      purpose,
+      session.hash,
+      contactHash,
+      expiresAt,
+      preferredDate || null,
+      preferredTime || null,
+      Number(privacyAcknowledged)
+    );
+    res.status(201).json({
+      success: true,
+      verificationId: id,
+      maskedDestination: maskContact(method, target),
+      expiresInSeconds: OTP_LIFETIME_MS / 1000,
+      resendAfterSeconds: OTP_RESEND_COOLDOWN_MS / 1000
+    });
   } catch (error) {
-    console.error('Could not start brochure verification:', error.message);
+    console.error(`Could not start ${options.purpose.toLowerCase()} verification.`, error.status || 'internal_error');
+    res.status(error.status || 500).json({ success: false, message: error.message || 'Could not start verification.' });
+  }
+}
+
+app.post('/api/site-visits/verification/start', async (req, res) => {
+  try {
+    const name = String(req.body.name || '').trim();
+    const phone = normalizedPhone(req.body.phone);
+    const propertyId = String(req.body.property_id || '').trim();
+    const preferredDate = String(req.body.preferred_date || '');
+    const preferredTime = String(req.body.preferred_time || '');
+    if (name.length < 2 || name.length > 120 || !phone || !propertyId ||
+        !validVisitDateTime(preferredDate, preferredTime)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Enter your name, a valid phone number, and a future inspection date and time in IST.'
+      });
+    }
+    const property = db.getPropertyById(propertyId);
+    if (!property) return res.status(404).json({ success: false, message: 'This property is no longer available.' });
+    return startOtpVerification(req, res, {
+      purpose: 'SITE_VISIT',
+      action: 'site_visit',
+      method: 'sms',
+      target: phone,
+      property,
+      name,
+      email: '',
+      phone,
+      preferredDate,
+      preferredTime,
+      privacyAcknowledged: false
+    });
+  } catch (error) {
+    console.error('Could not start site visit verification.', error.status || 'internal_error');
     res.status(error.status || 500).json({ success: false, message: error.message || 'Could not start verification.' });
   }
 });
 
-app.post('/api/brochures/verification/resend', async (req, res) => {
+app.post('/api/brochures/verification/start', async (req, res) => {
   try {
-    const id = String(req.body.verification_id || '');
-    const record = db.db.prepare('SELECT * FROM otp_verifications WHERE id = ?').get(id);
-    if (!record || record.verified_at || Date.now() - record.created_at > 10 * 60_000) {
-      return res.status(400).json({ success: false, message: 'This verification has expired. Start again.' });
+    const name = String(req.body.name || '').trim();
+    const email = req.body.email ? validEmail(req.body.email) : '';
+    const phone = req.body.phone ? normalizedPhone(req.body.phone) : '';
+    const propertyId = String(req.body.property_id || '').trim();
+    const method = req.body.method;
+    if (!name || name.length > 120 || !propertyId ||
+        !['email', 'sms'].includes(method) || req.body.privacy_consent !== true ||
+        (req.body.email && !email) || (req.body.phone && !phone) ||
+        (method === 'email' && !email) || (method === 'sms' && !phone)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Enter your name, the selected contact method, and accept the privacy notice.'
+      });
     }
-    if (Date.now() - record.last_sent_at < 60_000) {
-      const retryAfter = Math.ceil((60_000 - (Date.now() - record.last_sent_at)) / 1000);
-      res.setHeader('Retry-After', String(retryAfter));
-      return res.status(429).json({ success: false, message: `Wait ${retryAfter} seconds before requesting another code.` });
+    const property = db.getPropertyById(propertyId);
+    if (!property || !property.brochure_url) {
+      return res.status(404).json({ success: false, message: 'No brochure is currently available for this property.' });
     }
-    const resendLimit = db.consumeRateLimit(`otp-resend:${record.id}`, 3, 60 * 60_000);
-    if (!resendLimit.allowed) {
-      res.setHeader('Retry-After', String(resendLimit.retryAfter));
-      return res.status(429).json({ success: false, message: 'Resend limit reached. Start again later.' });
-    }
-    const target = record.method === 'sms' ? record.phone : record.email;
-    await twilioVerify('/Verifications', { To: target, Channel: record.method });
-    const now = Date.now();
-    db.db.prepare('UPDATE otp_verifications SET created_at = ?, last_sent_at = ?, attempt_count = 0 WHERE id = ?')
-      .run(now, now, record.id);
-    res.json({ success: true, expiresInSeconds: 600, resendAfterSeconds: 60 });
+    return startOtpVerification(req, res, {
+      purpose: 'BROCHURE',
+      action: 'brochure',
+      method,
+      target: method === 'sms' ? phone : email,
+      property,
+      name,
+      email,
+      phone,
+      privacyAcknowledged: true
+    });
   } catch (error) {
-    console.error('Could not resend brochure verification:', error.message);
-    res.status(error.status || 500).json({ success: false, message: error.message || 'Could not resend the code.' });
+    console.error('Could not start brochure verification.', error.status || 'internal_error');
+    res.status(error.status || 500).json({ success: false, message: error.message || 'Could not start verification.' });
   }
 });
 
-app.post('/api/brochures/verification/complete', async (req, res) => {
+app.post('/api/site-visits/verification/resend', (req, res) =>
+  resendOtpVerification(req, res, 'SITE_VISIT')
+);
+
+app.post('/api/brochures/verification/resend', (req, res) =>
+  resendOtpVerification(req, res, 'BROCHURE')
+);
+
+async function resendOtpVerification(req, res, purpose) {
   try {
+    const session = getPublicSession(req, res, false);
+    const id = String(req.body.verification_id || '');
+    const record = session && getVerification(id, purpose, session.hash);
+    const now = Date.now();
+    if (!record || record.verified_at || record.expires_at <= now) {
+      return res.status(400).json({ success: false, message: 'This verification has expired. Start again.' });
+    }
+    const cooldown = OTP_RESEND_COOLDOWN_MS - (now - record.last_sent_at);
+    if (cooldown > 0) {
+      const seconds = Math.ceil(cooldown / 1000);
+      res.setHeader('Retry-After', String(seconds));
+      return res.status(429).json({ success: false, message: `Wait ${seconds} seconds before requesting another code.` });
+    }
+
+    const contactHash = record.contact_hash;
+    const ipHash = hashRateLimitValue(currentClientIp(req));
+    if (consumePublicLimit(res, `otp-resend-id:${id}`, 3, 60 * 60_000, 'Resend limit reached. Start again later.')) return;
+    if (consumePublicLimit(res, `otp-resend-contact:${contactHash}`, 5, 60 * 60_000, 'Too many codes have been sent to this contact. Try again later.')) return;
+    if (consumePublicLimit(res, `otp-resend-ip:${ipHash}`, 20, 60 * 60_000, 'Too many verification requests from this connection. Try again later.')) return;
+    if (consumePublicLimit(res, `otp-resend-session:${session.hash}`, 10, 60 * 60_000, 'Too many verification requests in this session. Try again later.')) return;
+
+    db.db.prepare('UPDATE otp_verifications SET expires_at = ? WHERE id = ? AND verified_at IS NULL')
+      .run(now, id);
+    const target = record.method === 'sms' ? record.phone : record.email;
+    await twilioVerify('/Verifications', { To: target, Channel: record.method });
+    db.db.prepare(`
+      UPDATE otp_verifications
+      SET created_at = ?, last_sent_at = ?, expires_at = ?, attempt_count = 0
+      WHERE id = ? AND verified_at IS NULL
+    `).run(now, now, now + OTP_LIFETIME_MS, id);
+    res.json({
+      success: true,
+      expiresInSeconds: OTP_LIFETIME_MS / 1000,
+      resendAfterSeconds: OTP_RESEND_COOLDOWN_MS / 1000
+    });
+  } catch (error) {
+    console.error(`Could not resend ${purpose.toLowerCase()} verification.`, error.status || 'internal_error');
+    res.status(error.status || 500).json({ success: false, message: error.message || 'Could not resend the code.' });
+  }
+}
+
+app.post('/api/verification/cancel', (req, res) => {
+  const session = getPublicSession(req, res, false);
+  const verificationId = String(req.body.verification_id || '');
+  const purpose = String(req.body.purpose || '');
+  if (!session || !['SITE_VISIT', 'BROCHURE'].includes(purpose)) {
+    return res.status(204).end();
+  }
+  db.db.prepare(`
+    UPDATE otp_verifications SET expires_at = ?
+    WHERE id = ? AND session_hash = ? AND purpose = ? AND verified_at IS NULL
+  `).run(Date.now(), verificationId, session.hash, purpose);
+  res.status(204).end();
+});
+
+function otpAttemptAllowed(req, res, record, session) {
+  const now = Date.now();
+  if (record.expires_at <= now) {
+    res.status(400).json({ success: false, message: 'This code has expired. Request a new code.' });
+    return false;
+  }
+  if (record.attempt_count >= 5) {
+    res.setHeader('Retry-After', '300');
+    res.status(429).json({ success: false, message: 'Too many incorrect attempts. Request a new code later.' });
+    return false;
+  }
+  const ipHash = hashRateLimitValue(currentClientIp(req));
+  if (consumePublicLimit(res, `otp-check-id:${record.id}`, 5, 10 * 60_000, 'Too many verification attempts. Request a new code later.')) return false;
+  if (consumePublicLimit(res, `otp-check-ip:${ipHash}`, 30, 60 * 60_000, 'Too many verification attempts from this connection. Try again later.')) return false;
+  if (consumePublicLimit(res, `otp-check-session:${session.hash}`, 20, 60 * 60_000, 'Too many verification attempts in this session. Try again later.')) return false;
+  db.db.prepare('UPDATE otp_verifications SET attempt_count = attempt_count + 1 WHERE id = ? AND attempt_count < 5')
+    .run(record.id);
+  return true;
+}
+
+function visitPayloadMatches(record, body) {
+  return String(body.name || '').trim() === record.name &&
+    normalizedPhone(body.phone) === record.phone &&
+    String(body.property_id || '') === record.property_id &&
+    String(body.preferred_date || '') === record.preferred_date &&
+    String(body.preferred_time || '') === record.preferred_time;
+}
+
+function siteVisitReceipt(leadId, record) {
+  return {
+    success: true,
+    referenceId: String(leadId),
+    maskedPhone: maskContact('sms', record.phone),
+    message: 'Your site visit request has been securely received. An authorized advisor will contact you about this visit.'
+  };
+}
+
+app.post('/api/site-visits/verification/complete', async (req, res) => {
+  try {
+    const session = getPublicSession(req, res, false);
     const verificationId = String(req.body.verification_id || '');
+    const record = session && getVerification(verificationId, 'SITE_VISIT', session.hash);
+    if (!record || !visitPayloadMatches(record, req.body)) {
+      return res.status(400).json({ success: false, message: 'The phone number or visit details changed. Start verification again.' });
+    }
+    if (record.lead_id) return res.json(siteVisitReceipt(record.lead_id, record));
     const code = String(req.body.code || '').trim();
     if (!/^[0-9]{4,10}$/.test(code)) return res.status(400).json({ success: false, message: 'Enter the verification code.' });
-    const record = db.db.prepare('SELECT * FROM otp_verifications WHERE id = ?').get(verificationId);
-    if (!record || record.verified_at || Date.now() - record.created_at > 10 * 60_000) {
-      return res.status(400).json({ success: false, message: 'This verification has expired. Request a new code.' });
+    if (!validVisitDateTime(record.preferred_date, record.preferred_time)) {
+      return res.status(400).json({ success: false, message: 'That inspection time has passed. Choose a future IST date and time and request a new code.' });
     }
-    const attemptLimit = db.consumeRateLimit(`otp-check:${verificationId}`, 5, 10 * 60_000);
-    const ipLimit = db.consumeRateLimit(`otp-check-ip:${req.ip}`, 30, 60 * 60_000);
-    if (!attemptLimit.allowed || !ipLimit.allowed || record.attempt_count >= 5) {
-      res.setHeader('Retry-After', String(Math.max(attemptLimit.retryAfter, ipLimit.retryAfter, 600)));
-      return res.status(429).json({ success: false, message: 'Too many verification attempts. Request a new code later.' });
+    if (!otpAttemptAllowed(req, res, record, session)) return;
+
+    const checked = await twilioVerify('/VerificationCheck', { To: record.phone, Code: code });
+    if (checked.status !== 'approved') {
+      return res.status(400).json({ success: false, message: 'The code is incorrect or expired. Check it or request a new code.' });
     }
-    db.db.prepare('UPDATE otp_verifications SET attempt_count = attempt_count + 1 WHERE id = ?').run(verificationId);
+
+    const now = Date.now();
+    const verifiedAt = new Date(now).toISOString();
+    let leadId;
+    db.db.exec('BEGIN IMMEDIATE');
+    try {
+      const current = getVerification(verificationId, 'SITE_VISIT', session.hash);
+      if (current.lead_id) {
+        leadId = current.lead_id;
+      } else {
+        const marked = db.db.prepare(`
+          UPDATE otp_verifications SET verified_at = ?
+          WHERE id = ? AND verified_at IS NULL AND expires_at > ?
+        `).run(verifiedAt, verificationId, now);
+        if (!marked.changes) throw new Error('Verification expired before completion.');
+        leadId = db.createEnquiry({
+          property_id: current.property_id,
+          property_title: db.getPropertyById(current.property_id)?.title || 'Property Site Visit',
+          name: current.name,
+          phone: current.phone,
+          message: `Requested site visit for ${current.preferred_date} at ${current.preferred_time} IST.`,
+          preferred_date: current.preferred_date,
+          preferred_time: current.preferred_time,
+          verified_contact_method: 'sms',
+          verified_at: verifiedAt,
+          verification_id: verificationId,
+          privacy_notice_acknowledged: false
+        });
+        db.db.prepare('UPDATE otp_verifications SET lead_id = ? WHERE id = ?').run(leadId, verificationId);
+        if (current.analytics_consent) {
+          db.db.prepare('INSERT INTO analytics_events (event_name, property_id) VALUES (?, ?)')
+            .run('enquiry', current.property_id);
+        }
+        db.logAudit('public', 'site_visit.verified', current.property_id, {
+          purpose: 'SITE_VISIT',
+          verifiedContactMethod: 'sms'
+        });
+      }
+      db.db.exec('COMMIT');
+    } catch (error) {
+      db.db.exec('ROLLBACK');
+      throw error;
+    }
+    res.status(201).json(siteVisitReceipt(leadId, record));
+  } catch (error) {
+    console.error('Could not complete site visit verification.', error.status || 'internal_error');
+    res.status(error.status || 500).json({ success: false, message: error.message || 'Could not verify the code.' });
+  }
+});
+
+function brochurePayloadMatches(record, body) {
+  const method = body.method;
+  const email = body.email ? validEmail(body.email) : '';
+  const phone = body.phone ? normalizedPhone(body.phone) : '';
+  const target = method === 'sms' ? phone : email;
+  return String(body.name || '').trim() === record.name &&
+    String(body.property_id || '') === record.property_id &&
+    method === record.method &&
+    email === record.email &&
+    phone === record.phone &&
+    target === (record.method === 'sms' ? record.phone : record.email) &&
+    body.privacy_consent === true;
+}
+
+app.post('/api/brochures/verification/complete', async (req, res) => {
+  try {
+    const session = getPublicSession(req, res, false);
+    const verificationId = String(req.body.verification_id || '');
+    const record = session && getVerification(verificationId, 'BROCHURE', session.hash);
+    if (!record || !brochurePayloadMatches(record, req.body)) {
+      return res.status(400).json({ success: false, message: 'Your contact details changed. Start verification again.' });
+    }
+    if (record.verified_at) {
+      return res.status(400).json({ success: false, message: 'This verification code has already been used.' });
+    }
+    const code = String(req.body.code || '').trim();
+    if (!/^[0-9]{4,10}$/.test(code)) return res.status(400).json({ success: false, message: 'Enter the verification code.' });
+    if (!otpAttemptAllowed(req, res, record, session)) return;
 
     const property = db.getPropertyById(record.property_id);
-    if (!property || !property.brochure_url) return res.status(404).json({ success: false, message: 'The property brochure is no longer available.' });
+    if (!property || !property.brochure_url) {
+      return res.status(404).json({ success: false, message: 'The property brochure is no longer available.' });
+    }
     const target = record.method === 'sms' ? record.phone : record.email;
     const checked = await twilioVerify('/VerificationCheck', { To: target, Code: code });
-    if (checked.status !== 'approved') return res.status(400).json({ success: false, message: 'The code is incorrect or expired.' });
+    if (checked.status !== 'approved') {
+      return res.status(400).json({ success: false, message: 'The code is incorrect or expired. Check it or request a new code.' });
+    }
 
     const now = Date.now();
     const token = crypto.randomBytes(32).toString('base64url');
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-    const claimed = db.db.prepare('UPDATE otp_verifications SET verified_at = ? WHERE id = ? AND verified_at IS NULL')
-      .run(new Date(now).toISOString(), verificationId);
-    if (!claimed.changes) return res.status(400).json({ success: false, message: 'This verification has already been used.' });
-    db.db.prepare(`
-      INSERT INTO brochure_downloads (verification_id, property_id, token_hash, expires_at, created_at)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(verificationId, record.property_id, tokenHash, now + 5 * 60_000, now);
-    if (record.analytics_consent) {
-      db.db.prepare('INSERT INTO analytics_events (event_name, property_id) VALUES (?, ?)')
-        .run('verification_completed', record.property_id);
+    db.db.exec('BEGIN IMMEDIATE');
+    try {
+      const marked = db.db.prepare(`
+        UPDATE otp_verifications SET verified_at = ?
+        WHERE id = ? AND verified_at IS NULL AND expires_at > ? AND session_hash = ?
+      `).run(new Date(now).toISOString(), verificationId, now, session.hash);
+      if (!marked.changes) throw new Error('This verification has already been used or expired.');
+      db.db.prepare(`
+        INSERT INTO brochure_downloads (verification_id, property_id, token_hash, expires_at, created_at)
+        VALUES (?, ?, ?, ?, ?)
+      `).run(verificationId, record.property_id, tokenHash, now + 5 * 60_000, now);
+      if (record.analytics_consent) {
+        db.db.prepare('INSERT INTO analytics_events (event_name, property_id) VALUES (?, ?)')
+          .run('verification_completed', record.property_id);
+      }
+      db.logAudit('public', 'brochure.verified', record.property_id, {
+        purpose: 'BROCHURE',
+        verifiedContactMethod: record.method
+      });
+      db.db.exec('COMMIT');
+    } catch (error) {
+      db.db.exec('ROLLBACK');
+      throw error;
     }
-    db.logAudit('customer', 'brochure.verified', record.property_id);
     res.json({
       success: true,
       downloadUrl: `/api/brochures/download/${token}`,
+      maskedDestination: maskContact(record.method, target),
+      verifiedMethod: record.method,
       expiresInSeconds: 300
     });
   } catch (error) {
-    console.error('Could not complete brochure verification:', error.message);
+    console.error('Could not complete brochure verification.', error.status || 'internal_error');
     res.status(error.status || 500).json({ success: false, message: error.message || 'Could not verify the code.' });
   }
 });
 
 app.get('/api/brochures/download/:token', (req, res) => {
+  const session = getPublicSession(req, res, false);
+  if (!session) return res.status(404).json({ success: false, message: 'This download link is invalid, expired, or already used.' });
   const tokenHash = crypto.createHash('sha256').update(String(req.params.token)).digest('hex');
   const download = db.db.prepare(`
     SELECT brochure_downloads.id, brochure_downloads.property_id, otp_verifications.verified_at, otp_verifications.analytics_consent
@@ -775,7 +1009,8 @@ app.get('/api/brochures/download/:token', (req, res) => {
     JOIN otp_verifications ON otp_verifications.id = brochure_downloads.verification_id
     WHERE brochure_downloads.token_hash = ? AND brochure_downloads.expires_at > ?
       AND brochure_downloads.downloaded_at IS NULL AND otp_verifications.verified_at IS NOT NULL
-  `).get(tokenHash, Date.now());
+      AND otp_verifications.session_hash = ? AND otp_verifications.purpose = 'BROCHURE'
+  `).get(tokenHash, Date.now(), session.hash);
   if (!download) return res.status(404).json({ success: false, message: 'This download link is invalid, expired, or already used.' });
 
   const property = db.getPropertyById(download.property_id);
@@ -915,7 +1150,10 @@ app.post('/api/analytics/events', (req, res) => {
 
 app.get('/api/public-config', (_req, res) => {
   const measurementId = String(process.env.GA4_MEASUREMENT_ID || '');
-  res.json({ analyticsMeasurementId: /^G-[A-Z0-9]+$/.test(measurementId) ? measurementId : '' });
+  res.json({
+    analyticsMeasurementId: /^G-[A-Z0-9]+$/.test(measurementId) ? measurementId : '',
+    turnstileSiteKey: String(process.env.TURNSTILE_SITE_KEY || '')
+  });
 });
 
 app.get('/api/admin/analytics', adminAuth.requireAdmin, async (req, res) => {
@@ -1011,7 +1249,7 @@ app.post('/mcp', (req, res) => {
       result = publicProperty;
     } else if (toolName === 'website_content_get') {
       const settings = db.getSiteSettings();
-      const allowedKeys = ['hero_tag', 'hero_title', 'hero_subtitle', 'contact_phone', 'contact_email', 'whatsapp_number'];
+      const allowedKeys = ['hero_title', 'hero_subtitle', 'contact_phone', 'contact_email', 'whatsapp_number'];
       result = Object.fromEntries(allowedKeys.filter(key => settings[key] !== undefined).map(key => [key, settings[key]]));
     } else if (toolName === 'property_draft_create' && isWrite) {
       const images = args.images ?? [];
@@ -1056,7 +1294,9 @@ app.get('/api/stats', async (req, res) => {
 // Fallback to index.html
 app.use((req, res) => {
   if (req.path === '/mcp') return res.set('Allow', 'POST').sendStatus(405);
-  if (req.path.startsWith('/api/')) return res.status(404).json({ success: false, message: 'API route not found.' });
+  if (req.path.startsWith('/api/') || req.path.startsWith('/auth/') || req.path.startsWith('/uploads/')) {
+    return res.status(404).json({ success: false, message: 'Not found.' });
+  }
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 

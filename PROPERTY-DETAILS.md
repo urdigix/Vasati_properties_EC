@@ -1,14 +1,14 @@
 # Property details page
 
-Every existing `/#property/<id>` link now opens the expanded property page with a gallery and keyboard-accessible image viewer, project overview, selectable floor plans and prices, amenities, a location search map, and a general enquiry form. The existing site-visit workflow and brochure verification remain connected. General enquiries are saved in the existing admin enquiries inbox.
+Every existing `/#property/<id>` link opens the property page with a gallery of up to four images, keyboard-accessible image viewer, project overview, saved floor plans and prices, and amenities. The site-visit workflow and brochure verification remain connected. Site visits are saved in the existing admin enquiries inbox after SMS verification; direct general enquiry submissions are disabled. The public Around this project section and neighbourhood map are removed.
 
 In Admin, add or edit a property and use **Project details & floor plans** to enter the developer, RERA ID, project size, launch date, map address, possession status, and property type. Add up to 12 floor plan configurations. Each configuration has its own area, display price, and optional uploaded image or image URL. Uploads use the existing authenticated image endpoint (PNG/JPEG/WebP, maximum 8 MB). Save the property after uploading. Empty or unconfirmed values remain empty; the public page invites an enquiry instead of inventing floor plans or amenities.
 
 ## Deploy on Coolify
 
-The live Coolify application tracks `codex/coolify-split` and builds `docker-compose.coolify.yml`. Push the change to that branch, preserving the existing split frontend/backend configuration and persistent database/upload volumes. No new environment variables or dependencies are required. Application startup adds `project_details` and `floor_plans` columns to the existing properties table without deleting listings. Existing listings work immediately; add their real floor plans and project information through Admin when available. Retain the current data volume and normal database backups when redeploying.
+The split Coolify application builds `docker-compose.coolify.yml`. Deploy the reviewed release branch, preserving the existing split frontend/backend configuration and persistent database/upload volumes. Public site-visit and brochure verification require Twilio Verify and Cloudflare Turnstile credentials; see [deployment configuration](./COOLIFY.md). Application startup adds `project_details` and `floor_plans` columns to the existing properties table without deleting listings. Existing listings work immediately; add their real floor plans and project information through Admin when available. Retain the current data volume and normal database backups when redeploying.
 
-The map uses a Google Maps address search and labels that limitation on the page. It is not a verified project pin. Image sources are the property's own saved gallery. The existing four-photo gallery limit remains; floor plan images are stored separately.
+The admin's saved map address field is retained for existing data compatibility, but the active public page does not render a map. Image sources are the property's own saved gallery. The existing four-photo gallery limit remains; floor plan images are stored separately.
 
 ## Validation
 

@@ -35,8 +35,9 @@ Copy `.env.example` to `.env` and set `DATA_DIR` plus integration settings as ne
 
 ## External services
 
-- **Twilio Verify:** required for email/SMS OTP delivery. Set all Twilio variables in `.env`, configure supported channels and expiry in Twilio. Without this provider the app returns an explicit unavailable response rather than pretending a code was delivered.
-- **Google OAuth:** set the Google client ID/secret and exact callback URI `/auth/google/callback`.
+- **Twilio Verify:** required for real email/SMS OTP delivery. Set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_VERIFY_SERVICE_SID` in `.env`. In the Verify service settings, enable SMS and/or the email channel you intend to offer, configure its email delivery integration, and set the verification-code validity to **5 minutes**. Without these credentials, the app returns an explicit unavailable response; it never simulates delivery.
+- **Cloudflare Turnstile:** required for public OTP requests. Create a widget for your site hostname, then set its public site key as `TURNSTILE_SITE_KEY` and secret as `TURNSTILE_SECRET_KEY`. Both are required for forms to send verification codes; the server validates every token and fails closed if server configuration is missing.
+- **Reverse proxy:** when the app is behind a trusted proxy, set `TRUST_PROXY_HOPS` to the exact number of proxy hops so server rate limits use the client IP. Keep it at `0` when the app is directly internet-facing; do not trust arbitrary forwarded headers.
 - **Google Analytics 4:** set `GA4_MEASUREMENT_ID` for consent-gated browser tracking. To enable the authenticated admin reports, also set `GA4_PROPERTY_ID`, `GA4_SERVICE_ACCOUNT_EMAIL`, and `GA4_SERVICE_ACCOUNT_PRIVATE_KEY` on the server. Enable the Google Analytics Data API in Google Cloud and grant the service account Viewer access to the GA4 property. Never put its private key in frontend code.
 - **Remote MCP:** configure separate random read and write tokens and expose `/mcp` through HTTPS.
 
@@ -47,7 +48,6 @@ The admin Analytics page separates GA4 Realtime active users from historical act
 - `node:sqlite` missing: upgrade to Node 24.
 - `EADDRINUSE`: set an available `PORT`.
 - App cannot create its database: ensure `DATA_DIR` exists and is writable.
-- OTP says delivery is not configured: set Twilio credentials; no development OTP bypass exists.
-- Google sign-in is unavailable: set all Google OAuth variables and register the exact redirect URI.
+- OTP delivery or security check is unavailable: configure Twilio Verify and Cloudflare Turnstile as described above; there is no development OTP or CAPTCHA bypass.
 
 See [COOLIFY.md](./COOLIFY.md) for deployment, persistent volume, HTTPS, backup, and remote MCP instructions.

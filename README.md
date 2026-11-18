@@ -20,7 +20,7 @@ The first local start creates `data/properties.db` and seeds the sample properti
 
 Change this password at first sign-in. These credentials are for local development only. Production refuses the temporary password; configure a unique `ADMIN_DEFAULT_PASSWORD` in Coolify. Never reuse the local database/password in production.
 
-Copy `.env.example` to `.env` to configure local integrations. No OTP is simulated. Until Twilio Verify is configured, brochure verification returns a clear configuration error.
+Copy `.env.example` to `.env` to configure local integrations. No OTP is simulated. Site-visit and brochure verification require Twilio Verify and Cloudflare Turnstile; without their credentials, requests remain unavailable and verification is never bypassed.
 
 ## Current functionality
 
@@ -29,13 +29,13 @@ Copy `.env.example` to `.env` to configure local integrations. No OTP is simulat
 - Draft/publish controls; unpublished properties are excluded from public listing and detail APIs.
 - Property image galleries with a maximum of four images enforced by the browser and database layer. Uploads accept JPEG, PNG, and WebP up to 8 MB and are resized/re-encoded to WebP.
 - PDF/media upload, admin-side brochure editing, and one-time, short-lived brochure links after contact consent and successful Twilio Verify OTP. Direct public brochure paths are blocked.
-- Optional Google OAuth customer sign-in. OAuth establishes an account session only; it does not replace the required OTP verification step for brochure downloads.
+- Session-bound SMS verification for site visits, with future date/time validation in IST; public enquiries are created only after verification. Google customer OAuth is not enabled by the current Express routes.
 - Subscriber consent, deduplication, search/filter, unsubscribe tokens, and confirmation-gated CSV export.
 - Editable social destinations; unconfigured links are hidden. Optional WhatsApp contact buttons hide if no number is configured.
 - Consent-gated GA4 tag plus first-party anonymous event summaries.
 - Authenticated `/mcp` endpoint with read-only and draft-write bearer scopes.
 
-See [INSTALLATION.md](./INSTALLATION.md) and [COOLIFY.md](./COOLIFY.md).
+See [INSTALLATION.md](./INSTALLATION.md), [COOLIFY.md](./COOLIFY.md), [property editing](./PROPERTY-DETAILS.md), and [UI components](./UI-COMPONENTS.md).
 
 ## API/security notes
 
@@ -47,8 +47,8 @@ See [INSTALLATION.md](./INSTALLATION.md) and [COOLIFY.md](./COOLIFY.md).
 
 ## Required owner setup for production
 
-Configure a unique admin bootstrap password, HTTPS, persistent Coolify volumes, and regular backups. Configure Google OAuth credentials and its exact HTTPS callback, Twilio Verify SMS/email channels, and a GA4 measurement ID if those integrations are to be used. Generate separate random MCP read/write tokens. Do not expose secrets in public code or commit `.env`.
+Configure a unique admin bootstrap password, HTTPS, persistent Coolify volumes, and regular backups. Configure Twilio Verify SMS/email channels and Cloudflare Turnstile before using the public verification forms; configure a GA4 measurement ID if analytics is to be used. Generate separate random MCP read/write tokens. Do not expose secrets in public code or commit `.env`.
 
-The analytics page currently reports anonymous first-party events, not a GA4 live map. It clearly says location is unavailable and that refreshes occur every 60 seconds. Visitor geolocation/GA4 Data API integration and email marketing delivery are not configured. Subscriber confirmation provides an unsubscribe link in the page; configure an email delivery provider before running a marketing campaign.
+When server-side GA4 credentials are configured, the analytics page reports GA4 Realtime active users, historical metrics, and approximate country-level sessions on a map. It refreshes every 60 seconds while visible and shows setup instructions when credentials are absent. Country markers are aggregate centroids, not individual visitor locations. Subscriber confirmation provides an unsubscribe link in the page; configure an email delivery provider before running a marketing campaign.
 
 No license is currently specified. Legal/compliance statements must be reviewed by qualified counsel before relying on them.

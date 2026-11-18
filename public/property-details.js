@@ -9,6 +9,17 @@
   function photos(p) { return [...new Set([...(Array.isArray(p.images) ? p.images : []), p.image].map(safeUrl).filter(Boolean))]; }
   const empty = text => `<p class="pd-muted">${esc(text)}</p>`;
   const stat = (label, value) => `<div><dt>${esc(label)}</dt><dd>${esc(value || 'On request')}</dd></div>`;
+  function renderSavedDetails(p) {
+    const d = p.project_details || {};
+    const facts = [['builder_name','Builder'],['rera_id','RERA ID'],['project_units','Project units'],['project_area','Project area'],['launch_date','Launch date']]
+      .filter(([key]) => d[key]).map(([key,label]) => '<div class="detail-highlight"><span>' + label + '</span><strong>' + esc(d[key]) + '</strong></div>').join('');
+    const plans = (Array.isArray(p.floor_plans) ? p.floor_plans : []).map(plan => {
+      const image = safeUrl(plan.image);
+      return '<article class="saved-floor-plan">' + (image ? '<a href="' + esc(image) + '" target="_blank" rel="noopener noreferrer" aria-label="Open ' + esc(plan.label) + ' floor plan"><img src="' + esc(image) + '" alt="' + esc(plan.label) + ' floor plan" loading="lazy"></a>' : '') +
+        '<h4>' + esc(plan.label) + '</h4><p>' + esc(plan.area || 'Area on request') + '</p><strong>' + esc(plan.price || 'Price on request') + '</strong></article>';
+    }).join('');
+    return { facts, plans };
+  }
   function render(p, options = {}) {
     const d = p.project_details || {}, gallery = photos(p), plans = Array.isArray(p.floor_plans) ? p.floor_plans : [];
     const price = priceLabel(p), area = /^([\d,]+(?:\.\d+)?)\s*(?:sq\.?\s*ft\.?|sqft|ft²)$/i.exec(String(p.area || '').trim());
@@ -90,7 +101,7 @@
       finally { sending = false; button.disabled = false; }
     });
   }
-  const api = { render, bind, safeUrl, photos, priceLabel, esc };
+  const api = { renderSavedDetails, render, bind, safeUrl, photos, priceLabel, esc };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.PropertyDetails = api;
 })(typeof window !== 'undefined' ? window : this);

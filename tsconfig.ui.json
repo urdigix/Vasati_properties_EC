@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "incremental": false,
+    "types": ["react", "react-dom"]
+  },
+  "include": [
+    "src/components/ui/rainbow-borders-button.tsx",
+    "components/ui/rainbow-borders-button.tsx",
+    "src/demos/rainbow-button/**/*.tsx",
+    "src/lib/utils.ts"
+  ],
+  "exclude": ["node_modules"]
+}

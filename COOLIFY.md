@@ -20,8 +20,10 @@ Required production settings:
 
 Optional integrations:
 
-- Google OAuth: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` (`https://your-domain/auth/google/callback`). Register the exact redirect URI in Google Cloud.
-- Customer OTP: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID`. Configure SMS and email channels and a 10-minute code lifetime in Twilio Verify. OTP is not simulated; brochure verification returns an explicit unavailable error until configured.
+- Google customer OAuth is not enabled by the current Express routes; legacy environment values are not used.
+- Customer OTP: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID`. Configure SMS and email channels and a 5-minute code lifetime in Twilio Verify. OTP is not simulated; site-visit and brochure verification remain unavailable until configured.
+- Bot protection: set `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` for the public hostname. Both are required for public verification requests.
+- Reverse proxy: the split stack defaults `TRUST_PROXY_HOPS` to `2` for Traefik → Nginx → Express. Adjust it if changing the topology; direct exposure uses `0`.
 - GA4 browser tracking: `GA4_MEASUREMENT_ID` (`G-...`). The browser tag and event collection are enabled only after analytics consent.
 - GA4 admin reports (optional): `GA4_PROPERTY_ID` (numeric property ID), `GA4_SERVICE_ACCOUNT_EMAIL`, and `GA4_SERVICE_ACCOUNT_PRIVATE_KEY`. Enable the Google Analytics Data API in the service account's Google Cloud project, then add the service-account email to the GA4 property's access management with Viewer permission. Store the private key only as a Coolify server secret (escaped `\n` sequences are supported); it and access tokens are never sent to the browser. The measurement ID and reporting property ID are separate settings.
 - Remote MCP: set independent high-entropy `MCP_READ_TOKEN` and `MCP_WRITE_TOKEN`. Expose the endpoint only through the HTTPS domain at `/mcp`. Keep tokens server-side and grant only the needed token to each client.
@@ -32,9 +34,9 @@ SQLite is appropriate for a single application instance with a persistent local 
 
 ## Operational checks
 
-- Health check: `GET /`.
+- Backend health check: `GET /api/health`; split frontend: `GET /healthz`.
 - Administrator: `/admin`; initial local-only login is documented in `README.md`. The first successful login requires a password change.
-- Configure and verify OAuth callback and Twilio delivery before advertising those workflows.
+- Configure and verify Turnstile and Twilio delivery before advertising verification forms. Without these services, WhatsApp contact remains available when a number is configured.
 - Configure and verify the GA4 measurement ID and server-side reporting property separately. The dashboard uses the GA4 Realtime API for active users and the GA4 Data API for historical reports. If reporting credentials are absent, it shows a setup-required state; API failures are reported without fabricating data.
 - The country map renders local country outlines and places aggregate GA4 country sessions at country-centroid positions. These are approximate country-level summaries, not exact visitor locations or individual tracking. Countries without a supported map shape are omitted.
 - Review the Coolify proxy's forwarded-header and HTTPS settings. The app sets secure cookies in production.
