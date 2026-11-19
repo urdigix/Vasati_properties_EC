@@ -212,6 +212,19 @@ test('admin, image, direct requests, brochure, and MCP authorization controls', 
     });
     assert.equal(propertyResponse.status, 201);
     const property = (await propertyResponse.json()).data;
+    await t.test('publishing and unpublishing a saved project updates the warmed public catalogue and detail page', async () => {
+      const catalogue = () => request('/api/properties').then(response => response.json());
+      assert.ok(!(await catalogue()).data.some(p => p.id === property.id));
+      const publish = await request(`/api/properties/${property.id}`, {method:'PUT', ...json({published:true}, {cookie})});
+      assert.equal(publish.status, 200);
+      assert.equal((await publish.json()).data.published, true);
+      assert.ok((await catalogue()).data.some(p => p.id === property.id));
+      assert.equal((await request(`/properties/${property.id}`)).status, 200);
+      const unpublish = await request(`/api/properties/${property.id}`, {method:'PUT', ...json({published:false}, {cookie})});
+      assert.equal(unpublish.status, 200);
+      assert.ok(!(await catalogue()).data.some(p => p.id === property.id));
+      assert.equal((await request(`/properties/${property.id}`)).status, 404);
+    });
     await t.test('builder name persists on create and partial edits, and can be changed or cleared', async () => {
       assert.equal(property.developer_name, 'Test Builders');
       const update = data => request(`/api/properties/${property.id}`, {method:'PUT', ...json(data, {cookie})});

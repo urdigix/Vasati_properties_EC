@@ -319,12 +319,6 @@
         <div style="font-size:16px;font-weight:800;letter-spacing:1px;color:white;line-height:1.1;">VASATI</div>
         <div style="font-size:9.5px;font-weight:700;letter-spacing:2px;color:#38bdf8;margin-top:2px;">ADMIN PORTAL</div>
       </div>
-      <div class="form-group form-full">
-        <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:13px;">
-          <input type="checkbox" id="formPublished" style="width:auto;">
-          Publish this listing on the public website
-        </label>
-      </div>
     </a>
     <ul class="nav-list">
       <li><button class="nav-btn active" data-tab="properties">🏢 Properties CMS</button></li>
@@ -651,6 +645,13 @@
           <div class="form-group form-full">
             <label>Property Title *</label>
             <input type="text" id="formTitle" placeholder="E.g. Ultra Luxury 3 BHK in Indiranagar" required>
+          </div>
+          <div class="form-group form-full">
+            <label for="formPublished" style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:13px;">
+              <input type="checkbox" id="formPublished" style="width:auto;" checked aria-describedby="publicationHelp">
+              Publish this project on the website
+            </label>
+            <p id="publicationHelp" style="font-size:12px;color:var(--muted);margin:6px 0 0;">Published projects appear in the public listings. Uncheck to save a private draft.</p>
           </div>
           <div class="form-group form-full">
             <label for="formDeveloperName">Builder Name</label>
@@ -1076,6 +1077,7 @@
                   ${p.video_url ? '<span style="color:#38bdf8;font-size:11px;font-weight:700;margin-left:6px;" title="Walkthrough video configured">🎥 Video</span>' : ''}
                 </div>
                 <div class="prop-loc">📍 ${p.location}</div>
+                <span class="badge ${p.published ? 'badge-ready' : 'badge-resale'}" style="margin-top:6px;">${p.published ? 'Live on website' : 'Draft · not on website'}</span>
                 ${p.admin_note ? `<div style="font-size:11px;color:#fde047;margin-top:4px;display:inline-flex;align-items:center;gap:4px;background:rgba(234,179,8,0.12);padding:2px 8px;border-radius:6px;border:1px solid rgba(234,179,8,0.3);" title="Private Personal Note (Visible only in Admin)">🔒 Note: <span style="color:#fef08a;">${(p.admin_note.length > 55 ? p.admin_note.slice(0, 55) + '...' : p.admin_note).replace(/"/g, '&quot;')}</span></div>` : ''}
               </div>
             </div>
@@ -1279,7 +1281,7 @@
       renderGalleryGrid();
       document.getElementById('galleryUploadStatus').textContent = 'Upload 3–4 photos from your computer or keep default gallery.';
       document.getElementById('formGalleryFiles').value = '';
-      document.getElementById('formPublished').checked = false;
+      document.getElementById('formPublished').checked = true;
       document.getElementById('formVideoUrl').value = '';
       document.getElementById('formBrochureUrl').value = '';
       document.getElementById('videoUploadStatus').textContent = '';
@@ -1395,7 +1397,7 @@
         const result = await res.json();
         if (!res.ok) throw new Error(result.message || 'Could not save property.');
         if (result.success) {
-          showToast(id ? '✅ Property updated!' : '✅ Draft property added!');
+          showToast(payload.published ? '✅ Project published on the website!' : '✅ Project saved as draft — not visible on the website.');
           propModal.close();
           loadProperties();
           loadStats();

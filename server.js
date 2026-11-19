@@ -200,7 +200,7 @@ app.post('/api/properties', async (req, res) => {
 
     const newId = await db.createProperty({ ...req.body, published: Boolean(req.body.published) });
     const created = await db.getPropertyById(newId, true);
-    db.logAudit(adminAuth.currentAdmin(req).email, 'property.created', newId, { published: false });
+    db.logAudit(adminAuth.currentAdmin(req).email, 'property.created', newId, { published: created.published });
     res.status(201).json({ success: true, message: 'Property created successfully', data: created });
   } catch (error) {
     console.error('Error creating property:', error);
