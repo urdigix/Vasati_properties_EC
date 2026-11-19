@@ -124,6 +124,22 @@
     .modal-body { padding: 24px; max-height: 75vh; overflow-y: auto; }
     
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .locality-editor { border: 1px solid var(--card-border); border-radius: var(--radius); padding: 16px; margin-bottom: 24px; min-width: 0; }
+    .locality-editor legend { padding: 0 8px; font-size: 15px; font-weight: 700; color: var(--text); }
+    .locality-editor p { color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 12px; }
+    .locality-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; margin-bottom: 10px; align-items: end; }
+    .locality-row .form-group { margin: 0; }
+    .locality-row .btn { min-height: 44px; }
+    .locality-row input { min-height: 44px; }
+    .locality-row input[readonly] { color: var(--muted); }
+    .locality-add { display: flex; align-items: end; gap: 8px; margin-top: 16px; }
+    .locality-add .form-group { flex: 1; min-width: 0; margin: 0; }
+    .locality-add .btn { min-height: 44px; }
+    @media (max-width: 480px) {
+      .locality-row { grid-template-columns: 1fr 1fr; }
+      .locality-row .form-group { grid-column: 1 / -1; }
+      .locality-add { flex-direction: column; align-items: stretch; }
+    }
     .form-full { grid-column: 1 / -1; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group label { font-size: 12px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -291,6 +307,8 @@
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
   </style>
+  <link rel="stylesheet" href="/admin-responsive.css">
+  <link rel="stylesheet" href="/floor-plans-admin.css">
 </head>
 <body>
   <!-- Sidebar -->
@@ -446,12 +464,21 @@
           <button type="button" class="btn btn-primary btn-sm" id="saveSettingsTopBtn">💾 Save All Changes</button>
         </div>
         <form id="settingsForm" style="padding:24px;">
+          <fieldset class="locality-editor" id="localitiesEditor" disabled>
+            <legend>Search dropdown locations</legend>
+            <p>Add, edit or delete locations shown in “Locality or project”. Click Save All Changes to publish your edits. Use these names in property locality fields so buyers can find the matching listings.</p>
+            <div id="searchLocalitiesList"></div>
+            <div class="locality-add">
+              <div class="form-group">
+                <label for="settingNewLocality">New locality or project</label>
+                <input type="text" id="settingNewLocality" maxlength="80" placeholder="Enter a location name" autocomplete="off">
+              </div>
+              <button type="button" class="btn btn-outline" id="addSearchLocality">Add location</button>
+            </div>
+          </fieldset>
+          <p id="searchLocalitiesStatus" role="status" aria-live="polite" style="font-size:13px;color:var(--muted);margin-bottom:24px;">Loading search locations…</p>
           <h3 style="font-size:15px;color:#38bdf8;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px;">1. Hero Banner Content</h3>
           <div class="form-grid" style="margin-bottom:24px;">
-            <div class="form-group form-full">
-              <label>Hero Tagline / Pill</label>
-              <input type="text" id="settingHeroTag" placeholder="E.g. ✨ Premium Bengaluru Real Estate Portfolio">
-            </div>
             <div class="form-group form-full">
               <label>Main Headline Title</label>
               <input type="text" id="settingHeroTitle" placeholder="E.g. Find Your Dream Space in the Silicon Valley of India">
@@ -712,7 +739,8 @@
           </div>
           <div class="form-group">
             <label>Locality Hub</label>
-            <input type="text" id="formLocality" placeholder="E.g. Indiranagar">
+            <input type="text" id="formLocality" list="adminLocalityOptions" placeholder="Choose or enter a locality">
+            <datalist id="adminLocalityOptions"></datalist>
           </div>
           <div class="form-group">
             <label>Price in Lakhs (₹) *</label>
@@ -749,12 +777,30 @@
               <option value="Villa">Luxury Villa</option>
             </select>
           </div>
+          <fieldset class="form-full" style="border:1px solid var(--card-border);border-radius:12px;padding:16px;min-width:0;">
+            <legend style="padding:0 8px;font-size:15px;font-weight:700;">Project overview</legend>
+            <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Optional details shown on the property overview card. Leave unknown information blank. RERA status is based on the details you supply.</p>
+            <div class="form-grid">
+              <div class="form-group"><label for="overview_project_units">Project Units</label><input id="overview_project_units" type="number" min="1" max="100000000" step="1" placeholder="e.g. 15"></div>
+              <div class="form-group"><label for="overview_area_unit">Area Unit</label><input id="overview_area_unit" type="text" maxlength="160" placeholder="e.g. sq.ft."></div>
+              <div class="form-group"><label for="overview_sizes">Sizes / Area Range</label><input id="overview_sizes" type="text" maxlength="160" placeholder="e.g. 990–1320 sq.ft."></div>
+              <div class="form-group"><label for="overview_project_size">Project Size</label><input id="overview_project_size" type="text" maxlength="160" placeholder="e.g. 1 Building – 15 units"></div>
+              <div class="form-group"><label for="overview_launch_date">Launch Date</label><input id="overview_launch_date" type="month" min="1900-01" max="2199-12"></div>
+              <div class="form-group"><label for="overview_avg_price">Average Price</label><input id="overview_avg_price" type="text" maxlength="160" placeholder="e.g. ₹4.5 K/sq.ft."></div>
+              <div class="form-group"><label for="overview_possession_status">Possession Status</label><input id="overview_possession_status" type="text" maxlength="160" placeholder="e.g. Ready to Move"></div>
+              <div class="form-group"><label for="overview_configurations">Configurations</label><input id="overview_configurations" type="text" maxlength="160" placeholder="e.g. 2, 3 BHK Apartments"></div>
+              <div class="form-group"><label for="overview_rera_status">RERA Status</label><select id="overview_rera_status"><option value="not_provided">Not provided</option><option value="registered">Registered — enter ID</option><option value="not_applicable">Not applicable</option></select></div>
+              <div class="form-group"><label for="overview_rera_id">RERA ID</label><input id="overview_rera_id" type="text" maxlength="160" placeholder="Enter registration number"></div>
+              <div class="form-group form-full"><label for="overview_rera_url">RERA “Know More” Link</label><input id="overview_rera_url" type="url" maxlength="2048" placeholder="https://..."></div>
+            </div>
+          </fieldset>
           <div class="form-group form-full">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
               <label style="margin:0;">Property Photos * (Maximum 4, first photo is cover)</label>
               <span id="galleryCountBadge" style="font-size:12px;font-weight:700;color:#38bdf8;background:rgba(56,189,248,0.12);padding:2px 8px;border-radius:12px;">0 photos</span>
             </div>
             <div style="background:#0c1220;border:1px dashed var(--card-border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px;">
+              <p style="margin:0;font-size:12px;color:var(--muted);">Add up to 4 photos for the property image slider. Photos appear in the order shown below; the first photo is the cover.</p>
               <div id="galleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(110px, 1fr));gap:10px;"></div>
               <div style="display:flex;align-items:center;gap:10px;background:#111827;padding:10px 14px;border-radius:8px;border:1px solid var(--card-border);flex-wrap:wrap;">
                 <label class="btn btn-primary btn-sm" style="cursor:pointer;margin:0;display:inline-flex;align-items:center;gap:6px;font-weight:700;white-space:nowrap;">
@@ -805,6 +851,14 @@
             </div>
           </div>
 
+          <section class="form-full" aria-labelledby="floorPlansEditorTitle">
+            <h3 id="floorPlansEditorTitle" style="font-size:15px;">2D floor plans and pricing</h3>
+            <p class="fp-admin-help">Add one option per configuration and area. Upload a 2D drawing, set its price and optional room dimensions, then save the property. Plans are separate from the four gallery photos. Only upload drawings you have permission to publish.</p>
+            <div id="floorPlansEditorList"></div>
+            <button type="button" class="btn btn-outline" id="addFloorPlanBtn">Add 2D floor plan</button>
+            <p id="floorPlansEditorStatus" class="fp-admin-help" role="status" aria-live="polite">No 2D plans yet.</p>
+          </section>
+
           <!-- Community Amenities & Features Editor -->
           <div class="form-group form-full">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
@@ -834,26 +888,6 @@
               <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
                 <input type="text" id="customAmenityInput" placeholder="Add custom amenity (e.g. 🏸 Badminton Court, ☕ Sky Lounge)..." style="flex:1;font-size:12.5px;padding:8px 12px;">
                 <button type="button" class="btn btn-outline btn-sm" id="addCustomAmenityBtn" style="white-space:nowrap;font-size:12px;">➕ Add Amenity</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Proximity & Travel Times Editor -->
-          <div class="form-group form-full">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
-              <label style="margin:0;">Proximity & Travel Times</label>
-              <button type="button" class="btn btn-outline btn-sm" id="addProximityRowBtn" style="font-size:11.5px;padding:4px 10px;color:#38bdf8;border-color:#38bdf8;">➕ Add Location</button>
-            </div>
-            
-            <div style="background:#0c1220;border:1px solid var(--card-border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;">
-              <div style="font-size:12px;color:#38bdf8;display:flex;align-items:center;gap:6px;">
-                ✏️ <span>Directly edit or rewrite landmark names and travel times below:</span>
-              </div>
-              <div id="proximityRowsContainer" style="display:flex;flex-direction:column;gap:8px;">
-                <!-- Populated dynamically -->
-              </div>
-              <div style="font-size:11.5px;color:var(--muted);margin-top:2px;">
-                💡 Specify landmark or destination name (e.g. 🚇 Metro Station) and distance or commute duration (e.g. 5 Minutes Walk).
               </div>
             </div>
           </div>
@@ -954,11 +988,16 @@
 
   <div class="toast" id="toast"></div>
 
+  <script src="/property-overview.js"></script>
+  <script src="/floor-plans.js"></script>
+  <script src="/floor-plans-admin.js"></script>
   <script>
     let properties = [];
     let slides = [];
     let enquiries = [];
     let siteSettings = {};
+    let localitiesLoaded = false;
+    let localityInputSequence = 0;
     let analyticsRefreshTimer;
     let analyticsRequestController;
     let analyticsHasData = false;
@@ -1143,6 +1182,14 @@
 
     const propModal = document.getElementById('propertyModal');
     const propForm = document.getElementById('propertyForm');
+    function setProjectOverview(value) {
+      const overview = PropertyOverview.read(value);
+      PropertyOverview.fields.forEach(key => { document.getElementById(`overview_${key}`).value = overview[key]; });
+    }
+
+    function readProjectOverview() {
+      return PropertyOverview.normalize(Object.fromEntries(PropertyOverview.fields.map(key => [key, document.getElementById(`overview_${key}`).value])));
+    }
 
     let currentGalleryImages = [];
 
@@ -1231,51 +1278,6 @@
       renderAmenitiesUI();
     }
 
-    // Proximity State & Defaults
-    const defaultProximityList = [
-      { title: '🚇 Metro Station', time: '5 Minutes Walk' },
-      { title: '🏢 IT Tech Parks', time: '10 Minutes Drive' },
-      { title: '🏥 Multi-Specialty Hospital', time: '8 Minutes Drive' }
-    ];
-
-    let currentProximity = [];
-
-    function renderProximityUI() {
-      const container = document.getElementById('proximityRowsContainer');
-      if (!container) return;
-
-      if (!currentProximity.length) {
-        container.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:8px;">No proximity locations added yet. Click "+ Add Location" above.</div>';
-        return;
-      }
-
-      container.innerHTML = currentProximity.map((item, idx) => `
-        <div style="display:flex;gap:8px;align-items:center;" class="proximity-row">
-          <input type="text" class="prox-title" placeholder="Landmark (e.g. 🚇 Metro Station)" value="${item.title || ''}" oninput="updateProximityItem(${idx}, 'title', this.value)" style="flex:1;font-size:13px;padding:8px 12px;">
-          <input type="text" class="prox-time" placeholder="Commute Time (e.g. 5 Minutes Walk)" value="${item.time || ''}" oninput="updateProximityItem(${idx}, 'time', this.value)" style="flex:1;font-size:13px;padding:8px 12px;">
-          <button type="button" class="btn btn-outline btn-sm" onclick="removeProximityRow(${idx})" style="color:#f87171;border-color:rgba(239,68,68,0.3);padding:8px 12px;" title="Remove this landmark">✕</button>
-        </div>
-      `).join('');
-    }
-
-    function updateProximityItem(idx, key, val) {
-      if (currentProximity[idx]) {
-        currentProximity[idx][key] = val;
-      }
-    }
-
-    function removeProximityRow(idx) {
-      if (idx >= 0 && idx < currentProximity.length) {
-        currentProximity.splice(idx, 1);
-        renderProximityUI();
-      }
-    }
-
-    function addProximityRow(title = '', time = '') {
-      currentProximity.push({ title, time });
-      renderProximityUI();
-    }
-
     function renderGalleryGrid() {
       const grid = document.getElementById('galleryGrid');
       const countBadge = document.getElementById('galleryCountBadge');
@@ -1342,6 +1344,8 @@
 
     document.getElementById('openAddModalBtn').addEventListener('click', () => {
       propForm.reset();
+      setProjectOverview({});
+      FloorPlansAdmin.set([]);
       document.getElementById('editPropId').value = '';
       document.getElementById('modalTitle').textContent = 'Add New Property';
       currentGalleryImages = [
@@ -1356,16 +1360,12 @@
       document.getElementById('formPublished').checked = false;
       document.getElementById('formVideoUrl').value = '';
       document.getElementById('formBrochureUrl').value = '';
-      document.getElementById('imageUploadStatus').textContent = '';
       document.getElementById('videoUploadStatus').textContent = '';
       document.getElementById('brochureUploadStatus').textContent = '';
       document.getElementById('formAdminNote').value = '';
 
       currentAmenities = [...defaultAmenitiesList];
       renderAmenitiesUI();
-
-      currentProximity = defaultProximityList.map(item => ({ ...item }));
-      renderProximityUI();
 
       propModal.showModal();
     });
@@ -1381,6 +1381,8 @@
       document.getElementById('formTitle').value = p.title;
       document.getElementById('formLocation').value = p.location;
       document.getElementById('formLocality').value = p.locality || '';
+      setProjectOverview(p.project_overview);
+      FloorPlansAdmin.set(p.floor_plans);
       document.getElementById('formPrice').value = p.price;
       document.getElementById('formPriceLabel').value = p.priceLabel;
       document.getElementById('formBhk').value = p.bhk;
@@ -1397,7 +1399,6 @@
 
       document.getElementById('formVideoUrl').value = p.video_url || '';
       document.getElementById('formBrochureUrl').value = p.brochure_url || '';
-      document.getElementById('imageUploadStatus').textContent = (p.image || '').startsWith('/api/media/') ? `Stored in database: ${p.image}` : '';
       document.getElementById('videoUploadStatus').textContent = (p.video_url || '').startsWith('/api/media/') ? `Stored in database: ${p.video_url}` : '';
       document.getElementById('brochureUploadStatus').textContent = p.brochure_url ? `Attached: ${p.brochure_url}` : '';
       document.getElementById('formDescription').value = p.description || '';
@@ -1407,16 +1408,14 @@
         : [...defaultAmenitiesList];
       renderAmenitiesUI();
 
-      currentProximity = (Array.isArray(p.proximity) && p.proximity.length)
-        ? p.proximity.map(item => ({ ...item }))
-        : defaultProximityList.map(item => ({ ...item }));
-      renderProximityUI();
-
       propModal.showModal();
     }
 
     propForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      let projectOverview, floorPlans;
+      try { projectOverview = readProjectOverview(); floorPlans = FloorPlansAdmin.get(); }
+      catch (error) { showToast(error.message); return; }
       const saveBtn = document.getElementById('savePropertyBtn');
       saveBtn.disabled = true;
       saveBtn.textContent = 'Saving...';
@@ -1439,20 +1438,10 @@
       });
       const finalAmenities = amenitiesData.length ? amenitiesData : currentAmenities.filter(Boolean);
 
-      // Collect proximity inputs directly from DOM so any rewritten values are captured
-      const proxRows = document.querySelectorAll('.proximity-row');
-      const proximityData = [];
-      proxRows.forEach(row => {
-        const title = row.querySelector('.prox-title')?.value.trim();
-        const time = row.querySelector('.prox-time')?.value.trim();
-        if (title && time) {
-          proximityData.push({ title, time });
-        }
-      });
-      const finalProximity = proximityData.length ? proximityData : currentProximity.filter(p => p.title && p.time);
-
       const payload = {
         title: document.getElementById('formTitle').value.trim(),
+        project_overview: projectOverview,
+        floor_plans: floorPlans,
         location: document.getElementById('formLocation').value.trim(),
         locality: document.getElementById('formLocality').value.trim(),
         price: Number(document.getElementById('formPrice').value),
@@ -1464,7 +1453,6 @@
         image: currentGalleryImages[0],
         images: currentGalleryImages,
         amenities: finalAmenities,
-        proximity: finalProximity,
         video_url: document.getElementById('formVideoUrl').value.trim(),
         brochure_url: document.getElementById('formBrochureUrl').value.trim(),
         description: document.getElementById('formDescription').value.trim(),
@@ -1522,11 +1510,6 @@
       });
       input.value = '';
       showToast('Amenity added');
-    });
-
-    // Add Proximity row button listener
-    document.getElementById('addProximityRowBtn')?.addEventListener('click', () => {
-      addProximityRow('', '');
     });
 
     // Multi-photo upload for property gallery
@@ -1618,8 +1601,6 @@
       reader.readAsDataURL(file);
     }
 
-    document.getElementById('formImageFile').addEventListener('change', (e) =>
-      uploadMediaFile(e.target.files[0], 'formImage', 'imageUploadStatus', ['image/jpeg', 'image/png', 'image/webp'], 'Image'));
     document.getElementById('formVideoFile').addEventListener('change', (e) =>
       uploadMediaFile(e.target.files[0], 'formVideoUrl', 'videoUploadStatus', ['video/mp4', 'video/webm'], 'Video'));
 
@@ -1873,13 +1854,109 @@
     }
 
     // --- Website Content & Settings CMS ---
+    function localityStatus(message) {
+      document.getElementById('searchLocalitiesStatus').textContent = message;
+    }
+
+    function getEditedLocalities() {
+      const names = [...document.querySelectorAll('#searchLocalitiesList input')].map(input => input.value.trim().replace(/\s+/g, ' '));
+      if (names.length > 100 || names.some(name => !name || name.length > 80)) throw new Error('Enter a name of 1–80 characters for each location (maximum 100 locations).');
+      if (new Set(names.map(name => name.toLowerCase())).size !== names.length) throw new Error('Each location must have a different name.');
+      return names;
+    }
+
+    function addLocalityRow(name) {
+      const row = document.createElement('div');
+      row.className = 'locality-row';
+      const group = document.createElement('div');
+      group.className = 'form-group';
+      const input = document.createElement('input');
+      input.id = `searchLocality-${++localityInputSequence}`;
+      input.type = 'text';
+      input.maxLength = 80;
+      input.value = name;
+      input.readOnly = true;
+      const label = document.createElement('label');
+      label.htmlFor = input.id;
+      label.textContent = 'Location name';
+      group.append(label, input);
+      const edit = document.createElement('button');
+      edit.type = 'button';
+      edit.className = 'btn btn-outline';
+      edit.textContent = 'Edit';
+      edit.setAttribute('aria-label', `Edit ${name}`);
+      edit.addEventListener('click', () => {
+        if (!input.readOnly) {
+          try { getEditedLocalities(); }
+          catch (error) { localityStatus(error.message); input.focus(); return; }
+          input.value = input.value.trim().replace(/\s+/g, ' ');
+          input.readOnly = true;
+          edit.textContent = 'Edit';
+          edit.setAttribute('aria-label', `Edit ${input.value}`);
+          remove.setAttribute('aria-label', `Delete ${input.value}`);
+          localityStatus('Location updated. Click Save All Changes to publish.');
+        } else {
+          input.readOnly = false;
+          edit.textContent = 'Done';
+          edit.setAttribute('aria-label', `Finish editing ${input.value}`);
+          input.focus();
+          input.select();
+        }
+      });
+      input.addEventListener('input', () => localityStatus('You have unsaved location changes.'));
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'btn btn-outline';
+      remove.textContent = 'Delete';
+      remove.setAttribute('aria-label', `Delete ${name}`);
+      remove.addEventListener('click', () => {
+        const nextFocus = row.nextElementSibling?.querySelector('button') || row.previousElementSibling?.querySelector('button') || document.getElementById('settingNewLocality');
+        row.remove();
+        localityStatus('Location removed from this list. Click Save All Changes to publish.');
+        nextFocus.focus();
+      });
+      row.append(group, edit, remove);
+      document.getElementById('searchLocalitiesList').append(row);
+    }
+
+    function refreshAdminLocalityOptions(names) {
+      document.getElementById('adminLocalityOptions').replaceChildren(...names.map(name => new Option(name, name)));
+    }
+
+    document.getElementById('addSearchLocality').addEventListener('click', () => {
+      const input = document.getElementById('settingNewLocality');
+      const name = input.value.trim().replace(/\s+/g, ' ');
+      try {
+        const existing = getEditedLocalities();
+        if (!name || name.length > 80) throw new Error('Enter a location name of 1–80 characters.');
+        if (existing.length >= 100) throw new Error('You can add up to 100 locations.');
+        if (existing.some(value => value.toLowerCase() === name.toLowerCase())) throw new Error('This location is already in the list.');
+        addLocalityRow(name);
+        input.value = '';
+        localityStatus('Location added. Click Save All Changes to publish.');
+      } catch (error) { localityStatus(error.message); }
+      input.focus();
+    });
+    document.getElementById('settingNewLocality').addEventListener('keydown', event => {
+      if (event.key === 'Enter') { event.preventDefault(); document.getElementById('addSearchLocality').click(); }
+    });
+
     async function loadSettings() {
+      localitiesLoaded = false;
+      document.getElementById('localitiesEditor').disabled = true;
       try {
         const res = await fetch('/api/settings');
         const data = await res.json();
         if (data.success && data.data) {
           siteSettings = data.data;
-          document.getElementById('settingHeroTag').value = siteSettings.hero_tag || '';
+          const names = JSON.parse(siteSettings.search_localities || '[]');
+          if (!Array.isArray(names) || !names.every(name => typeof name === 'string')) throw new Error('Invalid search locations');
+          document.getElementById('searchLocalitiesList').replaceChildren();
+          names.forEach(addLocalityRow);
+          refreshAdminLocalityOptions(names);
+          localitiesLoaded = true;
+          document.getElementById('localitiesEditor').disabled = false;
+          localityStatus(names.length ? 'Edit the list, then click Save All Changes.' : 'No locations yet. Add a location to show it in the search dropdown.');
           document.getElementById('settingHeroTitle').value = siteSettings.hero_title || '';
           document.getElementById('settingHeroSubtitle').value = siteSettings.hero_subtitle || '';
           document.getElementById('settingSeoTitle').value = siteSettings.seo_title || '';
@@ -1901,20 +1978,31 @@
           document.getElementById('settingStatTrust').value = siteSettings.stat_trust || '';
         }
       } catch (e) {
+        localityStatus('Unable to load locations. Refresh and try again.');
         showToast('Error loading settings');
       }
     }
 
     async function saveSettings(e) {
       if (e) e.preventDefault();
+      if (!localitiesLoaded) { localityStatus('Wait for locations to load before saving.'); return; }
+      let names;
+      try { names = getEditedLocalities(); }
+      catch (error) { localityStatus(error.message); showToast(error.message); return; }
+      if (document.getElementById('settingNewLocality').value.trim()) {
+        localityStatus('Click Add location to add the new name before saving.');
+        document.getElementById('settingNewLocality').focus();
+        return;
+      }
       const topBtn = document.getElementById('saveSettingsTopBtn');
       const bottomBtn = document.getElementById('saveSettingsBtnBottom');
       topBtn.disabled = true;
       bottomBtn.disabled = true;
       bottomBtn.textContent = 'Saving Changes...';
+      document.getElementById('localitiesEditor').disabled = true;
 
       const payload = {
-        hero_tag: document.getElementById('settingHeroTag').value.trim(),
+        search_localities: names,
         hero_title: document.getElementById('settingHeroTitle').value.trim(),
         hero_subtitle: document.getElementById('settingHeroSubtitle').value.trim(),
         seo_title: document.getElementById('settingSeoTitle').value.trim(),
@@ -1944,6 +2032,8 @@
         });
         const data = await res.json();
         if (data.success) {
+          refreshAdminLocalityOptions(names);
+          localityStatus('Search locations saved. The public dropdown updates on its next page load.');
           showToast('✅ Website content updated live!');
         } else {
           showToast('❌ ' + (data.message || 'Error updating settings'));
@@ -1951,6 +2041,7 @@
       } catch (err) {
         showToast('Error saving settings');
       } finally {
+        document.getElementById('localitiesEditor').disabled = false;
         topBtn.disabled = false;
         bottomBtn.disabled = false;
         bottomBtn.textContent = '💾 Save All Changes';

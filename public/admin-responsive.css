@@ -1,0 +1,34 @@
+/* Keep admin tables scrollable and editing forms usable on small screens. */
+.main-content, .card, .form-group { min-width: 0; }
+.stat-card { min-width: 0; overflow-wrap: anywhere; }
+.table-wrap { max-width: 100%; overscroll-behavior-x: contain; }
+dialog { max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); overflow-y: auto; }
+.modal-body { max-height: none; }
+.modal-foot { position: sticky; bottom: 0; padding-bottom: max(14px, env(safe-area-inset-bottom)); }
+.modal-close { min-width: 44px; min-height: 44px; }
+.form-group :is(input, select, textarea) { min-width: 0; max-width: 100%; }
+@media (max-width: 1050px) {
+  .sidebar { width: 210px; padding: 18px 12px; }
+  .main-content { padding: 20px; }
+  .stats-grid { gap: 12px; margin-bottom: 18px; }
+}
+@media (max-width: 760px) {
+  body { min-height: 100dvh; }
+  .sidebar { width: 100%; padding: 10px 12px; }
+  .brand { margin-bottom: 8px; }
+  .main-content { padding: 16px 12px; }
+  .top-header { margin-bottom: 16px; gap: 10px; }
+  .top-header h1 { font-size: 24px; }
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .stat-card { padding: 14px; }
+  .stat-val { font-size: 26px; }
+  .btn, .btn-sm, .nav-btn { min-height: 44px; }
+  .form-group :is(input, select, textarea), .analytics-select { font-size: 16px; }
+  .form-group :is(input:not([type="checkbox"]):not([type="radio"]), select) { min-height: 44px; }
+  .form-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .modal-head, .modal-body, .modal-foot { padding: 14px; }
+  dialog { width: calc(100% - 16px); max-height: calc(100dvh - 16px); }
+  .card-head { padding: 14px; flex-wrap: wrap; gap: 10px; }
+  .card-head input, .card-head select { min-width: 0; max-width: 100%; font-size: 16px; }
+  .toast { max-width: calc(100% - 24px); right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); }
+}

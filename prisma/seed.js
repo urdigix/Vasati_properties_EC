@@ -19,7 +19,6 @@ async function main() {
     { key: 'grievance_officer_email', value: process.env.NEXT_PUBLIC_GRIEVANCE_OFFICER_EMAIL || 'grievance@example.com' },
     { key: 'grievance_officer_phone', value: '+91 80 4567 8901' },
     { key: 'grievance_response_timeline', value: '7 working days' },
-    { key: 'hero_tag', value: '✨ 100% Karnataka RERA Registered Bangalore Properties' },
     { key: 'hero_title', value: 'Curated Residential Homes in Bengaluru Tech Corridors' },
     { key: 'hero_subtitle', value: 'Verified builder developments and luxury gated communities across Whitefield, Sarjapur Road, Hebbal, and Electronic City. DPDP Act 2023 compliant by design.' }
   ];

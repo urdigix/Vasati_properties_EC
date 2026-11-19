@@ -2,6 +2,9 @@
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { DatabaseSync } = require('node:sqlite');
+const { DEFAULT_SEARCH_LOCALITIES, validateSearchLocalities } = require('../server/search-localities');
+const propertyOverview = require('../public/property-overview');
+const floorPlans = require('../public/floor-plans');
 
 const dataDir = path.resolve(process.env.DATA_DIR || path.join(__dirname, '..', 'data'));
 fs.mkdirSync(dataDir, { recursive: true });
@@ -28,6 +31,8 @@ function formatProperty(property) {
 
   return {
     ...property,
+    project_overview: propertyOverview.read(property.project_overview),
+    floor_plans: floorPlans.read(property.floor_plans),
     image: property.image || (imageList[0] || ''),
     images: imageList,
     amenities: amenities && amenities.length ? amenities : null,
@@ -38,15 +43,15 @@ function formatProperty(property) {
 }
 
 const defaultSettings = {
-  hero_tag: '✨ Premium Bengaluru Real Estate Portfolio',
+  search_localities: JSON.stringify(DEFAULT_SEARCH_LOCALITIES),
   hero_title: 'Find Your Dream Space in the Silicon Valley of India',
   hero_subtitle: "Verified builder developments, luxury gated communities, and prime resale apartments across Bengaluru's top tech corridors.",
   contact_phone: '+91 6303420048',
   whatsapp_number: '916303420048',
-  contact_email: 'contact@vasatiproperties.com',
-  social_instagram: '',
+  contact_email: 'sales@vasatiproperties.com',
+  social_instagram: 'https://www.instagram.com/vasati_properties?fqnt=Ym1ob3l0M2tmZnR5',
   social_youtube: '',
-  social_facebook: '',
+  social_facebook: 'https://www.facebook.com/share/1FG68jV1mz/',
   social_whatsapp_channel: '',
   seo_title: 'Vasati Properties — Premium Bengaluru Homes & Luxury Real Estate',
   seo_description: 'Discover premier residential properties, luxury villas, and verified resale homes across Bengaluru with Vasati Properties.',
@@ -120,6 +125,12 @@ function initializeDatabase() {
       phone TEXT NOT NULL,
       email TEXT,
       message TEXT,
+      preferred_date TEXT,
+      preferred_time TEXT,
+      verified_contact_method TEXT,
+      verified_at TEXT,
+      verification_id TEXT,
+      privacy_notice_acknowledged INTEGER NOT NULL DEFAULT 0,
       status TEXT DEFAULT 'New',
       feedback TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -188,7 +199,15 @@ function initializeDatabase() {
       analytics_consent INTEGER NOT NULL DEFAULT 0,
       attempt_count INTEGER NOT NULL DEFAULT 0,
       last_sent_at INTEGER NOT NULL DEFAULT 0,
-      created_at INTEGER NOT NULL
+      created_at INTEGER NOT NULL,
+      purpose TEXT NOT NULL DEFAULT 'BROCHURE',
+      session_hash TEXT NOT NULL DEFAULT '',
+      contact_hash TEXT NOT NULL DEFAULT '',
+      expires_at INTEGER NOT NULL DEFAULT 0,
+      preferred_date TEXT,
+      preferred_time TEXT,
+      lead_id INTEGER,
+      privacy_acknowledged INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS brochure_downloads (
@@ -252,10 +271,28 @@ function initializeDatabase() {
   `);
 
   ensureColumn('properties', 'published', 'INTEGER NOT NULL DEFAULT 1');
+  ensureColumn('properties', 'project_overview', "TEXT NOT NULL DEFAULT '{}'");
+  ensureColumn('properties', 'floor_plans', "TEXT NOT NULL DEFAULT '[]'");
   ensureColumn('otp_verifications', 'attempt_count', 'INTEGER NOT NULL DEFAULT 0');
   ensureColumn('otp_verifications', 'last_sent_at', 'INTEGER NOT NULL DEFAULT 0');
   ensureColumn('otp_verifications', 'analytics_consent', 'INTEGER NOT NULL DEFAULT 0');
   ensureColumn('otp_verifications', 'customer_id', 'INTEGER');
+  ensureColumn('otp_verifications', 'purpose', "TEXT NOT NULL DEFAULT 'BROCHURE'");
+  ensureColumn('otp_verifications', 'session_hash', "TEXT NOT NULL DEFAULT ''");
+  ensureColumn('otp_verifications', 'contact_hash', "TEXT NOT NULL DEFAULT ''");
+  ensureColumn('otp_verifications', 'expires_at', 'INTEGER NOT NULL DEFAULT 0');
+  ensureColumn('otp_verifications', 'preferred_date', 'TEXT');
+  ensureColumn('otp_verifications', 'preferred_time', 'TEXT');
+  ensureColumn('otp_verifications', 'lead_id', 'INTEGER');
+  ensureColumn('otp_verifications', 'privacy_acknowledged', 'INTEGER NOT NULL DEFAULT 0');
+  ensureColumn('enquiries', 'preferred_date', 'TEXT');
+  ensureColumn('enquiries', 'preferred_time', 'TEXT');
+  ensureColumn('enquiries', 'verified_contact_method', 'TEXT');
+  ensureColumn('enquiries', 'verified_at', 'TEXT');
+  ensureColumn('enquiries', 'verification_id', 'TEXT');
+  ensureColumn('enquiries', 'privacy_notice_acknowledged', 'INTEGER NOT NULL DEFAULT 0');
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS enquiries_verification_id_unique ON enquiries (verification_id) WHERE verification_id IS NOT NULL;');
+  db.exec('CREATE INDEX IF NOT EXISTS otp_verifications_session_purpose_idx ON otp_verifications (session_hash, purpose, expires_at);');
   for (const property of db.prepare('SELECT id, image, images FROM properties WHERE images IS NOT NULL').all()) {
     const images = parseJsonField(property.images, property.image ? [property.image] : []).filter(Boolean);
     if (images.length > 4) {
@@ -363,9 +400,9 @@ function getAllProperties(filters = {}, includeUnpublished = false) {
   }
 
   if (filters.search) {
-    sql += ' AND (title LIKE ? OR location LIKE ? OR description LIKE ?)';
+    sql += ' AND (title LIKE ? OR location LIKE ? OR locality LIKE ? OR description LIKE ?)';
     const searchTerm = `%${String(filters.search)}%`;
-    params.push(searchTerm, searchTerm, searchTerm);
+    params.push(searchTerm, searchTerm, searchTerm, searchTerm);
   }
 
   if (filters.sort === 'price') {
@@ -386,6 +423,8 @@ function getPropertyById(id, includeUnpublished = false) {
 }
 
 function createProperty(prop) {
+  const overview = propertyOverview.normalize(prop.project_overview === undefined ? {} : prop.project_overview);
+  const plans = floorPlans.normalize(prop.floor_plans === undefined ? [] : prop.floor_plans);
   const id = prop.id || `prop_${Date.now().toString(36)}_${crypto.randomUUID()}`;
   const price = Number(prop.price ?? 0);
   const title = String(prop.title || 'Untitled Property');
@@ -402,8 +441,8 @@ function createProperty(prop) {
   const query = `
     INSERT INTO properties (
       id, title, location, locality, price, price_label, bhk, area, baths, status,
-      image, images, video_url, brochure_url, alt, listed, kind, possession, description, amenities, proximity, featured, published
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      image, images, video_url, brochure_url, alt, listed, kind, possession, description, amenities, proximity, featured, published, project_overview, floor_plans
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   db.prepare(query).run(
     id,
@@ -428,7 +467,9 @@ function createProperty(prop) {
     prop.amenities ? JSON.stringify(Array.isArray(prop.amenities) ? prop.amenities : String(prop.amenities).split(',')) : null,
     prop.proximity ? JSON.stringify(prop.proximity) : null,
     Number(Boolean(prop.featured)),
-    Number(Boolean(prop.published))
+    Number(Boolean(prop.published)),
+    JSON.stringify(overview),
+    JSON.stringify(plans)
   );
   return id;
 }
@@ -436,6 +477,8 @@ function createProperty(prop) {
 function updateProperty(id, prop) {
   const current = getPropertyById(id, true);
   if (!current) return false;
+  const overview = propertyOverview.normalize(prop.project_overview === undefined ? current.project_overview : prop.project_overview);
+  const plans = floorPlans.normalize(prop.floor_plans === undefined ? current.floor_plans : prop.floor_plans);
 
   const next = {
     ...current,
@@ -477,7 +520,7 @@ function updateProperty(id, prop) {
       amenities = ?,
       proximity = ?,
       featured = ?
-      , published = ?
+      , published = ?, project_overview = ?, floor_plans = ?
     WHERE id = ?
   `;
   db.prepare(query).run(
@@ -503,6 +546,8 @@ function updateProperty(id, prop) {
     next.proximity ? JSON.stringify(next.proximity) : (current.proximity ? current.proximity : null),
     Number(next.featured),
     prop.published !== undefined ? Number(Boolean(prop.published)) : Number(Boolean(current.published)),
+    JSON.stringify(overview),
+    JSON.stringify(plans),
     id
   );
   return true;
@@ -570,6 +615,10 @@ function getSiteSettings() {
 }
 
 function updateSiteSettings(settingsObj = {}) {
+  if (Object.hasOwn(settingsObj, 'search_localities')) {
+    // Validate before writing any setting so a rejected list cannot partially save the form.
+    settingsObj = { ...settingsObj, search_localities: JSON.stringify(validateSearchLocalities(settingsObj.search_localities)) };
+  }
   for (const [key, value] of Object.entries(settingsObj)) {
     db.prepare('INSERT INTO site_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(key, String(value));
   }
@@ -589,8 +638,10 @@ function getAllEnquiries(statusFilter = null) {
 
 function createEnquiry(enquiry) {
   const stmt = db.prepare(`
-    INSERT INTO enquiries (property_id, property_title, name, phone, email, message, status)
-    VALUES (?, ?, ?, ?, ?, ?, 'New')
+    INSERT INTO enquiries (
+      property_id, property_title, name, phone, email, message, preferred_date, preferred_time,
+      verified_contact_method, verified_at, verification_id, privacy_notice_acknowledged, status
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'New')
   `);
   const result = stmt.run(
     enquiry.property_id || null,
@@ -598,7 +649,13 @@ function createEnquiry(enquiry) {
     enquiry.name || 'Customer',
     enquiry.phone || '',
     enquiry.email || '',
-    enquiry.message || ''
+    enquiry.message || '',
+    enquiry.preferred_date || null,
+    enquiry.preferred_time || null,
+    enquiry.verified_contact_method || null,
+    enquiry.verified_at || null,
+    enquiry.verification_id || null,
+    Number(enquiry.privacy_notice_acknowledged === true)
   );
   return result.lastInsertRowid;
 }
