@@ -159,7 +159,7 @@
     }
     .toast.show { opacity: 1; transform: translateY(0); }
 
-    /* GA4 analytics dashboard */
+    /* Local analytics dashboard */
     .analytics-toolbar {
       display: grid;
       grid-template-columns: minmax(150px, 1fr) minmax(180px, 1fr) auto auto;
@@ -582,10 +582,10 @@
 
     <section class="tab-pane" id="tab-brochures">
       <div class="card">
-        <div class="card-head"><h2>Verified brochure requests and downloads</h2></div>
+        <div class="card-head"><h2>Brochure requests and downloads</h2></div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Customer</th><th>Email</th><th>Phone</th><th>Property</th><th>Method / Verified</th><th>Downloaded</th></tr></thead>
+            <thead><tr><th>Customer</th><th>Email</th><th>Phone</th><th>Property</th><th>Requested / Contact</th><th>Downloaded</th></tr></thead>
             <tbody id="brochureActivityBody"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Loading…</td></tr></tbody>
           </table>
         </div>
@@ -609,112 +609,31 @@
     <section class="tab-pane" id="tab-analytics">
       <div class="card analytics-toolbar" aria-label="Analytics report controls">
         <div class="analytics-filter">
-          <label for="analyticsRange">Historical date range</label>
+          <label for="analyticsRange">Date range</label>
           <select id="analyticsRange" class="analytics-select">
-            <option value="7d">Last 7 days</option>
-            <option value="30d" selected>Last 30 days</option>
-            <option value="90d">Last 90 days</option>
+            <option value="7d">Last 7 days</option><option value="30d" selected>Last 30 days</option><option value="90d">Last 90 days</option>
           </select>
         </div>
-        <div class="analytics-filter">
-          <label for="analyticsCountry">Country filter</label>
-          <select id="analyticsCountry" class="analytics-select" disabled>
-            <option value="">All countries</option>
-          </select>
-        </div>
-        <div class="analytics-updated">
-          <span class="analytics-updated-label">Last successful update</span>
-          <time id="analyticsLastUpdated">Not updated yet</time>
-        </div>
+        <div class="analytics-updated"><span class="analytics-updated-label">Last successful update</span><time id="analyticsLastUpdated">Not updated yet</time></div>
         <button type="button" class="btn btn-outline" id="refreshAnalyticsBtn" aria-controls="analyticsDashboard">Refresh analytics</button>
       </div>
-
+      <p style="color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:20px;">These totals count consented events stored on this website. They are not unique visitor counts. Location, device tracking, and external analytics are not used.</p>
       <div id="analyticsState" class="analytics-state is-loading" role="status" aria-live="polite">
-        <span class="analytics-spinner" aria-hidden="true"></span>
-        <span id="analyticsStateMessage">Loading GA4 analytics…</span>
+        <span class="analytics-spinner" aria-hidden="true"></span><span id="analyticsStateMessage">Loading local analytics…</span>
       </div>
-      <section id="analyticsSetupDetails" class="card analytics-setup" hidden aria-labelledby="analyticsSetupTitle">
-        <div class="card-head"><h2 id="analyticsSetupTitle">GA4 setup required</h2></div>
-        <div class="analytics-report-body">
-          <p>Configure GA4 tracking, the numeric GA4 property ID, and a server-side service account with read access to this property. Credentials stay on the server and are never sent to this page.</p>
-          <ul id="analyticsMissingConfig"></ul>
-          <p>No location map is connected. Location is approximate when supported, never exact. A GA4 Data API / map integration must be configured by the site owner. The summary refresh interval is 60 seconds; anonymous analytics cannot identify every visitor.</p>
-        </div>
-      </section>
-
       <div id="analyticsDashboard" class="analytics-dashboard" hidden aria-busy="true">
-        <section class="analytics-section" aria-labelledby="analyticsRealtimeTitle">
-          <div class="analytics-section-heading">
-            <h2 id="analyticsRealtimeTitle">Realtime</h2>
-            <p>GA4 Realtime active users in the last 30 minutes.</p>
-          </div>
-          <div class="analytics-kpi-grid realtime">
-            <div class="stat-card analytics-kpi">
-              <div class="stat-label">Active users (last 30 minutes)</div>
-              <div class="stat-val" id="analyticsRealtimeActiveUsers">—</div>
-              <div class="stat-sub">Realtime aggregate; not an individual visitor count.</div>
-            </div>
-          </div>
-        </section>
-
-        <section class="analytics-section" aria-labelledby="analyticsHistoricalTitle">
-          <div class="analytics-section-heading">
-            <h2 id="analyticsHistoricalTitle">Historical report</h2>
-            <p id="analyticsHistoricalRange">Selected date range</p>
-          </div>
+        <section class="analytics-section" aria-labelledby="analyticsSummaryTitle">
+          <div class="analytics-section-heading"><h2 id="analyticsSummaryTitle">Local event summary</h2><p id="analyticsHistoricalRange">Selected date range</p></div>
           <div class="analytics-kpi-grid">
-            <div class="stat-card analytics-kpi">
-              <div class="stat-label">Active users</div>
-              <div class="stat-val" id="analyticsHistoricalActiveUsers">—</div>
-              <div class="stat-sub">GA4 active users in the selected range.</div>
-            </div>
-            <div class="stat-card analytics-kpi">
-              <div class="stat-label">Sessions</div>
-              <div class="stat-val" id="analyticsSessions">—</div>
-              <div class="stat-sub">Sessions are not unique visitors.</div>
-            </div>
-            <div class="stat-card analytics-kpi">
-              <div class="stat-label">Page views</div>
-              <div class="stat-val" id="analyticsPageViews">—</div>
-              <div class="stat-sub">Page-view events are not unique visitors.</div>
-            </div>
+            <div class="stat-card analytics-kpi"><div class="stat-label">Total events</div><div class="stat-val" id="analyticsTotalEvents">—</div><div class="stat-sub">All consented events in this range.</div></div>
+            <div class="stat-card analytics-kpi"><div class="stat-label">Property views</div><div class="stat-val" id="analyticsPropertyViews">—</div><div class="stat-sub">Views may include repeat visits.</div></div>
+            <div class="stat-card analytics-kpi"><div class="stat-label">Visit requests</div><div class="stat-val" id="analyticsEnquiries">—</div><div class="stat-sub">Requests submitted with analytics consent.</div></div>
           </div>
         </section>
-
         <div class="analytics-report-grid">
-          <section class="card" aria-labelledby="analyticsPagesTitle">
-            <div class="card-head"><h2 id="analyticsPagesTitle">Top pages</h2></div>
-            <div id="analyticsTopPages" class="analytics-report-body analytics-bar-list" aria-live="polite"></div>
-          </section>
-          <section class="card" aria-labelledby="analyticsSourcesTitle">
-            <div class="card-head"><h2 id="analyticsSourcesTitle">Traffic sources</h2></div>
-            <div id="analyticsTrafficSources" class="analytics-report-body analytics-bar-list" aria-live="polite"></div>
-          </section>
-          <section class="card" aria-labelledby="analyticsDevicesTitle">
-            <div class="card-head"><h2 id="analyticsDevicesTitle">Devices</h2></div>
-            <div id="analyticsDevices" class="analytics-report-body analytics-bar-list" aria-live="polite"></div>
-          </section>
-          <section class="card" aria-labelledby="analyticsCountriesTitle">
-            <div class="card-head"><h2 id="analyticsCountriesTitle">Countries</h2></div>
-            <div class="table-wrap">
-              <table aria-label="Country-level sessions in selected range">
-                <thead><tr><th scope="col">Country</th><th scope="col">Sessions</th></tr></thead>
-                <tbody id="analyticsCountries"></tbody>
-              </table>
-            </div>
-          </section>
+          <section class="card" aria-labelledby="analyticsEventsTitle"><div class="card-head"><h2 id="analyticsEventsTitle">Event totals</h2></div><div id="analyticsEventCounts" class="analytics-report-body analytics-bar-list" aria-live="polite"></div></section>
+          <section class="card" aria-labelledby="analyticsPropertiesTitle"><div class="card-head"><h2 id="analyticsPropertiesTitle">Most viewed properties</h2></div><div id="analyticsProperties" class="analytics-report-body analytics-bar-list" aria-live="polite"></div></section>
         </div>
-
-        <section class="card analytics-map-card" aria-labelledby="analyticsMapTitle">
-          <div class="card-head"><h2 id="analyticsMapTitle">Approximate country activity</h2></div>
-          <p class="analytics-map-note">Aggregated country-level sessions only. Markers use country centroids as approximate references; they never represent exact or individual visitor locations.</p>
-          <p id="analyticsMapNotice" class="analytics-map-notice" hidden>No supported country-level map positions are available for this report range. Locations are approximate when supported and never exact.</p>
-          <div id="analyticsMapView" class="analytics-map-view" hidden>
-            <svg id="analyticsMap" class="analytics-map-svg" viewBox="0 0 960 440" role="group" aria-label="Interactive approximate country-level activity map"></svg>
-            <p id="analyticsMapTooltip" class="analytics-map-tooltip" role="status" aria-live="polite">Select a country marker to filter the dashboard.</p>
-          </div>
-          <p class="analytics-map-legend">Select or keyboard-focus a marker to see aggregate sessions and filter the report by country.</p>
-        </section>
       </div>
     </section>
   </main>
@@ -732,6 +651,10 @@
           <div class="form-group form-full">
             <label>Property Title *</label>
             <input type="text" id="formTitle" placeholder="E.g. Ultra Luxury 3 BHK in Indiranagar" required>
+          </div>
+          <div class="form-group form-full">
+            <label for="formDeveloperName">Builder Name</label>
+            <input type="text" id="formDeveloperName" placeholder="Enter the builder name">
           </div>
           <div class="form-group">
             <label>Full Location *</label>
@@ -1001,7 +924,6 @@
     let analyticsRefreshTimer;
     let analyticsRequestController;
     let analyticsHasData = false;
-    const analyticsKnownCountries = new Set();
 
     const toast = document.getElementById('toast');
     let toastTimer;
@@ -1060,8 +982,8 @@
           addSlideBtn.style.display = 'none';
           loadEnquiries();
         } else if (target === 'brochures') {
-          titleEl.textContent = 'Verified Brochure Activity';
-          subEl.textContent = 'Review customer verification and download history.';
+          titleEl.textContent = 'Brochure Activity';
+          subEl.textContent = 'Review supplied contact details and brochure download history.';
           addPropBtn.style.display = 'none';
           addSlideBtn.style.display = 'none';
           loadBrochureActivity();
@@ -1379,6 +1301,7 @@
       document.getElementById('editPropId').value = p.id;
       document.getElementById('modalTitle').textContent = 'Edit Property';
       document.getElementById('formTitle').value = p.title;
+      document.getElementById('formDeveloperName').value = p.developer_name || '';
       document.getElementById('formLocation').value = p.location;
       document.getElementById('formLocality').value = p.locality || '';
       setProjectOverview(p.project_overview);
@@ -1440,6 +1363,7 @@
 
       const payload = {
         title: document.getElementById('formTitle').value.trim(),
+        developer_name: document.getElementById('formDeveloperName').value.trim(),
         project_overview: projectOverview,
         floor_plans: floorPlans,
         location: document.getElementById('formLocation').value.trim(),
@@ -2193,7 +2117,7 @@
             <td>${escapeHtml(row.email)}</td>
             <td>${escapeHtml(row.phone)}</td>
             <td>${escapeHtml(row.property_title || row.property_id)}</td>
-            <td>${escapeHtml(row.method)} · ${row.verified_at ? escapeHtml(new Date(row.verified_at).toLocaleString()) : 'Not verified'}</td>
+            <td>${escapeHtml(new Date(row.requested_at).toLocaleString())}<br>${row.verified_at ? 'Previously verified' : 'Contact supplied, not verified'}</td>
             <td>${row.downloaded_at ? escapeHtml(new Date(row.downloaded_at).toLocaleString()) : 'Not downloaded'}</td>
           </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">No brochure requests yet.</td></tr>';
       } catch (error) {
@@ -2290,83 +2214,6 @@
       });
     }
 
-    function updateAnalyticsCountryOptions(countries) {
-      const select = document.getElementById('analyticsCountry');
-      countries.forEach(country => analyticsKnownCountries.add(country.name));
-      const selectedCountry = select.value;
-      select.replaceChildren(new Option('All countries', ''));
-      [...analyticsKnownCountries].sort((a, b) => a.localeCompare(b)).forEach(country => {
-        select.add(new Option(country, country));
-      });
-      select.value = selectedCountry;
-      select.disabled = analyticsKnownCountries.size === 0;
-    }
-
-    function selectAnalyticsCountry(country) {
-      const select = document.getElementById('analyticsCountry');
-      if (![...select.options].some(option => option.value === country)) return;
-      select.value = country;
-      loadAnalytics();
-    }
-
-    function renderAnalyticsMap(data) {
-      const notice = document.getElementById('analyticsMapNotice');
-      const mapView = document.getElementById('analyticsMapView');
-      const svg = document.getElementById('analyticsMap');
-      const markers = Array.isArray(data.map?.markers) ? data.map.markers : [];
-      const features = Array.isArray(data.map?.features) ? data.map.features : [];
-      svg.replaceChildren();
-
-      if (!markers.length || !features.length) {
-        mapView.hidden = true;
-        notice.hidden = false;
-        notice.textContent = 'No supported country-level map positions are available for this report range. Locations are approximate when supported and never exact.';
-        return;
-      }
-
-      notice.hidden = true;
-      mapView.hidden = false;
-      features.forEach(feature => {
-        const countryShape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        countryShape.setAttribute('d', feature.d);
-        countryShape.setAttribute('class', 'analytics-map-country');
-        countryShape.setAttribute('aria-hidden', 'true');
-        svg.appendChild(countryShape);
-      });
-
-      const tooltip = document.getElementById('analyticsMapTooltip');
-      markers.forEach(marker => {
-        if (!Number.isFinite(marker.x) || !Number.isFinite(marker.y) || !Number.isFinite(marker.sessions)) return;
-        const point = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        point.classList.add('analytics-map-marker');
-        point.setAttribute('tabindex', '0');
-        point.setAttribute('role', 'button');
-        point.setAttribute('aria-label', `${marker.country}: ${Number(marker.sessions).toLocaleString()} sessions, approximate country-level location. Select to filter.`);
-        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        dot.setAttribute('cx', marker.x);
-        dot.setAttribute('cy', marker.y);
-        dot.setAttribute('r', Math.min(14, Math.max(4, 3 + Math.sqrt(marker.sessions))));
-        const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-        title.textContent = `${marker.country}: ${Number(marker.sessions).toLocaleString()} sessions (approximate country centroid)`;
-        point.append(dot, title);
-
-        const showTooltip = () => {
-          tooltip.textContent = `${marker.country}: ${Number(marker.sessions).toLocaleString()} sessions · approximate country-level location`;
-        };
-        point.addEventListener('click', () => selectAnalyticsCountry(marker.country));
-        point.addEventListener('focus', showTooltip);
-        point.addEventListener('pointerenter', showTooltip);
-        point.addEventListener('keydown', event => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            selectAnalyticsCountry(marker.country);
-          }
-        });
-        svg.appendChild(point);
-      });
-      tooltip.textContent = 'Select a country marker to filter the dashboard.';
-    }
-
     function startAnalyticsRefresh() {
       clearInterval(analyticsRefreshTimer);
       analyticsRefreshTimer = undefined;
@@ -2379,84 +2226,34 @@
 
     async function loadAnalytics() {
       if (!document.getElementById('tab-analytics').classList.contains('active') || document.visibilityState !== 'visible') return;
-
       analyticsRequestController?.abort();
       const controller = new AbortController();
       analyticsRequestController = controller;
       const dashboard = document.getElementById('analyticsDashboard');
-      const setupDetails = document.getElementById('analyticsSetupDetails');
       dashboard.setAttribute('aria-busy', 'true');
-      setupDetails.hidden = true;
-      if (!analyticsHasData) {
-        dashboard.hidden = true;
-        setAnalyticsState('loading', 'Loading GA4 analytics…');
-      } else {
-        dashboard.hidden = false;
-        setAnalyticsState('loading', 'Refreshing GA4 reports… Showing the last successful data until this refresh completes.');
-      }
-
-      const range = document.getElementById('analyticsRange').value;
-      const country = document.getElementById('analyticsCountry').value;
-      const params = new URLSearchParams({ range });
-      if (country) params.set('country', country);
-
+      setAnalyticsState('loading', analyticsHasData ? 'Refreshing local analytics…' : 'Loading local analytics…');
       try {
+        const params = new URLSearchParams({ range: document.getElementById('analyticsRange').value });
         const response = await fetch(`/api/admin/analytics?${params}`, { signal: controller.signal });
         const result = await response.json();
-        if (!response.ok || !result.success) throw new Error(result.message || 'Could not load GA4 analytics.');
+        if (!response.ok || !result.success) throw new Error(result.message || 'Could not load local analytics.');
         if (analyticsRequestController !== controller) return;
-
         const data = result.data;
-        if (data.status === 'setup-required') {
-          analyticsHasData = false;
-          dashboard.hidden = true;
-          setupDetails.hidden = false;
-          document.getElementById('analyticsCountry').disabled = true;
-          const missing = document.getElementById('analyticsMissingConfig');
-          missing.replaceChildren();
-          data.missing.forEach(name => {
-            const item = document.createElement('li');
-            item.textContent = name;
-            missing.appendChild(item);
-          });
-          setAnalyticsState('setup', data.message);
-          return;
-        }
-
         analyticsHasData = true;
         document.getElementById('analyticsState').hidden = true;
         dashboard.hidden = false;
-        dashboard.setAttribute('aria-busy', 'false');
-        document.getElementById('analyticsRealtimeActiveUsers').textContent = Number(data.realtime.activeUsers).toLocaleString();
-        document.getElementById('analyticsHistoricalActiveUsers').textContent = Number(data.historical.activeUsers).toLocaleString();
-        document.getElementById('analyticsSessions').textContent = Number(data.historical.sessions).toLocaleString();
-        document.getElementById('analyticsPageViews').textContent = Number(data.historical.pageViews).toLocaleString();
-        document.getElementById('analyticsHistoricalRange').textContent = `${data.rangeLabel} · GA4 Data API`;
-        renderAnalyticsBars('analyticsTopPages', data.topPages, 'No page-view data for this range.');
-        renderAnalyticsBars('analyticsTrafficSources', data.trafficSources, 'No traffic-source data for this range.');
-        renderAnalyticsBars('analyticsDevices', data.devices, 'No device data for this range.');
-
-        const countries = Array.isArray(data.countries) ? data.countries : [];
-        updateAnalyticsCountryOptions(countries);
-        const countriesBody = document.getElementById('analyticsCountries');
-        countriesBody.innerHTML = countries.length
-          ? countries.map(item => `<tr><td><button type="button" class="analytics-country-button" data-country="${escapeHtml(item.name)}">${escapeHtml(item.name)}</button></td><td>${Number(item.sessions).toLocaleString()}</td></tr>`).join('')
-          : '<tr><td colspan="2" class="analytics-empty">No country-level session data for this range.</td></tr>';
-        countriesBody.querySelectorAll('.analytics-country-button').forEach(button => {
-          button.addEventListener('click', () => selectAnalyticsCountry(button.dataset.country));
-        });
-        renderAnalyticsMap(data);
-
+        document.getElementById('analyticsTotalEvents').textContent = Number(data.totalEvents).toLocaleString();
+        document.getElementById('analyticsPropertyViews').textContent = Number(data.propertyViews).toLocaleString();
+        document.getElementById('analyticsEnquiries').textContent = Number(data.enquiries).toLocaleString();
+        document.getElementById('analyticsHistoricalRange').textContent = data.rangeLabel;
+        renderAnalyticsBars('analyticsEventCounts', data.events, 'No consented events recorded for this range.');
+        renderAnalyticsBars('analyticsProperties', data.properties, 'No property views recorded for this range.');
         const updated = new Date(data.lastUpdatedAt);
-        const lastUpdated = document.getElementById('analyticsLastUpdated');
-        if (!Number.isNaN(updated.getTime())) {
-          lastUpdated.dateTime = updated.toISOString();
-          lastUpdated.textContent = updated.toLocaleString();
-        }
+        document.getElementById('analyticsLastUpdated').dateTime = updated.toISOString();
+        document.getElementById('analyticsLastUpdated').textContent = updated.toLocaleString();
       } catch (error) {
         if (error.name === 'AbortError' || analyticsRequestController !== controller) return;
-        setAnalyticsState('error', error.message || 'Could not load GA4 analytics. Try again shortly.');
-        if (!analyticsHasData) dashboard.hidden = true;
+        setAnalyticsState('error', error.message || 'Could not load local analytics.');
       } finally {
         if (analyticsRequestController === controller) {
           dashboard.setAttribute('aria-busy', 'false');
@@ -2466,7 +2263,6 @@
     }
 
     document.getElementById('analyticsRange').addEventListener('change', loadAnalytics);
-    document.getElementById('analyticsCountry').addEventListener('change', loadAnalytics);
     document.getElementById('refreshAnalyticsBtn').addEventListener('click', loadAnalytics);
 
     document.getElementById('subscriberSearch').addEventListener('input', () => {

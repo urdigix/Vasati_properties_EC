@@ -1,5 +1,7 @@
 # Coolify deployment
 
+See [SCALING.md](./SCALING.md) for traffic optimizations, load checks, WAL backup requirements and the single-instance constraint.
+
 The active app is Express + Node's built-in SQLite database. The legacy Next.js/Prisma/PostgreSQL scaffolding is not used by `npm start` or this Dockerfile.
 
 ## Replace the existing Vasati production application
@@ -29,9 +31,6 @@ Required production settings:
 Optional integrations:
 
 - Google OAuth: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` (`https://your-domain/auth/google/callback`). Register the exact redirect URI in Google Cloud.
-- Customer OTP: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID`. Configure SMS and email channels and a 10-minute code lifetime in Twilio Verify. OTP is not simulated; brochure verification returns an explicit unavailable error until configured.
-- GA4 browser tracking: `GA4_MEASUREMENT_ID` (`G-...`). The browser tag and event collection are enabled only after analytics consent.
-- GA4 admin reports (optional): `GA4_PROPERTY_ID` (numeric property ID), `GA4_SERVICE_ACCOUNT_EMAIL`, and `GA4_SERVICE_ACCOUNT_PRIVATE_KEY`. Enable the Google Analytics Data API in the service account's Google Cloud project, then add the service-account email to the GA4 property's access management with Viewer permission. Store the private key only as a Coolify server secret (escaped `\n` sequences are supported); it and access tokens are never sent to the browser. The measurement ID and reporting property ID are separate settings.
 - Remote MCP: set independent high-entropy `MCP_READ_TOKEN` and `MCP_WRITE_TOKEN`. Expose the endpoint only through the HTTPS domain at `/mcp`. Keep tokens server-side and grant only the needed token to each client.
 
 ## Database and storage
@@ -48,9 +47,6 @@ Restore a pre-migration database snapshot only when needed, as a separate manual
 
 - Backend health check: `GET /api/health` returns `{"status":"ok"}` after a database query. The frontend container's `GET /healthz` checks Nginx; check `/api/health` through the public domain to verify both services.
 - Administrator: `/admin`; initial local-only login is documented in `README.md`. The first successful login requires a password change.
-- Configure and verify OAuth callback and Twilio delivery before advertising those workflows.
-- Configure and verify the GA4 measurement ID and server-side reporting property separately. The dashboard uses the GA4 Realtime API for active users and the GA4 Data API for historical reports. If reporting credentials are absent, it shows a setup-required state; API failures are reported without fabricating data.
-- The country map renders local country outlines and places aggregate GA4 country sessions at country-centroid positions. These are approximate country-level summaries, not exact visitor locations or individual tracking. Countries without a supported map shape are omitted.
 - Review the Coolify proxy's forwarded-header and HTTPS settings. The app sets secure cookies in production.
 
 ## Remote MCP client setup
@@ -61,4 +57,4 @@ The endpoint uses stateless JSON-RPC over HTTPS POST (Streamable HTTP). Do not e
 
 ## Important limitations
 
-The admin dashboard reports GA4 aggregates when its server-side integration is configured; it does not identify individuals. Its summary refreshes every 60 seconds while the Analytics page is visible. The country map is approximate and uses country-centroid positions, never exact visitor locations. No email-marketing delivery provider is configured, so new subscribers receive a one-time unsubscribe link in the confirmation UI; wire an email provider before operating a mailing program.
+The admin dashboard reports consented local event totals, not unique visitors or locations, and refreshes every 60 seconds while its Analytics tab is visible. The application no longer uses Twilio OTP, Turnstile verification, or GA4. Visit and brochure requests submit directly with contact validation, consent and rate limits; supplied contacts are not independently verified. No email-marketing delivery provider is configured, so new subscribers receive an unsubscribe link in the confirmation UI; wire an email provider before operating a mailing program. Old provider environment variables are no longer read by the active app. Existing customer request history is retained.

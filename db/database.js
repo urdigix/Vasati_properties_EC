@@ -32,6 +32,7 @@ function formatProperty(property) {
 
   return {
     ...property,
+    listed: String(property.listed || '').replace(/\bagent\s+listing\b\s*(?:[·|,\-]\s*)?/gi, '').trim(),
     project_overview: propertyOverview.read(property.project_overview),
     floor_plans: floorPlans.read(property.floor_plans),
     image: property.image || (imageList[0] || ''),
@@ -67,12 +68,12 @@ const defaultSettings = {
 };
 
 const seedProperties = [
-  ['a', 'Modern living in Whitefield', 'Whitefield, East Bengaluru', 'Whitefield', 95, '₹95 L', 2, '1,240 sqft', 2, 'New', 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1000&q=78', 'https://www.youtube.com/embed/dQw4w9WgXcQ', 'Bright contemporary home with spacious living and dining areas', 'Agent listing · Verified', 'Apartment', 'Ready to move', 'A bright, thoughtfully laid-out premium home in Whitefield close to tech parks, international schools, and metro stations.', 1],
-  ['b', 'Room to grow in Sarjapur', 'Sarjapur Road, South Bengaluru', 'Sarjapur Road', 125, '₹1.25 Cr', 3, '1,685 sqft', 3, 'New', 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1000&q=78', '', 'Contemporary residence with generous living space and natural light', 'Agent listing · Verified', 'Apartment', 'Under construction', 'A spacious luxury apartment listing on Sarjapur Road with premium amenities and fast Outer Ring Road connectivity.', 1],
+  ['a', 'Modern living in Whitefield', 'Whitefield, East Bengaluru', 'Whitefield', 95, '₹95 L', 2, '1,240 sqft', 2, 'New', 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1000&q=78', 'https://www.youtube.com/embed/dQw4w9WgXcQ', 'Bright contemporary home with spacious living and dining areas', 'Verified', 'Apartment', 'Ready to move', 'A bright, thoughtfully laid-out premium home in Whitefield close to tech parks, international schools, and metro stations.', 1],
+  ['b', 'Room to grow in Sarjapur', 'Sarjapur Road, South Bengaluru', 'Sarjapur Road', 125, '₹1.25 Cr', 3, '1,685 sqft', 3, 'New', 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1000&q=78', '', 'Contemporary residence with generous living space and natural light', 'Verified', 'Apartment', 'Under construction', 'A spacious luxury apartment listing on Sarjapur Road with premium amenities and fast Outer Ring Road connectivity.', 1],
   ['c', 'A home with character', 'HSR Layout, South Bengaluru', 'HSR Layout', 220, '₹2.2 Cr', 3, '2,140 sqft', 3, 'Resale', 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1000&q=78', '', 'Airy modern family home with a garden-side patio', 'Resale · Verified', 'Villa', 'Ready to move', 'A premium resale family home in prime HSR Layout Sector 2.', 1],
-  ['d', 'A brighter start in Electronic City', 'Electronic City, South Bengaluru', 'Electronic City', 68, '₹68 L', 2, '1,090 sqft', 2, 'New', 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1000&q=78', '', 'Sunlit apartment interior with a calm neutral palette', 'Agent listing · Verified', 'Apartment', 'Ready to move', 'A welcoming apartment near Electronic City Phase 1. Close to major IT campuses with fast access via the elevated expressway.', 0],
+  ['d', 'A brighter start in Electronic City', 'Electronic City, South Bengaluru', 'Electronic City', 68, '₹68 L', 2, '1,090 sqft', 2, 'New', 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1000&q=78', '', 'Sunlit apartment interior with a calm neutral palette', 'Verified', 'Apartment', 'Ready to move', 'A welcoming apartment near Electronic City Phase 1. Close to major IT campuses with fast access via the elevated expressway.', 0],
   ['e', 'A cosy home in Thanisandra', 'Thanisandra, North Bengaluru', 'Thanisandra', 52, '₹52 L', 1, '710 sqft', 1, 'Resale', 'https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1000&q=78', '', 'Warm and compact home with a light-filled living zone', 'Resale · Verified', 'Apartment', 'Ready to move', 'A compact modern resale apartment in Thanisandra Main Road, ideal for young professionals or investors seeking high rental returns near Manyata Tech Park.', 0],
-  ['f', 'The Yelahanka family villa', 'Yelahanka, North Bengaluru', 'Yelahanka', 245, '₹2.45 Cr', 4, '3,050 sqft', 4, 'Villa', 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1000&q=78', '', 'Contemporary villa with clean architecture and landscaped greenery', 'Agent listing · Verified', 'Villa', 'Ready to move', 'A grand duplex family villa in scenic Yelahanka with a peaceful, premium community setting.', 1]
+  ['f', 'The Yelahanka family villa', 'Yelahanka, North Bengaluru', 'Yelahanka', 245, '₹2.45 Cr', 4, '3,050 sqft', 4, 'Villa', 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1000&q=78', '', 'Contemporary villa with clean architecture and landscaped greenery', 'Verified', 'Villa', 'Ready to move', 'A grand duplex family villa in scenic Yelahanka with a peaceful, premium community setting.', 1]
 ];
 
 const seedProjects = [
@@ -100,6 +101,8 @@ function initializeDatabase() {
     db.exec(`VACUUM INTO '${backup.replace(/'/g, "''")}'`);
     console.log('Created pre-migration database backup.');
   }
+  // WAL allows readers to continue while a writer commits. Keep FULL durability.
+  db.exec('PRAGMA journal_mode = WAL; PRAGMA synchronous = FULL;');
   db.exec(`
     CREATE TABLE IF NOT EXISTS properties (
       id TEXT PRIMARY KEY,
@@ -251,6 +254,28 @@ function initializeDatabase() {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS brochure_requests (
+      id TEXT PRIMARY KEY,
+      property_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      phone TEXT NOT NULL DEFAULT '',
+      consent_at TEXT NOT NULL,
+      session_hash TEXT NOT NULL,
+      analytics_consent INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS brochure_request_downloads (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      request_id TEXT NOT NULL REFERENCES brochure_requests(id),
+      property_id TEXT NOT NULL,
+      token_hash TEXT NOT NULL UNIQUE,
+      expires_at INTEGER NOT NULL,
+      downloaded_at INTEGER,
+      created_at INTEGER NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS audit_logs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       actor TEXT NOT NULL,
@@ -288,6 +313,7 @@ function initializeDatabase() {
   ensureColumn('properties', 'published', 'INTEGER NOT NULL DEFAULT 1');
   ensureColumn('properties', 'project_overview', "TEXT NOT NULL DEFAULT '{}'");
   ensureColumn('properties', 'floor_plans', "TEXT NOT NULL DEFAULT '[]'");
+  ensureColumn('properties', 'developer_name', "TEXT NOT NULL DEFAULT ''");
   ensureColumn('otp_verifications', 'attempt_count', 'INTEGER NOT NULL DEFAULT 0');
   ensureColumn('otp_verifications', 'last_sent_at', 'INTEGER NOT NULL DEFAULT 0');
   ensureColumn('otp_verifications', 'analytics_consent', 'INTEGER NOT NULL DEFAULT 0');
@@ -305,6 +331,8 @@ function initializeDatabase() {
   ensureColumn('enquiries', 'verified_contact_method', 'TEXT');
   ensureColumn('enquiries', 'verified_at', 'TEXT');
   ensureColumn('enquiries', 'verification_id', 'TEXT');
+  ensureColumn('enquiries', 'request_key', 'TEXT');
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS enquiries_request_key_unique ON enquiries (request_key) WHERE request_key IS NOT NULL;');
   ensureColumn('enquiries', 'privacy_notice_acknowledged', 'INTEGER NOT NULL DEFAULT 0');
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS enquiries_verification_id_unique ON enquiries (verification_id) WHERE verification_id IS NOT NULL;');
   db.exec('CREATE INDEX IF NOT EXISTS otp_verifications_session_purpose_idx ON otp_verifications (session_hash, purpose, expires_at);');
@@ -321,6 +349,9 @@ function initializeDatabase() {
   db.exec('CREATE INDEX IF NOT EXISTS admin_sessions_expires_at_idx ON admin_sessions (expires_at);');
   db.exec('CREATE INDEX IF NOT EXISTS analytics_events_created_at_idx ON analytics_events (created_at DESC);');
   db.exec('CREATE INDEX IF NOT EXISTS audit_logs_created_at_idx ON audit_logs (created_at DESC);');
+  db.exec('CREATE INDEX IF NOT EXISTS properties_public_order_idx ON properties (published, featured DESC, created_at DESC);');
+  db.exec('CREATE INDEX IF NOT EXISTS properties_public_price_idx ON properties (published, price);');
+  db.exec('CREATE INDEX IF NOT EXISTS analytics_events_name_date_idx ON analytics_events (event_name, created_at DESC);');
 
   try {
     db.exec("CREATE INDEX IF NOT EXISTS enquiries_created_at_idx ON enquiries (created_at DESC);");
@@ -479,8 +510,8 @@ function createProperty(prop) {
   const query = `
     INSERT INTO properties (
       id, title, location, locality, price, price_label, bhk, area, baths, status,
-      image, images, video_url, brochure_url, alt, listed, kind, possession, description, amenities, proximity, featured, published, project_overview, floor_plans
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      image, images, video_url, brochure_url, alt, listed, kind, possession, description, amenities, proximity, featured, published, project_overview, floor_plans, developer_name
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   db.prepare(query).run(
     id,
@@ -498,7 +529,7 @@ function createProperty(prop) {
     String(prop.video_url || ''),
     String(prop.brochure_url || ''),
     String(prop.alt || title),
-    String(prop.listed || 'Agent listing · Verified'),
+    String(prop.listed || 'Verified'),
     String(prop.kind || 'Apartment'),
     String(prop.possession || 'Ready to move'),
     String(prop.description || ''),
@@ -507,7 +538,8 @@ function createProperty(prop) {
     Number(Boolean(prop.featured)),
     Number(Boolean(prop.published)),
     JSON.stringify(overview),
-    JSON.stringify(plans)
+    JSON.stringify(plans),
+    String(prop.developer_name || '').trim()
   );
   return id;
 }
@@ -558,7 +590,7 @@ function updateProperty(id, prop) {
       amenities = ?,
       proximity = ?,
       featured = ?
-      , published = ?, project_overview = ?, floor_plans = ?
+      , published = ?, project_overview = ?, floor_plans = ?, developer_name = ?
     WHERE id = ?
   `;
   db.prepare(query).run(
@@ -576,7 +608,7 @@ function updateProperty(id, prop) {
     String(next.video_url ?? current.video_url ?? ''),
     String(next.brochure_url ?? current.brochure_url ?? ''),
     String(next.alt || current.alt || next.title || current.title),
-    String(next.listed || current.listed || 'Agent listing · Verified'),
+    String(next.listed || current.listed || 'Verified'),
     String(next.kind || current.kind || 'Apartment'),
     String(next.possession || current.possession || 'Ready to move'),
     String(next.description || current.description || ''),
@@ -586,6 +618,7 @@ function updateProperty(id, prop) {
     prop.published !== undefined ? Number(Boolean(prop.published)) : Number(Boolean(current.published)),
     JSON.stringify(overview),
     JSON.stringify(plans),
+    String(next.developer_name || '').trim(),
     id
   );
   return true;

@@ -1147,8 +1147,8 @@
   </footer>
 
   <aside id="analyticsConsentNotice" hidden style="position:fixed;left:16px;bottom:16px;z-index:5000;max-width:400px;padding:16px;background:#0b192c;color:white;border:1px solid #334155;border-radius:12px;box-shadow:0 12px 30px #0004;">
-    <p style="font-size:13px;line-height:1.5;margin:0 0 12px;">Allow anonymous Google Analytics to help improve this website?</p>
-    <details class="analytics-consent-detail"><summary>How your data is used</summary><p>We use Google Analytics only with your consent. Analytics are anonymous and cannot identify every visitor; we associate analytics with customer details only after you voluntarily submit them.</p></details>
+    <p style="font-size:13px;line-height:1.5;margin:0 0 12px;">Allow anonymous local analytics to help improve this website?</p>
+    <details class="analytics-consent-detail"><summary>How your data is used</summary><p>With your consent, we count property views and interactions on our own server. We do not send these analytics to Google or track visitor locations.</p></details>
     <button type="button" id="acceptAnalytics" class="btn btn-primary btn-sm">Allow analytics</button>
     <button type="button" id="declineAnalytics" class="btn btn-outline btn-sm">Decline</button>
   </aside>
@@ -1172,7 +1172,7 @@
 
         <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:12.5px;color:#166534;margin-bottom:18px;display:flex;align-items:flex-start;gap:10px;line-height:1.45;">
           <span style="font-size:18px;">🔒</span>
-          <span>Provide your contact details, accept the privacy notice, and verify your chosen contact method before downloading.</span>
+          <span>Enter your contact details and consent below to request the brochure. No verification code is needed.</span>
         </div>
         <div style="margin-bottom:14px;">
           <label for="brochureLeadName" style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px;">Your Full Name *</label>
@@ -1181,7 +1181,7 @@
 
         <div style="margin-bottom:18px;">
           <label id="brochureLeadEmailLabel" for="brochureLeadEmail" style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px;">Email address *</label>
-          <input type="email" id="brochureLeadEmail" name="email" autocomplete="email" placeholder="you@example.com" style="width:100%;padding:12px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;">
+          <input type="email" id="brochureLeadEmail" name="email" required autocomplete="email" placeholder="you@example.com" style="width:100%;padding:12px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;">
         </div>
 
         <div style="margin-bottom:18px;">
@@ -1189,32 +1189,16 @@
           <input type="tel" id="brochureLeadPhone" name="phone" autocomplete="tel" placeholder="e.g. +91 9876543210" style="width:100%;padding:12px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;">
         </div>
 
-        <fieldset style="border:0;padding:0;margin:0 0 16px;">
-          <legend style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px;">Verify using</legend>
-          <label style="margin-right:16px;font-size:13px;"><input type="radio" name="verification_method" value="email" checked> Email</label>
-          <label style="font-size:13px;"><input type="radio" name="verification_method" value="sms"> SMS</label>
-        </fieldset>
-
         <label style="display:flex;gap:9px;align-items:flex-start;margin-bottom:16px;font-size:12px;line-height:1.5;color:#475569;">
           <input type="checkbox" id="brochurePrivacyConsent" required style="margin-top:3px;">
-          <span>I agree to the <a href="/privacy" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:underline;">privacy notice</a> and understand Vasati will use these details to verify access and record this brochure request.</span>
+          <span>I agree that Vasati Properties may use my contact details to process and respond to this brochure request.</span>
         </label>
 
-        <div id="brochureCaptcha" style="margin:0 0 12px;" aria-label="Security check"></div>
-        <div id="brochureCaptchaHelp" role="status" aria-live="polite" style="font-size:12px;color:#475569;margin-bottom:12px;"></div>
+        <p id="brochureRequestStatus" role="status" aria-live="polite" style="font-size:13px;line-height:1.5;margin-bottom:12px;"></p>
 
-        <div id="brochureOtpStep" hidden style="margin-bottom:16px;">
-          <label for="brochureOtpCode" style="display:block;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px;">One-time verification code *</label>
-          <input type="text" id="brochureOtpCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{4,10}" maxlength="10" aria-describedby="brochureOtpStatus brochureOtpCountdown" style="width:100%;padding:12px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;outline-offset:2px;">
-          <div id="brochureOtpStatus" role="status" aria-live="polite" style="font-size:12px;color:#475569;margin-top:6px;"></div>
-          <div id="brochureOtpCountdown" role="timer" aria-live="off" style="font-size:12px;color:#475569;margin-top:4px;"></div>
-          <button type="button" id="resendBrochureOtp" class="btn btn-outline btn-sm" disabled style="margin-top:8px;">Resend code in 60s</button>
-        </div>
-
-        <button type="button" id="brochureSubmitBtn" class="btn btn-primary" style="width:100%;padding:13px;font-size:15px;font-weight:700;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg, #16a34a, #15803d);border:none;color:white;cursor:pointer;">
-          <span>Send verification code</span>
+        <button type="submit" id="brochureSubmitBtn" class="btn btn-primary" style="width:100%;padding:13px;font-size:15px;font-weight:700;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg, #16a34a, #15803d);border:none;color:white;cursor:pointer;">
+          <span>Request brochure</span>
         </button>
-        <button type="button" id="brochureVerifyBtn" class="btn btn-primary" hidden style="width:100%;margin-top:8px;padding:13px;">Verify &amp; Download Brochure</button>
         <a id="brochureDownloadAction" class="btn btn-primary" hidden style="width:100%;margin-top:8px;padding:13px;text-align:center;">Download brochure</a>
       </form>
     </div>
@@ -1244,147 +1228,11 @@
     let featuredAutoPaused = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let liveSearchTimer;
     let propertyLoadSequence = 0;
+    let propertyLoadController;
     let siteSettings = {};
-    let activeBrochureVerificationId = '';
-    let activeSiteVisitVerificationId = '';
-    const otpTimers = {
-      brochure: { resend: null, expiry: null },
-      visit: { resend: null, expiry: null }
-    };
-    let brochureCaptchaToken = '';
-    let siteVisitCaptchaToken = '';
-    let turnstileSiteKey = '';
-    let turnstileReady = false;
-    let brochureWidgetId = null;
-    let siteVisitWidgetId = null;
     let lastBrochureTrigger = null;
-    let analyticsMeasurementId = '';
     let analyticsSessionId = '';
-    let analyticsRefreshTimer;
     const WHATSAPP_ICON_SVG = `<svg viewBox="0 0 24 24" width="20" height="20" fill="#ffffff" style="display:inline-block;vertical-align:middle;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
-
-    function renderTurnstileWidget(containerId, action) {
-      const container = document.getElementById(containerId);
-      if (!container) return;
-      const help = document.getElementById(action === 'brochure' ? 'brochureCaptchaHelp' : 'siteVisitCaptchaHelp');
-      if (!turnstileSiteKey) {
-        if (help) help.textContent = 'Security verification is not configured. Please contact the site administrator.';
-        return;
-      }
-      if (!turnstileReady || !window.turnstile) {
-        if (help) help.textContent = 'Loading security verification…';
-        return;
-      }
-      const currentId = action === 'brochure' ? brochureWidgetId : siteVisitWidgetId;
-      if (currentId !== null) window.turnstile.remove(currentId);
-      const tokenCallback = action === 'brochure'
-        ? token => { brochureCaptchaToken = token; }
-        : token => {
-            siteVisitCaptchaToken = token;
-            document.getElementById('visitPhone')?.dispatchEvent(new Event('input', { bubbles: true }));
-          };
-      const widgetId = window.turnstile.render(container, {
-        sitekey: turnstileSiteKey,
-        action,
-        callback: tokenCallback,
-        'expired-callback': () => {
-          if (action === 'brochure') brochureCaptchaToken = '';
-          else {
-            siteVisitCaptchaToken = '';
-            document.getElementById('visitPhone')?.dispatchEvent(new Event('input', { bubbles: true }));
-          }
-        },
-        'error-callback': () => {
-          if (action === 'brochure') {
-            brochureCaptchaToken = '';
-            document.getElementById('brochureCaptchaHelp').textContent = 'Security check failed. Refresh the challenge and try again.';
-          } else {
-            siteVisitCaptchaToken = '';
-            document.getElementById('siteVisitCaptchaHelp').textContent = 'Security check failed. Refresh the challenge and try again.';
-            document.getElementById('visitPhone')?.dispatchEvent(new Event('input', { bubbles: true }));
-          }
-        }
-      });
-      if (action === 'brochure') brochureWidgetId = widgetId;
-      else siteVisitWidgetId = widgetId;
-    }
-
-    function resetTurnstileWidget(action) {
-      if (action === 'brochure') {
-        brochureCaptchaToken = '';
-        if (brochureWidgetId !== null && window.turnstile) window.turnstile.reset(brochureWidgetId);
-      } else {
-        siteVisitCaptchaToken = '';
-        if (siteVisitWidgetId !== null && window.turnstile) window.turnstile.reset(siteVisitWidgetId);
-      }
-    }
-
-    function startOtpCountdown(countdownId, resendButtonId, expiresInSeconds, resendAfterSeconds, kind) {
-      const timers = otpTimers[kind];
-      const countdown = document.getElementById(countdownId);
-      const resendButton = document.getElementById(resendButtonId);
-      if (expiresInSeconds) clearInterval(timers.expiry);
-      clearInterval(timers.resend);
-      if (expiresInSeconds) {
-        let expiryRemaining = expiresInSeconds;
-        const updateExpiry = () => {
-          if (expiryRemaining <= 0) {
-            clearInterval(timers.expiry);
-            countdown.textContent = 'Code expired. Request a new code to continue.';
-            const verifyButton = document.getElementById(kind === 'brochure' ? 'brochureVerifyBtn' : 'verifyVisitOtp');
-            if (verifyButton) verifyButton.disabled = true;
-            return;
-          }
-          countdown.textContent = `Code expires in ${Math.floor(expiryRemaining / 60)}:${String(expiryRemaining % 60).padStart(2, '0')}.`;
-          expiryRemaining -= 1;
-        };
-        updateExpiry();
-        timers.expiry = setInterval(updateExpiry, 1000);
-        const verifyButton = document.getElementById(kind === 'brochure' ? 'brochureVerifyBtn' : 'verifyVisitOtp');
-        if (verifyButton) verifyButton.disabled = false;
-      }
-      let resendRemaining = resendAfterSeconds || 0;
-      const updateResend = () => {
-        if (resendRemaining <= 0) {
-          clearInterval(timers.resend);
-          resendButton.disabled = false;
-          resendButton.textContent = 'Resend code';
-          return;
-        }
-        resendButton.disabled = true;
-        resendButton.textContent = `Resend code in ${resendRemaining}s`;
-        resendRemaining -= 1;
-      };
-      updateResend();
-      if (resendRemaining > 0) timers.resend = setInterval(updateResend, 1000);
-    }
-
-    function configureTurnstile(siteKey) {
-      turnstileSiteKey = siteKey || '';
-      const brochureHelp = document.getElementById('brochureCaptchaHelp');
-      const visitHelp = document.getElementById('siteVisitCaptchaHelp');
-      if (!turnstileSiteKey) {
-        if (brochureHelp) brochureHelp.textContent = 'Security verification is not configured. Please contact the site administrator.';
-        if (visitHelp) visitHelp.textContent = 'Security verification is not configured. Please contact the site administrator.';
-        return;
-      }
-      if (document.getElementById('turnstileScript')) return;
-      window.onTurnstileLoaded = () => {
-        turnstileReady = true;
-        renderTurnstileWidget('brochureCaptcha', 'brochure');
-        renderTurnstileWidget('siteVisitCaptcha', 'site_visit');
-      };
-      const script = document.createElement('script');
-      script.id = 'turnstileScript';
-      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoaded&render=explicit';
-      script.async = true;
-      script.defer = true;
-      script.onerror = () => {
-        if (brochureHelp) brochureHelp.textContent = 'Security verification could not load. Check your connection and try again.';
-        if (visitHelp) visitHelp.textContent = 'Security verification could not load. Check your connection and try again.';
-      };
-      document.head.appendChild(script);
-    }
 
     function formatEmbedUrl(url) {
       if (!url) return '';
@@ -1500,6 +1348,8 @@
     // --- Dynamic API Ingestion ---
     async function loadProperties() {
       const sequence = ++propertyLoadSequence;
+      propertyLoadController?.abort();
+      propertyLoadController = new AbortController();
       const grid = document.getElementById('propertyGrid');
       grid.setAttribute('aria-busy', 'true');
       try {
@@ -1512,7 +1362,7 @@
         if (state.budget !== 'any') params.set('budget', state.budget);
         if (state.sort) params.set('sort', state.sort);
 
-        const res = await fetch(`/api/properties?${params.toString()}`);
+        const res = await fetch(`/api/properties?${params.toString()}`, { signal: propertyLoadController.signal });
         const data = await res.json();
         if (sequence !== propertyLoadSequence) return;
         if (!res.ok || !data.success || !Array.isArray(data.data)) throw new Error('Property request failed');
@@ -1546,7 +1396,7 @@
       const indicators = document.getElementById('sliderIndicators');
       const waNum = String(siteSettings.whatsapp_number || '').replace(/[^0-9]/g, '');
 
-      track.innerHTML = featuredProjects.map(p => `
+      track.innerHTML = featuredProjects.map((p, index) => `
         <div class="slide-item">
           <div class="slide-info">
             <span class="slide-partner">🏢 ${p.builder_name} · Premier Developer</span>
@@ -1565,7 +1415,7 @@
             </div>
           </div>
           <div class="slide-img-box">
-            <img src="${p.image}" alt="${p.name}">
+            <img src="${p.image}" alt="${p.name}" decoding="async" ${index ? 'loading="lazy" fetchpriority="low"' : 'fetchpriority="high"'}>
           </div>
         </div>
       `).join('');
@@ -2009,7 +1859,12 @@
         try {
           const res = await fetch(`/api/properties/${id}`);
           const data = await res.json();
-          if (data.success) p = data.data;
+          if (data.success && data.data) {
+            p = data.data;
+            // Detail pages skip the homepage catalogue; keep the fetched record
+            // available to brochure actions that use the shared property list.
+            allProperties.push(p);
+          }
         } catch(e) {}
       }
 
@@ -2100,7 +1955,7 @@
           <div>
             <span class="card-status-badge" style="position:static;margin-bottom:8px;">${safeStatus} · ${safeKind}</span>
             <h1 style="font-size:clamp(24px,3vw,34px);font-weight:800;letter-spacing:-.8px;line-height:1.2;">${safeTitle}</h1>
-            <p style="margin-top:7px;color:var(--ink-muted);font-size:14px;">📍 ${safeLocation} · ${safeListed}</p>
+            <p style="margin-top:7px;color:var(--ink-muted);font-size:14px;">📍 ${safeLocation}${safeListed ? ` · ${safeListed}` : ''}</p>
             ${p.developer_name ? `<p style="margin-top:5px;color:var(--ink-muted);font-size:13px;">By <strong style="color:var(--ink);">${escapeDetailHtml(p.developer_name)}</strong></p>` : ''}
           </div>
           <div class="detail-price-block" style="text-align:right;">
@@ -2189,18 +2044,12 @@
               <input type="time" id="visitTime" name="preferred_time" autocomplete="off" aria-describedby="visitScheduleHelp" required>
               <p id="visitScheduleHelp" class="booking-help" aria-live="polite" aria-atomic="true">Enter your name and phone number, then choose a visit date and time.</p>
               
-              <div id="siteVisitCaptcha" aria-label="Security check"></div>
-              <p id="siteVisitCaptchaHelp" class="booking-help" role="status" aria-live="polite"></p>
-              <div id="siteVisitOtpStep" hidden>
-                <label for="visitOtpCode" style="font-size:12px;font-weight:700;">SMS verification code *</label>
-                <input type="text" id="visitOtpCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{4,10}" maxlength="10" aria-describedby="visitOtpStatus visitOtpCountdown">
-                <p id="visitOtpStatus" class="booking-help" role="status" aria-live="polite"></p>
-                <p id="visitOtpCountdown" class="booking-help" role="timer" aria-live="off"></p>
-                <button type="button" class="btn btn-outline btn-sm" id="resendVisitOtp" disabled>Resend code in 60s</button>
-                <button type="button" class="btn btn-primary" id="verifyVisitOtp" style="width:100%;margin-top:8px;">Verify &amp; Schedule Visit</button>
-              </div>
+              <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;line-height:1.5;">
+                <input type="checkbox" id="visitPrivacyConsent" required style="width:auto;min-height:20px;margin-top:3px;">
+                <span>I agree that Vasati Properties may contact me to arrange this site visit.</span>
+              </label>
               <div id="siteVisitSuccess" hidden role="status" aria-live="polite" style="padding:12px;border:1px solid #bbf7d0;border-radius:10px;background:#f0fdf4;color:#166534;font-size:13px;"></div>
-              <button type="submit" class="btn btn-primary" id="submitLeadBtn" style="width:100%;margin-top:6px;" aria-describedby="visitScheduleHelp" disabled>Verify Phone &amp; Schedule Visit</button>
+              <button type="submit" class="btn btn-primary" id="submitLeadBtn" style="width:100%;margin-top:6px;" aria-describedby="visitScheduleHelp" disabled>Request Site Visit</button>
             </form>
 
             ${String(siteSettings.whatsapp_number || '').replace(/[^0-9]/g, '') ? `<a href="https://wa.me/${String(siteSettings.whatsapp_number || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello, I would like to inquire about ${p.title} (${priceLabel})`)}" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:10px;margin-top:12px;">
@@ -2214,7 +2063,7 @@
         <div class="photo-lightbox" id="photoLightbox" role="dialog" aria-modal="true" aria-label="Property photos" aria-hidden="true" onclick="if(event.target===this)closeGalleryLightbox()">
           <button type="button" class="lightbox-close" onclick="closeGalleryLightbox()" aria-label="Close photo viewer">✕</button>
           ${galleryList.length > 1 ? `<button type="button" class="lightbox-arrow lightbox-prev" onclick="moveGalleryImage(-1)" aria-label="Previous photo">‹</button><button type="button" class="lightbox-arrow lightbox-next" onclick="moveGalleryImage(1)" aria-label="Next photo">›</button>` : ''}
-          <img id="lightboxImage" src="${escapeDetailHtml(galleryList[0])}" alt="${safeTitle}">
+          <img id="lightboxImage" alt="${safeTitle}">
           <span class="lightbox-count" id="lightboxCount">1 / ${galleryList.length}</span>
         </div>
       `;
@@ -2252,20 +2101,16 @@
       }, { passive: false });
       photoSlider.addEventListener('touchcancel', () => { photoTouchStart = null; });
 
-      // Form handler
+      // Direct visit requests; contact details are supplied, not verified.
       const visitForm = document.getElementById('scheduleVisitForm');
-      if (activeSiteVisitVerificationId) cancelVerification(activeSiteVisitVerificationId, 'SITE_VISIT');
-      activeSiteVisitVerificationId = '';
-      const visitNameInput = visitForm.querySelector('[name="name"]');
-      const visitPhoneInput = visitForm.querySelector('[name="phone"]');
-      const visitCountryCodeInput = visitForm.querySelector('[name="country_code"]');
-      const visitDateInput = visitForm.querySelector('[name="preferred_date"]');
-      const visitTimeInput = visitForm.querySelector('[name="preferred_time"]');
+      const visitNameInput = document.getElementById('visitName');
+      const visitPhoneInput = document.getElementById('visitPhone');
+      const visitCountryCodeInput = document.getElementById('visitCountryCode');
+      const visitDateInput = document.getElementById('visitDate');
+      const visitTimeInput = document.getElementById('visitTime');
+      const consent = document.getElementById('visitPrivacyConsent');
       const submitLeadButton = document.getElementById('submitLeadBtn');
       const visitScheduleHelp = document.getElementById('visitScheduleHelp');
-      const visitOtpStep = document.getElementById('siteVisitOtpStep');
-      const visitOtpStatus = document.getElementById('visitOtpStatus');
-      const visitOtpCode = document.getElementById('visitOtpCode');
       const visitSuccess = document.getElementById('siteVisitSuccess');
       let isSubmittingVisit = false;
       const istDateFormatter = new Intl.DateTimeFormat('en-CA', {
@@ -2318,166 +2163,49 @@
             message: `That time has passed. Choose a time at or after ${minimumTime} IST, or select a future date.`
           };
         }
-        if (!turnstileSiteKey) {
-          return { ready: false, message: 'Security verification is not configured. Please contact the site administrator.' };
-        }
-        if (!siteVisitCaptchaToken) {
-          return { ready: false, message: 'Complete the security check before requesting a code.' };
-        }
-        return { ready: true, message: 'Your details are ready. Verify your phone to schedule the site visit.' };
+        const phone = `${visitCountryCodeInput.value.trim()}${visitPhoneInput.value.replace(/\D/g, '')}`;
+        if (!/^\+[1-9]\d{7,14}$/.test(phone)) return { ready: false, message: 'Enter a valid phone number including its country code.' };
+        if (!consent.checked) return { ready: false, message: 'Consent to being contacted to arrange this visit.' };
+        return { ready: true, message: 'Your details are ready. Submit your request and our coordinator will contact you.' };
       };
       const updateVisitSubmitState = () => {
         const status = getVisitFormStatus();
-        submitLeadButton.disabled = isSubmittingVisit || !status.ready || Boolean(activeSiteVisitVerificationId);
-        const message = isSubmittingVisit ? 'Submitting your site visit request...' : status.message;
-        if (visitScheduleHelp.textContent !== message) visitScheduleHelp.textContent = message;
+        submitLeadButton.disabled = isSubmittingVisit || !status.ready;
+        visitScheduleHelp.textContent = isSubmittingVisit ? 'Submitting your site visit request…' : status.message;
       };
-      const invalidateVisitCode = () => {
-        if (activeSiteVisitVerificationId) {
-          fetch('/api/verification/cancel', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ verification_id: activeSiteVisitVerificationId, purpose: 'SITE_VISIT' })
-          }).catch(() => {});
-          activeSiteVisitVerificationId = '';
-          clearInterval(otpTimers.visit.expiry);
-          clearInterval(otpTimers.visit.resend);
-          visitOtpStep.hidden = true;
-          visitOtpCode.value = '';
-          submitLeadButton.hidden = false;
-          visitScheduleHelp.textContent = 'Your details changed. Request a new verification code.';
-        }
-        updateVisitSubmitState();
-      };
-      [visitNameInput, visitCountryCodeInput, visitPhoneInput, visitDateInput, visitTimeInput].forEach(input => {
-        input.addEventListener('input', invalidateVisitCode);
-        input.addEventListener('change', invalidateVisitCode);
+      [visitNameInput, visitCountryCodeInput, visitPhoneInput, visitDateInput, visitTimeInput, consent].forEach(input => {
+        input.addEventListener('input', updateVisitSubmitState);
+        input.addEventListener('change', updateVisitSubmitState);
       });
-      renderTurnstileWidget('siteVisitCaptcha', 'site_visit');
       updateVisitSubmitState();
-
-      visitForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (isSubmittingVisit || activeSiteVisitVerificationId) return;
-        const visitStatus = getVisitFormStatus();
-        if (!visitStatus.ready) {
-          visitForm.reportValidity();
-          updateVisitSubmitState();
-          if (visitNameInput.value.trim() && visitPhoneInput.value.trim() &&
-              visitDateInput.value && visitTimeInput.value) {
-            showToast(visitStatus.message);
-          }
-          return;
-        }
+      visitForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (isSubmittingVisit || !getVisitFormStatus().ready || !visitForm.reportValidity()) return;
         isSubmittingVisit = true;
         updateVisitSubmitState();
-        submitLeadButton.textContent = 'Sending verification code...';
-
+        submitLeadButton.textContent = 'Submitting…';
         try {
-          const payload = {
-            property_id: p.id,
-            name: visitNameInput.value.trim(),
-            phone: `${visitCountryCodeInput.value.trim()}${visitPhoneInput.value.replace(/\D/g, '')}`,
-            preferred_date: visitDateInput.value,
-            preferred_time: visitTimeInput.value,
-            captcha_token: siteVisitCaptchaToken,
-            analytics_consent: localStorage.getItem('vasati_analytics_consent') === 'accepted'
-          };
-
-          const res = await fetch('/api/site-visits/verification/start', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          const resData = await res.json();
-          if (!res.ok) throw new Error(resData.message || 'Could not send the verification code.');
-          activeSiteVisitVerificationId = resData.verificationId;
-          visitOtpStep.hidden = false;
-          submitLeadButton.hidden = true;
-          visitOtpStatus.textContent = `A code was sent to ${resData.maskedDestination}. Enter it to confirm this visit.`;
-          visitOtpCode.focus();
-          startOtpCountdown('visitOtpCountdown', 'resendVisitOtp', resData.expiresInSeconds, resData.resendAfterSeconds, 'visit');
-          resetTurnstileWidget('site_visit');
-        } catch (error) {
-          visitScheduleHelp.textContent = error.message || 'Could not send the verification code.';
-          resetTurnstileWidget('site_visit');
-        } finally {
-          isSubmittingVisit = false;
-          submitLeadButton.textContent = 'Verify Phone & Schedule Visit';
-          updateVisitSubmitState();
-        }
-      });
-
-      document.getElementById('resendVisitOtp').addEventListener('click', async () => {
-        const button = document.getElementById('resendVisitOtp');
-        if (!activeSiteVisitVerificationId || button.disabled) return;
-        button.disabled = true;
-        try {
-          const response = await fetch('/api/site-visits/verification/resend', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ verification_id: activeSiteVisitVerificationId })
-          });
-          const result = await response.json();
-          if (!response.ok) {
-            const error = new Error(result.message || 'Could not resend the code.');
-            error.status = response.status;
-            error.retryAfter = Number(response.headers.get('Retry-After') || 0);
-            throw error;
-          }
-          visitOtpStatus.textContent = 'A new code was sent. The previous code will no longer work.';
-          startOtpCountdown('visitOtpCountdown', 'resendVisitOtp', result.expiresInSeconds, result.resendAfterSeconds, 'visit');
-        } catch (error) {
-          visitOtpStatus.textContent = error.message || 'Could not resend the code.';
-          const seconds = Number(error.retryAfter || 0);
-          if (seconds > 0) startOtpCountdown('visitOtpCountdown', 'resendVisitOtp', null, seconds, 'visit');
-          else if (error.status === 400) invalidateVisitCode();
-          else button.disabled = false;
-        }
-      });
-
-      document.getElementById('verifyVisitOtp').addEventListener('click', async () => {
-        const verifyButton = document.getElementById('verifyVisitOtp');
-        if (!activeSiteVisitVerificationId || isSubmittingVisit) return;
-        if (!/^[0-9]{4,10}$/.test(visitOtpCode.value.trim())) {
-          visitOtpStatus.textContent = 'Enter the verification code from your SMS.';
-          visitOtpCode.focus();
-          return;
-        }
-        isSubmittingVisit = true;
-        verifyButton.disabled = true;
-        verifyButton.textContent = 'Verifying...';
-        try {
-          const response = await fetch('/api/site-visits/verification/complete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              verification_id: activeSiteVisitVerificationId,
-              code: visitOtpCode.value.trim(),
-              property_id: p.id,
-              name: visitNameInput.value.trim(),
+          const response = await fetch('/api/enquiries', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ property_id: p.id, name: visitNameInput.value.trim(),
               phone: `${visitCountryCodeInput.value.trim()}${visitPhoneInput.value.replace(/\D/g, '')}`,
-              preferred_date: visitDateInput.value,
-              preferred_time: visitTimeInput.value
-            })
+              preferred_date: visitDateInput.value, preferred_time: visitTimeInput.value,
+              privacy_consent: consent.checked,
+              analytics_consent: localStorage.getItem('vasati_analytics_consent') === 'accepted' })
           });
           const result = await response.json();
-          if (!response.ok) throw new Error(result.message || 'Could not verify the code.');
-          clearInterval(otpTimers.visit.expiry);
-          clearInterval(otpTimers.visit.resend);
-          visitOtpStep.hidden = true;
-          submitLeadButton.hidden = true;
+          if (!response.ok) throw new Error(result.message || 'Could not submit your site visit request.');
           visitSuccess.hidden = false;
-          visitSuccess.textContent = `Site visit request confirmed. Reference ${result.referenceId}; phone ${result.maskedPhone}; ${visitDateInput.value} at ${visitTimeInput.value} IST. Our coordinator will contact you to confirm the visit.`;
+          visitSuccess.textContent = `Request received. Reference ${result.referenceId}; ${visitDateInput.value} at ${visitTimeInput.value} IST. Our coordinator will contact you to confirm availability.`;
           visitForm.querySelectorAll('input,button').forEach(input => { input.disabled = true; });
-          trackAnalytics('enquiry', p.id);
+          submitLeadButton.hidden = true;
+          visitScheduleHelp.textContent = 'Your request has been received.';
         } catch (error) {
-          visitOtpStatus.textContent = error.message || 'Verification failed. Check the code or request a new one.';
+          visitScheduleHelp.textContent = error.message || 'Could not submit your site visit request. Please try again.';
         } finally {
           isSubmittingVisit = false;
-          verifyButton.disabled = false;
-          verifyButton.textContent = 'Verify & Schedule Visit';
-          updateVisitSubmitState();
+          if (!submitLeadButton.hidden) submitLeadButton.disabled = !getVisitFormStatus().ready;
+          submitLeadButton.textContent = 'Request Site Visit';
         }
       });
     }
@@ -2525,20 +2253,11 @@
       document.getElementById('brochurePropertyTitle').value = p.title;
       document.getElementById('brochureModalPropertyTitle').textContent = `${p.title} · ${p.location}`;
       lastBrochureTrigger = event?.currentTarget || document.activeElement;
-      if (activeBrochureVerificationId) cancelVerification(activeBrochureVerificationId, 'BROCHURE');
-      activeBrochureVerificationId = '';
-      clearInterval(otpTimers.brochure.resend);
-      clearInterval(otpTimers.brochure.expiry);
-      document.getElementById('brochureOtpStep').hidden = true;
-      document.getElementById('brochureVerifyBtn').hidden = true;
       document.getElementById('brochureDownloadAction').hidden = true;
+      document.getElementById('brochureDownloadAction').removeAttribute('href');
       document.getElementById('brochureSubmitBtn').hidden = false;
       document.getElementById('brochureLeadForm').reset();
-      document.getElementById('brochureOtpCode').value = '';
-      document.getElementById('brochureOtpStatus').textContent = '';
-      document.getElementById('brochureOtpCountdown').textContent = '';
-      resetTurnstileWidget('brochure');
-      updateBrochureContactRequirements();
+      document.getElementById('brochureRequestStatus').textContent = '';
 
       const modal = document.getElementById('brochureModal');
       modal.style.display = 'flex';
@@ -2553,67 +2272,15 @@
       const modal = document.getElementById('brochureModal');
       modal.style.display = 'none';
       document.body.style.overflow = document.body.dataset.previousOverflow || '';
-      if (activeBrochureVerificationId) cancelVerification(activeBrochureVerificationId, 'BROCHURE');
-      activeBrochureVerificationId = '';
-      clearInterval(otpTimers.brochure.resend);
-      clearInterval(otpTimers.brochure.expiry);
       lastBrochureTrigger?.focus?.();
     }
 
-    function cancelVerification(verificationId, purpose) {
-      fetch('/api/verification/cancel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ verification_id: verificationId, purpose })
-      }).catch(() => {});
-    }
-
-    function updateBrochureContactRequirements() {
-      const method = document.querySelector('input[name="verification_method"]:checked')?.value || 'email';
-      const email = document.getElementById('brochureLeadEmail');
-      const phone = document.getElementById('brochureLeadPhone');
-      email.required = method === 'email';
-      phone.required = method === 'sms';
-      email.setAttribute('aria-required', String(email.required));
-      phone.setAttribute('aria-required', String(phone.required));
-      document.getElementById('brochureLeadEmailLabel').textContent = `Email address${email.required ? ' *' : ' (optional)'}`;
-      document.getElementById('brochureLeadPhoneLabel').textContent = `Phone number${phone.required ? ' *' : ' (optional)'}`;
-    }
-
-    function invalidateBrochureCode() {
-      if (!activeBrochureVerificationId) return;
-      cancelVerification(activeBrochureVerificationId, 'BROCHURE');
-      activeBrochureVerificationId = '';
-      clearInterval(otpTimers.brochure.resend);
-      clearInterval(otpTimers.brochure.expiry);
-      document.getElementById('brochureOtpStep').hidden = true;
-      document.getElementById('brochureVerifyBtn').hidden = true;
-      document.getElementById('brochureDownloadAction').hidden = true;
-      document.getElementById('brochureSubmitBtn').hidden = false;
-      document.getElementById('brochureOtpCode').value = '';
-      document.getElementById('brochureOtpStatus').textContent = 'Your contact details changed. Request a new code.';
-      resetTurnstileWidget('brochure');
-    }
-
-    document.getElementById('brochureModal').addEventListener('click', (e) => {
-      if (e.target === document.getElementById('brochureModal')) {
-        closeBrochureModal();
-      }
+    document.getElementById('brochureModal').addEventListener('click', event => {
+      if (event.target === event.currentTarget) closeBrochureModal();
     });
     document.getElementById('brochureModal').addEventListener('keydown', event => {
       if (event.key === 'Escape') closeBrochureModal();
     });
-    document.querySelectorAll('input[name="verification_method"]').forEach(input => {
-      input.addEventListener('change', () => {
-        updateBrochureContactRequirements();
-        invalidateBrochureCode();
-      });
-    });
-    ['brochureLeadName', 'brochureLeadEmail', 'brochureLeadPhone', 'brochurePrivacyConsent'].forEach(id => {
-      document.getElementById(id).addEventListener('input', invalidateBrochureCode);
-      document.getElementById(id).addEventListener('change', invalidateBrochureCode);
-    });
-    document.getElementById('brochureLeadForm').addEventListener('submit', event => event.preventDefault());
 
     function trackAnalytics(eventName, propertyId = '', source = '') {
       if (localStorage.getItem('vasati_analytics_consent') !== 'accepted') return;
@@ -2631,52 +2298,19 @@
           body: JSON.stringify({ event: eventName, property_id: propertyId, source, session_id: analyticsSessionId, consent: true })
         }).catch(() => {});
       }
-      if (analyticsMeasurementId && window.gtag) {
-        window.gtag('event', eventName, propertyId ? { property_id: propertyId } : {});
-      }
-    }
-
-    function enableGoogleAnalytics() {
-      if (!analyticsMeasurementId || window.gtag) return;
-      window.dataLayer = window.dataLayer || [];
-      window.gtag = function(){ window.dataLayer.push(arguments); };
-      window.gtag('js', new Date());
-      window.gtag('config', analyticsMeasurementId, { anonymize_ip: true });
-      const script = document.createElement('script');
-      script.async = true;
-      script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(analyticsMeasurementId)}`;
-      document.head.appendChild(script);
     }
 
     async function setupAnalyticsConsent() {
-      try {
-        const response = await fetch('/api/public-config');
-        const config = await response.json();
-        analyticsMeasurementId = config.analyticsMeasurementId || '';
-        configureTurnstile(config.turnstileSiteKey);
-      } catch {
-        analyticsMeasurementId = '';
-        configureTurnstile('');
-      }
-      const consent = localStorage.getItem('vasati_analytics_consent');
-      if (consent === 'accepted') enableGoogleAnalytics();
-      if (!consent) document.getElementById('analyticsConsentNotice').hidden = false;
+      // Establish the local form session; no external tracking script is loaded.
+      await fetch('/api/public-config').catch(() => {});
+      if (!localStorage.getItem('vasati_analytics_consent')) document.getElementById('analyticsConsentNotice').hidden = false;
       document.getElementById('acceptAnalytics').addEventListener('click', () => {
         localStorage.setItem('vasati_analytics_consent', 'accepted');
         document.getElementById('analyticsConsentNotice').hidden = true;
-        enableGoogleAnalytics();
       });
       document.getElementById('declineAnalytics').addEventListener('click', () => {
         localStorage.setItem('vasati_analytics_consent', 'declined');
         document.getElementById('analyticsConsentNotice').hidden = true;
-        if (analyticsMeasurementId && window.gtag) {
-          window[`ga-disable-${analyticsMeasurementId}`] = true;
-          window.gtag('consent', 'update', { analytics_storage: 'denied' });
-          document.cookie.split(';').forEach(cookie => {
-            const name = cookie.split('=')[0].trim();
-            if (name.startsWith('_ga')) document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax`;
-          });
-        }
       });
     }
 
@@ -2724,150 +2358,41 @@
       if (link && !link.hidden) trackAnalytics('social_click', '', link.id);
     });
 
-    let isStartingBrochureVerification = false;
-    let isCheckingBrochureCode = false;
-
-    async function sendBrochureCode() {
-      const btn = document.getElementById('brochureSubmitBtn');
-      const propId = document.getElementById('brochurePropertyId').value;
-      const name = document.getElementById('brochureLeadName').value.trim();
-      const email = document.getElementById('brochureLeadEmail').value.trim();
-      const phone = document.getElementById('brochureLeadPhone').value.trim();
-      const method = document.querySelector('input[name="verification_method"]:checked')?.value;
-
-      if (isStartingBrochureVerification || activeBrochureVerificationId) return;
-      updateBrochureContactRequirements();
-      if (!document.getElementById('brochureLeadForm').reportValidity()) return;
-      if (!brochureCaptchaToken) {
-        document.getElementById('brochureCaptchaHelp').textContent = 'Complete the security check before requesting a code.';
-        return;
-      }
-      isStartingBrochureVerification = true;
-      btn.disabled = true;
-      btn.textContent = 'Sending verification code…';
+    let isRequestingBrochure = false;
+    document.getElementById('brochureLeadForm').addEventListener('submit', async event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      if (isRequestingBrochure || !form.reportValidity()) return;
+      isRequestingBrochure = true;
+      const button = document.getElementById('brochureSubmitBtn');
+      const status = document.getElementById('brochureRequestStatus');
+      button.disabled = true;
+      button.textContent = 'Preparing brochure…';
+      status.textContent = 'Submitting your request…';
       try {
-        const response = await fetch('/api/brochures/verification/start', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            property_id: propId,
-            name,
-            email,
-            phone,
-            method,
-            privacy_consent: true,
-            captcha_token: brochureCaptchaToken,
-            analytics_consent: localStorage.getItem('vasati_analytics_consent') === 'accepted'
-          })
-        });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.message || 'Could not send verification code.');
-        activeBrochureVerificationId = result.verificationId;
-        document.getElementById('brochureOtpStep').hidden = false;
-        document.getElementById('brochureVerifyBtn').hidden = false;
-        document.getElementById('brochureSubmitBtn').hidden = true;
-        document.getElementById('brochureOtpStatus').textContent = `A code was sent to ${result.maskedDestination} by ${method === 'sms' ? 'SMS' : 'email'}.`;
-        document.getElementById('brochureOtpCode').focus();
-        startOtpCountdown('brochureOtpCountdown', 'resendBrochureOtp', result.expiresInSeconds, result.resendAfterSeconds, 'brochure');
-        resetTurnstileWidget('brochure');
-      } catch (error) {
-        document.getElementById('brochureOtpStatus').textContent = error.message || 'Could not send the verification code.';
-        document.getElementById('brochureCaptchaHelp').textContent = error.message || 'Could not send the verification code.';
-        resetTurnstileWidget('brochure');
-      } finally {
-        isStartingBrochureVerification = false;
-        btn.disabled = false;
-        btn.textContent = 'Send verification code';
-      }
-    }
-
-    document.getElementById('brochureSubmitBtn').addEventListener('click', sendBrochureCode);
-
-    document.getElementById('resendBrochureOtp').addEventListener('click', async () => {
-      const resendButton = document.getElementById('resendBrochureOtp');
-      if (!activeBrochureVerificationId || resendButton.disabled) return;
-      resendButton.disabled = true;
-      try {
-        const response = await fetch('/api/brochures/verification/resend', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ verification_id: activeBrochureVerificationId })
-        });
-        const result = await response.json();
-        if (!response.ok) {
-          const error = new Error(result.message || 'Could not resend code.');
-          error.status = response.status;
-          error.retryAfter = Number(response.headers.get('Retry-After') || 0);
-          throw error;
-        }
-        document.getElementById('brochureOtpStatus').textContent = 'A new code was sent. The previous code will no longer work.';
-        startOtpCountdown('brochureOtpCountdown', 'resendBrochureOtp', result.expiresInSeconds, result.resendAfterSeconds, 'brochure');
-      } catch (error) {
-        document.getElementById('brochureOtpStatus').textContent = error.message || 'Could not resend code.';
-        if (error.retryAfter) startOtpCountdown('brochureOtpCountdown', 'resendBrochureOtp', null, error.retryAfter, 'brochure');
-        else if (error.status === 400) invalidateBrochureCode();
-        else resendButton.disabled = false;
-      }
-    });
-
-    async function verifyBrochureCode() {
-      const verifyButton = document.getElementById('brochureVerifyBtn');
-      if (isCheckingBrochureCode || !activeBrochureVerificationId) return;
-      if (!/^[0-9]{4,10}$/.test(document.getElementById('brochureOtpCode').value.trim())) {
-        document.getElementById('brochureOtpStatus').textContent = 'Enter the verification code from your selected contact method.';
-        document.getElementById('brochureOtpCode').focus();
-        return;
-      }
-      isCheckingBrochureCode = true;
-      verifyButton.disabled = true;
-      verifyButton.textContent = 'Verifying & preparing download…';
-      try {
-        const response = await fetch('/api/brochures/verification/complete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            verification_id: activeBrochureVerificationId,
-            code: document.getElementById('brochureOtpCode').value.trim(),
-            property_id: document.getElementById('brochurePropertyId').value,
+        const response = await fetch('/api/brochures/request', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ property_id: document.getElementById('brochurePropertyId').value,
             name: document.getElementById('brochureLeadName').value.trim(),
             email: document.getElementById('brochureLeadEmail').value.trim(),
             phone: document.getElementById('brochureLeadPhone').value.trim(),
-            method: document.querySelector('input[name="verification_method"]:checked')?.value,
-            privacy_consent: document.getElementById('brochurePrivacyConsent').checked
-          })
+            privacy_consent: document.getElementById('brochurePrivacyConsent').checked,
+            analytics_consent: localStorage.getItem('vasati_analytics_consent') === 'accepted' })
         });
         const result = await response.json();
-        if (!response.ok) throw new Error(result.message || 'Verification failed.');
+        if (!response.ok) throw new Error(result.message || 'Could not prepare your brochure.');
         const download = document.getElementById('brochureDownloadAction');
         download.href = result.downloadUrl;
         download.hidden = false;
-        verifyButton.hidden = true;
-        document.getElementById('brochureOtpStatus').textContent = `${result.verifiedMethod === 'sms' ? 'Phone' : 'Email'} verified (${result.maskedDestination}). Your private download link expires in 5 minutes and works once.`;
-        clearInterval(otpTimers.brochure.expiry);
-        clearInterval(otpTimers.brochure.resend);
-        activeBrochureVerificationId = '';
-        document.getElementById('brochureLeadForm').querySelectorAll('input').forEach(input => { input.disabled = true; });
-        trackAnalytics('verification_completed', document.getElementById('brochurePropertyId').value);
+        button.hidden = true;
+        status.textContent = 'Your brochure is ready. This private link expires in 5 minutes and works once.';
       } catch (error) {
-        document.getElementById('brochureOtpStatus').textContent = error.message || 'Verification failed.';
+        status.textContent = error.message || 'Could not prepare your brochure. Please try again.';
       } finally {
-        isCheckingBrochureCode = false;
-        if (!verifyButton.hidden) {
-          verifyButton.disabled = false;
-          verifyButton.textContent = 'Verify & Download Brochure';
-        }
+        isRequestingBrochure = false;
+        button.disabled = false;
+        button.textContent = 'Request brochure';
       }
-    }
-
-    document.getElementById('brochureVerifyBtn').addEventListener('click', verifyBrochureCode);
-    document.getElementById('brochureLeadForm').addEventListener('submit', event => {
-      event.preventDefault();
-      if (activeBrochureVerificationId) verifyBrochureCode();
-      else sendBrochureCode();
-    });
-
-    document.getElementById('brochureDownloadAction').addEventListener('click', () => {
-      trackAnalytics('brochure_download', document.getElementById('brochurePropertyId').value);
     });
 
     // Mobile Navigation Triggers
@@ -2899,8 +2424,10 @@
     if (initialQuery.get('saved') === '1') state.showingSavedOnly = true;
     updateFavCounter();
     loadSiteSettings();
-    loadFeaturedProjects();
-    loadProperties();
+    if (!location.pathname.startsWith('/properties/')) {
+      loadFeaturedProjects();
+      loadProperties();
+    }
     setupAnalyticsConsent();
     handleRoute();
   </script>

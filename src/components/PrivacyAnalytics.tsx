@@ -44,7 +44,6 @@ export default function PrivacyAnalytics() {
   const umamiId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
   const umamiUrl = process.env.NEXT_PUBLIC_UMAMI_URL || 'https://analytics.umami.is/script.js';
   const plausibleDomain = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN;
-  const gaId = process.env.NEXT_PUBLIC_GA_ID;
 
   return (
     <>
@@ -68,32 +67,6 @@ export default function PrivacyAnalytics() {
         />
       )}
 
-      {/* 3. Google Analytics with Mandatory DPDP Safeguards (IP Anonymisation, No Ad Signals) */}
-      {gaId && (
-        <>
-          <Script
-            strategy="afterInteractive"
-            src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-          />
-          <Script
-            id="google-analytics-init"
-            strategy="afterInteractive"
-            dangerouslySetInnerHTML={{
-              __html: `
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${gaId}', {
-                  anonymize_ip: true,
-                  allow_google_signals: false,
-                  allow_ad_personalization_signals: false,
-                  restricted_data_processing: true
-                });
-              `,
-            }}
-          />
-        </>
-      )}
     </>
   );
 }

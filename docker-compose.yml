@@ -4,6 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    init: true
+    stop_grace_period: 15s
     ports:
       - "${PORT:-3000}:3000"
     environment:
@@ -16,13 +18,7 @@ services:
       APP_BASE_URL: ${APP_BASE_URL:?Set the public HTTPS URL in Coolify}
       SITE_URL: ${SITE_URL:-${APP_BASE_URL}}
       SEO_INDEXABLE: ${SEO_INDEXABLE:-false}
-      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
-      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
-      TWILIO_VERIFY_SERVICE_SID: ${TWILIO_VERIFY_SERVICE_SID:-}
-      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
-      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
       TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-0}
-      GA4_MEASUREMENT_ID: ${GA4_MEASUREMENT_ID:-}
       MCP_READ_TOKEN: ${MCP_READ_TOKEN:-}
       MCP_WRITE_TOKEN: ${MCP_WRITE_TOKEN:-}
     volumes:

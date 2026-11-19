@@ -1,5 +1,7 @@
 # India DPDP Act 2023 & IT Act 2000 Compliance Architecture
 
+> **Legacy scaffolding reference:** This document describes the inactive Next.js/Prisma application under `src/` and `prisma/`. Its security controls, policies and operational checklist do not describe protections implemented by the active Express/SQLite application. See [README.md](./README.md) for the running application's behavior and [COOLIFY.md](./COOLIFY.md) for its deployment instructions. The historical narrative below is retained for reference.
+
 > **LEGAL NOTICE & STATUTORY DISCLAIMER**  
 > This documentation and the accompanying codebase constitute a technical compliance architecture designed to align with India's **Digital Personal Data Protection Act, 2023 (DPDP Act 2023)**, the **Information Technology Act, 2000 (IT Act 2000)**, the **IT (Reasonable Security Practices and Procedures and Sensitive Personal Data or Information) Rules, 2011 (SPDI Rules)**, and the **Real Estate (Regulation and Development) Act, 2016 (Karnataka RERA Rules 2017)**.  
 > All policy documents, consent disclosures, and grievance procedures in this project are baseline technical implementations and drafts. They **must be formally reviewed and approved by an advocate enrolled with the Bar Council of India** specializing in Indian privacy and real estate law prior to public commercial deployment.

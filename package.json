@@ -7,26 +7,26 @@
     "dev": "node --watch server.js",
     "start": "node server.js",
     "server": "node server.js",
-    "check": "node --check server.js && node --check server/seo.js && node --check server/ga4-analytics.js && node --check server/admin-auth.js && node --check db/database.js",
+    "check": "node --check server.js && node --check server/seo.js && node --check server/local-analytics.js && node --check server/admin-auth.js && node --check db/database.js",
     "build": "npm run check && npm run typecheck:ui && npm run build:ui",
     "build:ui": "node scripts/build-ui.mjs",
     "typecheck:ui": "tsc --project tsconfig.ui.json",
     "lint": "npm run check",
     "test": "node --test",
-    "dev:server": "node --watch server.js"
+    "test:load": "node scripts/load-check.cjs",
+    "dev:server": "node --watch server.js",
+    "reset-admin:local": "node scripts/reset-local-admin.cjs"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
+    "compression": "^1.8.2",
     "cors": "^2.8.6",
-    "d3-geo": "^3.1.2",
     "express": "^5.3.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "sharp": "^0.35.5",
-    "tailwind-merge": "^3.7.0",
-    "topojson-client": "^3.1.0",
-    "world-atlas": "^2.0.2"
+    "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",

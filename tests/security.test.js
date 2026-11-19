@@ -24,7 +24,7 @@ function findPort() {
   });
 }
 
-test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 60_000 }, async t => {
+test('admin, image, direct requests, brochure, and MCP authorization controls', { timeout: 60_000 }, async t => {
   const port = await findPort();
   const env = {
     ...process.env,
@@ -37,18 +37,9 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
     MCP_READ_TOKEN: 'test-read-token',
     MCP_WRITE_TOKEN: 'test-write-token',
     IP_HASH_SALT: 'test-analytics-salt',
-    GA4_PROPERTY_ID: '',
-    GA4_SERVICE_ACCOUNT_EMAIL: '',
-    GA4_SERVICE_ACCOUNT_PRIVATE_KEY: '',
-    TWILIO_ACCOUNT_SID: 'AC00000000000000000000000000000000',
-    TWILIO_AUTH_TOKEN: 'test-auth-token',
-    TWILIO_VERIFY_SERVICE_SID: 'VA00000000000000000000000000000000',
-    TURNSTILE_SITE_KEY: 'test-site-key',
-    TURNSTILE_SECRET_KEY: 'test-secret-key',
     TRUST_PROXY_HOPS: '0'
   };
   const child = spawn(process.execPath, [
-    '--require', path.join(root, 'tests', 'fixtures', 'mock-twilio.js'),
     path.join(root, 'server.js')
   ], { cwd: root, env, stdio: ['ignore', 'pipe', 'pipe'] });
   let logs = '';
@@ -110,7 +101,7 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
     assert.equal((await request('/api/admin/analytics')).status, 401);
     assert.equal((await request('/auth/google')).status, 404);
     assert.equal((await request('/api/customer/session')).status, 404);
-    assert.equal((await request('/api/enquiries', { method: 'POST', ...json({ name: 'Bypass', phone: '+919876543210' }) })).status, 410);
+    assert.equal((await request('/api/enquiries', { method: 'POST', ...json({ name: 'Incomplete', phone: '+919876543210' }) })).status, 400);
     assert.equal((await request('/api/properties', { method: 'POST', ...json({ title: 'No', location: 'No', price: 1, bhk: 1, area: '1' }) })).status, 401);
     assert.equal((await request('/api/upload-image', { method: 'POST', ...json({ filename: 'x.jpg', fileData: 'aGVsbG8=' }) })).status, 401);
     assert.equal((await request('/mcp', { method: 'POST', ...json({ jsonrpc: '2.0', id: 1, method: 'tools/list' }) })).status, 401);
@@ -172,8 +163,9 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
     assert.equal(analyticsResponse.status, 200);
     const analyticsBody = await analyticsResponse.json();
     assert.equal(analyticsBody.success, true);
-    assert.equal(analyticsBody.data.status, 'setup-required');
-    assert.ok(analyticsBody.data.locationMapNotice.includes('Location is approximate when supported, never exact.'));
+    assert.equal(analyticsBody.data.status, 'ready');
+    assert.equal(analyticsBody.data.provider, 'local');
+    assert.equal(analyticsBody.data.totalEvents, 0);
     assert.equal((await request('/api/admin/analytics?range=all-time', { headers: { cookie } })).status, 400);
 
     const viewerPassword = 'Viewer-Only-Password-123!';
@@ -210,6 +202,7 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
       headers: { cookie, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title: 'Integration Test Property',
+        developer_name: '  Test Builders  ',
         location: 'Bengaluru',
         price: 50,
         bhk: 2,
@@ -219,6 +212,14 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
     });
     assert.equal(propertyResponse.status, 201);
     const property = (await propertyResponse.json()).data;
+    await t.test('builder name persists on create and partial edits, and can be changed or cleared', async () => {
+      assert.equal(property.developer_name, 'Test Builders');
+      const update = data => request(`/api/properties/${property.id}`, {method:'PUT', ...json(data, {cookie})});
+      assert.equal((await (await update({price:50})).json()).data.developer_name, 'Test Builders');
+      assert.equal((await (await update({developer_name:'New Builders'})).json()).data.developer_name, 'New Builders');
+      assert.equal(database.getPropertyById(property.id, true).developer_name, 'New Builders');
+      assert.equal((await (await update({developer_name:''})).json()).data.developer_name, '');
+    });
     await t.test('2D floor plans persist through admin create/edit and reject invalid updates', async () => {
       const plans = [{configuration:'2 BHK Apartment',area:'1332 sq.ft.',price:'₹1.5 Cr',image_url:'/images/logo.png',rooms:[{name:'Bedroom 1',dimensions:'14 × 11 ft'}]}, {configuration:'2 BHK Apartment',area:'1347 sq.ft.',price:'₹1.55 Cr',image_url:'/images/logo.png',rooms:[]}];
       const update = data => request(`/api/properties/${property.id}`, {method:'PUT',...json(data,{cookie})});
@@ -311,170 +312,73 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
     assert.equal(published.status, 200);
     assert.equal((await request(`/api/properties/${property.id}`)).status, 200);
 
-    const verificationBody = (email, method = 'email', phone = '') => ({
-      property_id: property.id, name: 'Test Customer', email, phone,
-      method, privacy_consent: true, analytics_consent: true,
-      captcha_token: 'test-brochure-token'
-    });
-    const startVerification = (email, method = 'email', phone = '') => request('/api/brochures/verification/start', {
-      method: 'POST',
-      ...json(verificationBody(email, method, phone))
-    });
-    const completeBrochureVerification = (verificationId, data, code = '123456') => request('/api/brochures/verification/complete', {
-      method: 'POST',
-      ...json({ ...data, verification_id: verificationId, code })
+
+    await t.test('brochure requests work without a provider, require consent, and protect one-use links', async () => {
+      const config = await (await request('/api/public-config')).json();
+      assert.deepEqual(config, { analyticsProvider: 'local', contactVerificationRequired: false });
+      const details = { property_id: property.id, name: 'Test Customer', email: 'requested@example.test',
+        phone: '', privacy_consent: true, analytics_consent: true };
+      const submit = data => request('/api/brochures/request', { method: 'POST', ...json(data) });
+      const before = database.db.prepare('SELECT COUNT(*) AS n FROM brochure_requests').get().n;
+      for (const invalid of [{...details,privacy_consent:false},{...details,email:'invalid'},{...details,name:'x'},{...details,phone:'bad'}]) {
+        assert.equal((await submit(invalid)).status, 400);
+      }
+      assert.equal(database.db.prepare('SELECT COUNT(*) AS n FROM brochure_requests').get().n, before);
+      const accepted = await submit(details);
+      assert.equal(accepted.status, 201);
+      const { downloadUrl } = await accepted.json();
+      const stored = database.db.prepare('SELECT * FROM brochure_requests WHERE email = ?').get(details.email);
+      assert.ok(stored.consent_at);
+      assert.equal(database.db.prepare('SELECT COUNT(*) AS n FROM otp_verifications').get().n, 0);
+      assert.equal((await fetch(`${base}${downloadUrl}`)).status, 404, 'link is bound to the submitting browser session');
+      const download = await request(downloadUrl);
+      assert.equal(download.status, 200);
+      assert.equal(download.headers.get('content-type'), 'application/pdf');
+      assert.equal(Buffer.from(await download.arrayBuffer()).toString(), pdf.toString());
+      assert.equal((await request(downloadUrl)).status, 404, 'link cannot be reused');
+      const expiring = await (await submit({...details,email:'expired@example.test'})).json();
+      database.db.prepare('UPDATE brochure_request_downloads SET expires_at = ? WHERE downloaded_at IS NULL').run(Date.now()-1);
+      assert.equal((await request(expiring.downloadUrl)).status, 404);
+      const draft = database.createProperty({title:'No public brochure',location:'Test',price:50,bhk:2,area:'1000 sqft',published:false,brochure_url:mediaUrl});
+      assert.equal((await submit({...details,property_id:draft})).status, 404);
+      for (let index=0; index<8; index++) assert.equal((await submit({...details,email:`limit${index}@example.test`})).status, 201);
+      assert.equal((await submit(details)).status, 429, 'public requests remain rate limited');
     });
 
-    const firstOtp = await startVerification('cooldown@example.test');
-    assert.equal(firstOtp.status, 201);
-    assert.equal((await firstOtp.json()).expiresInSeconds, 300);
-    assert.equal((await startVerification('cooldown@example.test')).status, 429);
-
-    const expiredOtp = await startVerification('expired@example.test');
-    const expiredId = (await expiredOtp.json()).verificationId;
-    database.db.prepare('UPDATE otp_verifications SET expires_at = ? WHERE id = ?').run(Date.now() - 1, expiredId);
-    const expiredCheck = await completeBrochureVerification(expiredId, verificationBody('expired@example.test'), '654321');
-    assert.equal(expiredCheck.status, 400);
-
-    const limitedOtp = await startVerification('limited@example.test');
-    const limitedId = (await limitedOtp.json()).verificationId;
-    database.db.prepare('UPDATE otp_verifications SET attempt_count = 5 WHERE id = ?').run(limitedId);
-    const limitedCheck = await completeBrochureVerification(limitedId, verificationBody('limited@example.test'));
-    assert.equal(limitedCheck.status, 429);
-
-    const validOtp = await startVerification('verified@example.test');
-    const validId = (await validOtp.json()).verificationId;
-    const verifiedRecord = database.db.prepare('SELECT * FROM otp_verifications WHERE id = ?').get(validId);
-    assert.equal(verifiedRecord.phone, '');
-    assert.equal(verifiedRecord.method, 'email');
-    const verified = await completeBrochureVerification(validId, verificationBody('verified@example.test'), '123456');
-    assert.equal(verified.status, 200);
-    const verifiedResult = await verified.json();
-    assert.equal(verifiedResult.verifiedMethod, 'email');
-    const downloadUrl = verifiedResult.downloadUrl;
-    const reusedCode = await completeBrochureVerification(validId, verificationBody('verified@example.test'), '123456');
-    assert.equal(reusedCode.status, 400);
-    assert.equal((await fetch(`${base}${downloadUrl}`)).status, 404);
-    const download = await request(downloadUrl);
-    assert.equal(download.status, 200);
-    assert.equal(download.headers.get('content-type'), 'application/pdf');
-    assert.equal(Buffer.from(await download.arrayBuffer()).toString(), pdf.toString());
-    assert.equal((await request(downloadUrl)).status, 404);
-
-    const changedContactOtp = await startVerification('original@example.test');
-    const changedContactId = (await changedContactOtp.json()).verificationId;
-    const changedContact = await completeBrochureVerification(changedContactId, verificationBody('changed@example.test'));
-    assert.equal(changedContact.status, 400);
-    const sessionBoundOtp = await startVerification('session-bound@example.test');
-    const sessionBoundId = (await sessionBoundOtp.json()).verificationId;
-    const wrongSession = await fetch(`${base}/api/brochures/verification/complete`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...verificationBody('session-bound@example.test'),
-        verification_id: sessionBoundId,
-        code: '123456'
-      })
+    await t.test('visit requests validate contacts, consent and future IST time, and deduplicate retries', async () => {
+      const futureDate = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(Date.now()+2*86400000));
+      const details = {property_id:property.id,name:'Site Visit Customer',phone:'+919812345678',preferred_date:futureDate,preferred_time:'10:30',privacy_consent:true,analytics_consent:true};
+      const submit = data => request('/api/enquiries', {method:'POST',...json(data)});
+      const before = database.db.prepare('SELECT COUNT(*) AS n FROM enquiries').get().n;
+      for (const invalid of [{...details,privacy_consent:false},{...details,phone:'abc'},{...details,preferred_date:'2000-01-01'},{...details,preferred_time:'25:00'},{...details,preferred_date:'2099-02-31'}]) {
+        assert.equal((await submit(invalid)).status, 400);
+      }
+      assert.equal(database.db.prepare('SELECT COUNT(*) AS n FROM enquiries').get().n,before);
+      assert.equal((await submit({...details,property_id:'missing'})).status,404);
+      const accepted=await submit(details);
+      assert.equal(accepted.status,201);
+      const receipt=await accepted.json();
+      const retries=await Promise.all([submit(details),submit(details)]);
+      for (const retry of retries) {
+        assert.equal(retry.status,200);
+        assert.equal((await retry.json()).referenceId,receipt.referenceId);
+      }
+      const saved=database.db.prepare('SELECT * FROM enquiries WHERE id = ?').get(Number(receipt.referenceId));
+      assert.equal(saved.preferred_date,futureDate);
+      assert.equal(saved.preferred_time,'10:30');
+      assert.equal(saved.verified_at,null);
+      assert.equal(saved.verified_contact_method,null);
+      assert.equal(saved.privacy_notice_acknowledged,1);
+      assert.equal(database.db.prepare('SELECT COUNT(*) AS n FROM enquiries').get().n,before+1);
+      const analytics=await (await request('/api/admin/analytics',{headers:{cookie}})).json();
+      assert.equal(analytics.data.enquiries,1);
+      assert.ok(analytics.data.events.some(e=>e.name==='brochure_download'&&e.value===1));
+      for(let index=0;index<9;index++) assert.equal((await submit({...details,name:`Another Customer ${index}`})).status,201);
+      assert.equal((await submit({...details,name:'Limited Customer'})).status,429);
+      for (const route of ['/api/site-visits/verification/start','/api/site-visits/verification/complete','/api/brochures/verification/start','/api/brochures/verification/resend','/api/brochures/verification/complete','/api/verification/cancel']) {
+        assert.equal((await request(route,{method:'POST',...json({})})).status,404);
+      }
     });
-    assert.equal(wrongSession.status, 400);
-
-    const smsOtp = await startVerification('', 'sms', '+919876543210');
-    assert.equal(smsOtp.status, 201);
-    const smsId = (await smsOtp.json()).verificationId;
-    const smsVerified = await completeBrochureVerification(smsId, verificationBody('', 'sms', '+919876543210'), '123456');
-    assert.equal(smsVerified.status, 200);
-    assert.equal((await smsVerified.json()).verifiedMethod, 'sms');
-
-    const captchaFailure = await request('/api/brochures/verification/start', {
-      method: 'POST',
-      ...json({ ...verificationBody('captcha@example.test'), captcha_token: 'invalid-token' })
-    });
-    assert.equal(captchaFailure.status, 403);
-
-    const futureDate = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit'
-    }).format(new Date(Date.now() + 2 * 24 * 60 * 60_000));
-    const siteVisitBody = (overrides = {}) => ({
-      property_id: property.id,
-      name: 'Site Visit Customer',
-      phone: '+919812345678',
-      preferred_date: futureDate,
-      preferred_time: '10:30',
-      captcha_token: 'test-site_visit-token',
-      ...overrides
-    });
-    const pastVisit = await request('/api/site-visits/verification/start', {
-      method: 'POST', ...json(siteVisitBody({ preferred_date: '2000-01-01' }))
-    });
-    assert.equal(pastVisit.status, 400);
-    const todayIST = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit'
-    }).format(new Date());
-    const pastTimeIST = new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
-    }).format(new Date(Date.now() - 60_000));
-    const pastVisitTime = await request('/api/site-visits/verification/start', {
-      method: 'POST', ...json(siteVisitBody({ preferred_date: todayIST, preferred_time: pastTimeIST }))
-    });
-    assert.equal(pastVisitTime.status, 400);
-    const wrongCodeStart = await request('/api/site-visits/verification/start', {
-      method: 'POST', ...json(siteVisitBody({ phone: '+919812345677' }))
-    });
-    const wrongCodeId = (await wrongCodeStart.json()).verificationId;
-    const wrongCode = await request('/api/site-visits/verification/complete', {
-      method: 'POST', ...json({ ...siteVisitBody({ phone: '+919812345677' }), verification_id: wrongCodeId, code: '000000' })
-    });
-    assert.equal(wrongCode.status, 400);
-
-    const changedPhoneStart = await request('/api/site-visits/verification/start', {
-      method: 'POST',
-      ...json(siteVisitBody({ phone: '+919812345679' }))
-    });
-    const changedPhoneId = (await changedPhoneStart.json()).verificationId;
-    const changedPhone = await request('/api/site-visits/verification/complete', {
-      method: 'POST',
-      ...json({ ...siteVisitBody({ phone: '+919812345680' }), verification_id: changedPhoneId, code: '123456' })
-    });
-    assert.equal(changedPhone.status, 400);
-
-    const siteVisitStart = await request('/api/site-visits/verification/start', {
-      method: 'POST', ...json(siteVisitBody({ phone: '+919812345681' }))
-    });
-    assert.equal(siteVisitStart.status, 201);
-    const siteVisitId = (await siteVisitStart.json()).verificationId;
-    const visitRequest = { ...siteVisitBody({ phone: '+919812345681' }), verification_id: siteVisitId, code: '123456' };
-    const beforeSiteVisits = database.db.prepare("SELECT COUNT(*) AS count FROM enquiries WHERE verification_id IS NOT NULL").get().count;
-    const booked = await request('/api/site-visits/verification/complete', { method: 'POST', ...json(visitRequest) });
-    assert.equal(booked.status, 201);
-    const bookingReceipt = await booked.json();
-    const retriedBooking = await request('/api/site-visits/verification/complete', { method: 'POST', ...json(visitRequest) });
-    assert.equal(retriedBooking.status, 200);
-    assert.equal((await retriedBooking.json()).referenceId, bookingReceipt.referenceId);
-    const afterSiteVisits = database.db.prepare("SELECT COUNT(*) AS count FROM enquiries WHERE verification_id IS NOT NULL").get().count;
-    assert.equal(afterSiteVisits, beforeSiteVisits + 1);
-    const savedBooking = database.db.prepare('SELECT preferred_date, preferred_time, verified_contact_method FROM enquiries WHERE verification_id = ?')
-      .get(siteVisitId);
-    assert.deepEqual({ ...savedBooking }, {
-      preferred_date: futureDate,
-      preferred_time: '10:30',
-      verified_contact_method: 'sms'
-    });
-
-    const resendStart = await startVerification('resend@example.test');
-    const resendId = (await resendStart.json()).verificationId;
-    const immediateResend = await request('/api/brochures/verification/resend', {
-      method: 'POST', ...json({ verification_id: resendId })
-    });
-    assert.equal(immediateResend.status, 429);
-    database.db.prepare('UPDATE otp_verifications SET last_sent_at = ? WHERE id = ?').run(Date.now() - 61_000, resendId);
-    const resent = await request('/api/brochures/verification/resend', {
-      method: 'POST', ...json({ verification_id: resendId })
-    });
-    assert.equal(resent.status, 200);
-    const oldResentCode = await completeBrochureVerification(resendId, verificationBody('resend@example.test'), '123456');
-    assert.equal(oldResentCode.status, 400);
-    const newResentCode = await completeBrochureVerification(resendId, verificationBody('resend@example.test'), '654321');
-    assert.equal(newResentCode.status, 200);
 
     const readTools = await request('/mcp', {
       method: 'POST',
@@ -517,7 +421,7 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
 
     const downloadActivity = await request('/api/admin/brochure-activity', { headers: { cookie } });
     assert.equal(downloadActivity.status, 200);
-    assert.equal((await downloadActivity.json()).data.some(row => row.email === 'verified@example.test' && row.downloaded_at), true);
+    assert.equal((await downloadActivity.json()).data.some(row => row.email === 'requested@example.test' && row.downloaded_at && !row.verified_at), true);
 
     const productionDefault = spawnSync(process.execPath, [path.join(root, 'server.js')], {
       cwd: root,
