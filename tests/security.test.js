@@ -31,6 +31,7 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
     NODE_ENV: 'development',
     PORT: String(port),
     DATA_DIR: dataDir,
+    UPLOADS_DIR: path.join(dataDir, 'uploads'),
     ADMIN_DEFAULT_EMAIL: 'admin@example.com',
     ADMIN_DEFAULT_PASSWORD: 'Admin@12345',
     MCP_READ_TOKEN: 'test-read-token',
@@ -88,6 +89,16 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
     const json = (body, headers = {}) => ({
       headers: { 'Content-Type': 'application/json', ...headers },
       body: JSON.stringify(body)
+    });
+    await t.test('deployment health and persisted uploads use the configured storage', async () => {
+      const health = await request('/api/health');
+      assert.equal(health.status, 200);
+      assert.equal((await health.json()).status, 'ok');
+      const persisted = path.join(dataDir, 'uploads', 'properties', 'persisted.txt');
+      fs.writeFileSync(persisted, 'existing upload');
+      assert.equal(await (await request('/uploads/properties/persisted.txt')).text(), 'existing upload');
+      fs.writeFileSync(path.join(dataDir, 'uploads', 'brochures', 'private.pdf'), 'private');
+      assert.equal((await request('/uploads/brochures/private.pdf')).status, 404);
     });
 
     const adminPage = await request('/admin', { redirect: 'manual' });
@@ -148,6 +159,9 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
         assert.equal((await save({ search_localities: original.search_localities })).status, 200);
       }
       const id = database.createProperty({ title: 'Dropdown matching fixture', locality: 'Electronic City Phase 2', location: 'Bengaluru', price: 80, area: '1000 sqft', bhk: 2, published: true });
+      database.db.prepare('UPDATE properties SET admin_note = ? WHERE id = ?').run('Private production note', id);
+      assert.equal(Object.hasOwn((await (await request(`/api/properties/${id}`)).json()).data, 'admin_note'), false);
+      assert.equal((await (await request('/api/properties')).json()).data.some(item => Object.hasOwn(item, 'admin_note')), false);
       try {
         const filtered = await (await request('/api/properties?search=Electronic%20City%20Phase%202')).json();
         assert.ok(filtered.data.some(p => p.id === id));
@@ -233,7 +247,7 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
       assert.equal(response.status,200);
       const result = await response.json();
       assert.match(result.url,/^\/uploads\/properties\/[a-zA-Z0-9_.-]+\.webp$/);
-      const uploaded = path.join(root,'public',result.url);
+      const uploaded = path.join(dataDir,'uploads',result.url.replace('/uploads/',''));
       try {
         const metadata = await sharp(fs.readFileSync(uploaded)).metadata();
         assert.equal(metadata.width,2500);
@@ -276,7 +290,7 @@ test('admin, image, OTP, brochure, and MCP authorization controls', { timeout: 6
     assert.equal(imageUpload.status, 200);
     const imageResult = await imageUpload.json();
     assert.match(imageResult.url, /\.webp$/);
-    uploadedImagePath = path.join(root, 'public', imageResult.url.slice(1));
+    uploadedImagePath = path.join(dataDir, 'uploads', imageResult.url.replace('/uploads/', ''));
     const optimizedImage = Buffer.from(await (await request(imageResult.url)).arrayBuffer());
     assert.equal((await sharp(optimizedImage).metadata()).format, 'webp');
 

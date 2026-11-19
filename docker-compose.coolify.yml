@@ -1,0 +1,75 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: deploy/frontend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    expose:
+      - "80"
+    # This VPS already has a host-network Traefik using web/websecure.
+    # Route through it rather than starting a second proxy on ports 80/443.
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vasati-ec-public.rule=Host(`vasatiproperties.com`) || Host(`www.vasatiproperties.com`) || Host(`bt68y5vqmfrmy9dtuw3fjluy.200.141.3.5.sslip.io`)"
+      - "traefik.http.routers.vasati-ec-public.entrypoints=websecure"
+      - "traefik.http.routers.vasati-ec-public.tls=true"
+      - "traefik.http.routers.vasati-ec-public.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.vasati-ec-public.service=vasati-ec-frontend"
+      - "traefik.http.routers.vasati-ec-admin.rule=Host(`admin.vasatiproperties.com`)"
+      - "traefik.http.routers.vasati-ec-admin.entrypoints=websecure"
+      - "traefik.http.routers.vasati-ec-admin.tls=true"
+      - "traefik.http.routers.vasati-ec-admin.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.vasati-ec-admin.service=vasati-ec-frontend"
+      - "traefik.http.services.vasati-ec-frontend.loadbalancer.server.port=80"
+    security_opt:
+      - no-new-privileges:true
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    expose:
+      - "3000"
+    labels:
+      - "traefik.enable=false"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATA_DIR: /app/data
+      BACKUP_BEFORE_MIGRATION: "true"
+      SITE_URL: ${SITE_URL:-https://vasatiproperties.com}
+      SEO_INDEXABLE: ${SEO_INDEXABLE:-true}
+      UPLOADS_DIR: /app/storage/uploads
+      APP_BASE_URL: ${APP_BASE_URL:?Set the public origin}
+      ADMIN_DEFAULT_EMAIL: ${ADMIN_DEFAULT_EMAIL:-admin@example.com}
+      ADMIN_EMAIL_MIGRATE_FROM: ${ADMIN_EMAIL_MIGRATE_FROM:-}
+      ADMIN_DEFAULT_PASSWORD: ${ADMIN_DEFAULT_PASSWORD:?Set a unique bootstrap password}
+      IP_HASH_SALT: ${IP_HASH_SALT:?Set a random analytics salt}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-2}
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_VERIFY_SERVICE_SID: ${TWILIO_VERIFY_SERVICE_SID:-}
+      GA4_MEASUREMENT_ID: ${GA4_MEASUREMENT_ID:-}
+      GA4_PROPERTY_ID: ${GA4_PROPERTY_ID:-}
+      GA4_SERVICE_ACCOUNT_EMAIL: ${GA4_SERVICE_ACCOUNT_EMAIL:-}
+      GA4_SERVICE_ACCOUNT_PRIVATE_KEY: ${GA4_SERVICE_ACCOUNT_PRIVATE_KEY:-}
+      MCP_READ_TOKEN: ${MCP_READ_TOKEN:-}
+      MCP_WRITE_TOKEN: ${MCP_WRITE_TOKEN:-}
+    volumes:
+      - database_data:/app/data
+      - uploaded_media:/app/storage/uploads
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  database_data:
+  uploaded_media:

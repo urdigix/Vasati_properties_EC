@@ -27,6 +27,7 @@
   function addPlan(plan = {}, focus = false) {
     if (list.children.length >= 30) return message('Add up to 30 floor-plan options.');
     const card = document.createElement('fieldset'); card.className = 'fp-admin-plan';
+    if (plan.legacy_partial) card.dataset.legacyPartial = 'true';
     const legend = document.createElement('legend'); legend.textContent = '2D floor-plan option';
     const grid = document.createElement('div'); grid.className = 'form-grid';
     const config = inputField('Configuration', 'configuration', plan.configuration, 80); config.input.placeholder = 'e.g. 2 BHK Apartment';
@@ -78,6 +79,7 @@
       if (pendingUploads) throw new Error('Wait for the 2D plan uploads to finish before saving.');
       return FloorPlans.normalize([...list.children].map(card => {
         const result = {};
+        if (card.dataset.legacyPartial === 'true') result.legacy_partial = true;
         card.querySelectorAll('.form-grid input[data-fp-field]').forEach(input => { result[input.dataset.fpField] = input.value; });
         result.rooms = [...card.querySelector('.fp-admin-rooms').children].map(row => Object.fromEntries([...row.querySelectorAll('input')].map(input => [input.dataset.fpField, input.value])));
         return result;

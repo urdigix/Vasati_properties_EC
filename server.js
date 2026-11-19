@@ -12,6 +12,9 @@ const app = express();
 const ga4Analytics = new Ga4AnalyticsClient();
 const requestedPort = Number.parseInt(process.env.PORT || '3000', 10);
 const PORT = Number.isInteger(requestedPort) && requestedPort >= 0 && requestedPort <= 65535 ? requestedPort : 3000;
+const uploadsDir = path.resolve(process.env.UPLOADS_DIR || path.join(__dirname, 'public', 'uploads'));
+fs.mkdirSync(path.join(uploadsDir, 'properties'), { recursive: true });
+fs.mkdirSync(path.join(uploadsDir, 'brochures'), { recursive: true });
 installSeo(app, db);
 
 // Middlewares
@@ -87,6 +90,11 @@ app.use('/api/admin', adminAuth.requireAdmin);
 
 // Brochure files are served only through expiring, verified download links.
 app.use('/uploads/brochures', (_req, res) => res.sendStatus(404));
+app.use('/uploads', express.static(uploadsDir));
+app.get('/api/health', (_req, res) => {
+  db.db.prepare('SELECT 1').get();
+  res.json({ status: 'ok' });
+});
 
 // Serve static assets from 'public'
 app.use(express.static(path.join(__dirname, 'public')));
@@ -142,7 +150,7 @@ app.get('/api/properties', async (req, res) => {
       sort
     });
 
-    res.json({ success: true, count: properties.length, data: properties });
+    res.json({ success: true, count: properties.length, data: properties.map(({ admin_note, ...property }) => property) });
   } catch (error) {
     console.error('Error fetching properties:', error);
     res.status(500).json({ success: false, message: 'Server error fetching properties' });
@@ -156,7 +164,8 @@ app.get('/api/properties/:id', async (req, res) => {
     if (!property) {
       return res.status(404).json({ success: false, message: 'Property not found' });
     }
-    res.json({ success: true, data: property });
+    const { admin_note, ...publicProperty } = property;
+    res.json({ success: true, data: publicProperty });
   } catch (error) {
     console.error('Error fetching property:', error);
     res.status(500).json({ success: false, message: 'Server error fetching property' });
@@ -295,7 +304,7 @@ app.post('/api/upload-image', adminAuth.requireAdmin, async (req, res) => {
       .webp({ quality: req.body.purpose === 'floor-plan' ? 95 : 82, effort: 4 })
       .toBuffer();
 
-    const uploadDir = path.join(__dirname, 'public', 'uploads', 'properties');
+    const uploadDir = path.join(uploadsDir, 'properties');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -1005,8 +1014,8 @@ app.get('/api/brochures/download/:token', (req, res) => {
     filename = media.filename;
   } else if (property.brochure_url.startsWith('/uploads/brochures/')) {
     const safeName = path.basename(property.brochure_url.slice('/uploads/brochures/'.length));
-    const brochurePath = path.resolve(__dirname, 'public', 'uploads', 'brochures', safeName);
-    const expectedDir = path.resolve(__dirname, 'public', 'uploads', 'brochures');
+    const brochurePath = path.resolve(uploadsDir, 'brochures', safeName);
+    const expectedDir = path.resolve(uploadsDir, 'brochures');
     if (path.dirname(brochurePath) !== expectedDir || !fs.existsSync(brochurePath)) return res.sendStatus(404);
     bytes = fs.readFileSync(brochurePath);
     filename = safeName;

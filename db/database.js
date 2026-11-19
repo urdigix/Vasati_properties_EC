@@ -10,6 +10,7 @@ const dataDir = path.resolve(process.env.DATA_DIR || path.join(__dirname, '..', 
 fs.mkdirSync(dataDir, { recursive: true });
 const dbPath = path.join(dataDir, 'properties.db');
 const db = new DatabaseSync(dbPath);
+db.exec('PRAGMA busy_timeout = 5000; PRAGMA foreign_keys = ON;');
 
 function parseJsonField(value, fallback = []) {
   if (value === null || value === undefined || value === '') return fallback;
@@ -88,6 +89,17 @@ function ensureColumn(tableName, columnName, columnSql) {
 }
 
 function initializeDatabase() {
+  const migrationName = 'practice-overview-2d-v1';
+  const existingDatabase = Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'properties'").get());
+  const hasMigrations = Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'schema_migrations'").get());
+  const migrationDone = hasMigrations && db.prepare('SELECT 1 FROM schema_migrations WHERE name = ?').get(migrationName);
+  // Back up before schema changes, settings inserts, pruning or any other writes.
+  // VACUUM INTO captures a consistent SQLite snapshot, including WAL contents.
+  if (existingDatabase && !migrationDone && process.env.BACKUP_BEFORE_MIGRATION === 'true') {
+    const backup = path.join(dataDir, `properties-before-practice-${Date.now()}-${crypto.randomUUID()}.db`);
+    db.exec(`VACUUM INTO '${backup.replace(/'/g, "''")}'`);
+    console.log('Created pre-migration database backup.');
+  }
   db.exec(`
     CREATE TABLE IF NOT EXISTS properties (
       id TEXT PRIMARY KEY,
@@ -270,6 +282,9 @@ function initializeDatabase() {
     );
   `);
 
+  db.exec('CREATE TABLE IF NOT EXISTS schema_migrations (name TEXT PRIMARY KEY);');
+  const shouldSeed = !existingDatabase && !db.prepare('SELECT 1 FROM schema_migrations WHERE name = ?').get('initial-sample-data');
+
   ensureColumn('properties', 'published', 'INTEGER NOT NULL DEFAULT 1');
   ensureColumn('properties', 'project_overview', "TEXT NOT NULL DEFAULT '{}'");
   ensureColumn('properties', 'floor_plans', "TEXT NOT NULL DEFAULT '[]'");
@@ -317,8 +332,29 @@ function initializeDatabase() {
     db.prepare('INSERT OR IGNORE INTO site_settings (key, value) VALUES (?, ?)').run(key, String(value));
   }
 
+  if (!migrationDone && process.env.BACKUP_BEFORE_MIGRATION === 'true') {
+    // Apply the owner's requested production contact changes once; later admin edits win.
+    for (const key of ['contact_email', 'social_instagram', 'social_facebook', 'whatsapp_number']) {
+      db.prepare('INSERT INTO site_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(key, defaultSettings[key]);
+    }
+  }
+
+  if (!migrationDone) {
+    const hasLegacyDetails = db.prepare("SELECT 1 FROM pragma_table_info('properties') WHERE name = 'project_details'").get();
+    if (hasLegacyDetails) {
+      for (const property of db.prepare('SELECT id, project_details, project_overview FROM properties').all()) {
+        let overview;
+        try { overview = JSON.parse(property.project_overview || '{}'); } catch { overview = {}; }
+        // Keep the legacy column intact; copy only fields absent from the new overview.
+        const mapped = propertyOverview.fromLegacy(property.project_details);
+        const merged = { ...mapped, ...Object.fromEntries(Object.entries(overview).filter(([, value]) => value !== '')) };
+        db.prepare('UPDATE properties SET project_overview = ? WHERE id = ?').run(JSON.stringify(merged), property.id);
+      }
+    }
+  }
+
   const propertyCount = db.prepare('SELECT COUNT(*) AS count FROM properties').get().count;
-  if (propertyCount === 0) {
+  if (shouldSeed && propertyCount === 0) {
     const insertProperty = db.prepare(`
       INSERT INTO properties (
         id, title, location, locality, price, price_label, bhk, area, baths, status,
@@ -331,7 +367,7 @@ function initializeDatabase() {
   }
 
   const projectCount = db.prepare('SELECT COUNT(*) AS count FROM featured_projects').get().count;
-  if (projectCount === 0) {
+  if (shouldSeed && projectCount === 0) {
     const insertProject = db.prepare(`
       INSERT INTO featured_projects (
         id, name, builder_name, builder_logo, price_range, bhk_types, location, offer_text, image, video_url, link
@@ -341,6 +377,8 @@ function initializeDatabase() {
       insertProject.run(project[0], project[1], project[2], project[3], project[4], project[5], project[6], project[7], project[8], project[9], project[10]);
     }
   }
+  db.prepare('INSERT OR IGNORE INTO schema_migrations (name) VALUES (?)').run('initial-sample-data');
+  db.prepare('INSERT OR IGNORE INTO schema_migrations (name) VALUES (?)').run(migrationName);
 }
 
 function getAllProperties(filters = {}, includeUnpublished = false) {

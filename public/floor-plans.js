@@ -18,18 +18,19 @@
     const seen = new Set();
     return value.map(plan => {
       if (!plan || typeof plan !== 'object' || Array.isArray(plan)) fail('Each floor plan must be an object.');
-      const configuration = text(plan.configuration, 'Configuration', 80);
-      const area = text(plan.area, 'Area', 80);
-      const price = text(plan.price ?? '', 'Price');
-      const image_url = text(plan.image_url, '2D plan image URL', 2048);
-      if (!configuration || !area || !image_url) fail('Each floor plan needs a configuration, area and 2D image.');
-      if (!safeImage(image_url)) fail('Use an uploaded image or an HTTP(S) image URL without credentials.');
+      const legacy = typeof plan.label === 'string' || plan.legacy_partial === true;
+      const configuration = text(plan.configuration ?? plan.label, 'Configuration', legacy ? 500 : 80);
+      const area = text(plan.area ?? (legacy ? '' : undefined), 'Area', legacy ? 500 : 80);
+      const price = text(plan.price ?? '', 'Price', legacy ? 500 : 160);
+      const image_url = text(plan.image_url ?? plan.image ?? (legacy ? '' : undefined), '2D plan image URL', 2048);
+      if (!configuration || (!legacy && (!area || !image_url))) fail('Each floor plan needs a configuration, area and 2D image.');
+      if (image_url && !safeImage(image_url) && !(legacy && /^\/(?!\/)[^\s\\]*$/.test(image_url) && !image_url.includes('..'))) fail('Use an uploaded image or an HTTP(S) image URL without credentials.');
       const key = `${configuration.toLowerCase()}\u0000${area.toLowerCase()}`;
-      if (seen.has(key)) fail('Each configuration and area combination must be unique.');
+      if (seen.has(key) && !legacy) fail('Each configuration and area combination must be unique.');
       seen.add(key);
       const rooms = plan.rooms ?? [];
       if (!Array.isArray(rooms) || rooms.length > 30) fail('Add up to 30 rooms per floor plan.');
-      return { configuration, area, price, image_url, rooms: rooms.map(room => {
+      return { configuration, area, price, image_url, ...(legacy ? { legacy_partial: true } : {}), rooms: rooms.map(room => {
         if (!room || typeof room !== 'object') fail('Each room needs a name and dimensions.');
         const name = text(room.name, 'Room name', 80);
         const dimensions = text(room.dimensions, 'Room dimensions', 80);
@@ -56,10 +57,10 @@
     const plan = group.plans[planIndex];
     return `<div class="fp-tabs fp-configurations" role="tablist" aria-label="Floor plan configurations">${groupList.map((item, i) => `<button type="button" role="tab" id="fp-config-${i}" aria-controls="fp-config-panel" aria-selected="${i === groupIndex}" tabindex="${i === groupIndex ? 0 : -1}" data-fp-group="${i}"><strong>${escape(item.name)}</strong><span>${item.plans.length === 1 ? escape(item.plans[0].price || 'Contact for price') : `${item.plans.length} area options`}</span></button>`).join('')}</div>
 <div id="fp-config-panel" role="tabpanel" aria-labelledby="fp-config-${groupIndex}">
-<div class="fp-tabs fp-areas" role="tablist" aria-label="Area options">${group.plans.map((item, i) => `<button type="button" role="tab" id="fp-area-${i}" aria-controls="fp-view-panel" aria-selected="${i === planIndex}" tabindex="${i === planIndex ? 0 : -1}" data-fp-plan="${i}">${escape(item.area)}</button>`).join('')}</div>
+<div class="fp-tabs fp-areas" role="tablist" aria-label="Area options">${group.plans.map((item, i) => `<button type="button" role="tab" id="fp-area-${i}" aria-controls="fp-view-panel" aria-selected="${i === planIndex}" tabindex="${i === planIndex ? 0 : -1}" data-fp-plan="${i}">${escape(item.area || 'Area not listed')}</button>`).join('')}</div>
 <div id="fp-view-panel" role="tabpanel" aria-labelledby="fp-area-${planIndex}" tabindex="0">
 <div class="fp-price"><strong>${escape(plan.price || 'Contact for price')}</strong><span>2D Floor Plan</span></div>
-<div class="fp-viewer"><div class="fp-scroller" tabindex="0" role="region" aria-label="2D floor plan; scroll to explore when zoomed"><div class="fp-stage"><img src="${escape(plan.image_url)}" alt="${escape(plan.configuration)} — ${escape(plan.area)} 2D floor plan" loading="lazy" decoding="async"><p class="fp-image-error" role="status" hidden>This plan image could not be loaded. Please contact the seller.</p></div></div>
+<div class="fp-viewer"><div class="fp-scroller" tabindex="0" role="region" aria-label="2D floor plan; scroll to explore when zoomed"><div class="fp-stage">${plan.image_url ? `<img src="${escape(plan.image_url)}" alt="${escape(plan.configuration)} — ${escape(plan.area)} 2D floor plan" loading="lazy" decoding="async">` : '<p class="fp-help">A 2D plan image has not been provided for this option.</p>'}<p class="fp-image-error" role="status" hidden>This plan image could not be loaded. Please contact the seller.</p></div></div>
 <div class="fp-zoom" role="group" aria-label="Floor plan zoom"><button type="button" data-fp-zoom="in" aria-label="Zoom in">+</button><button type="button" data-fp-zoom="out" aria-label="Zoom out">−</button><button type="button" data-fp-zoom="reset" aria-label="Reset zoom">↺</button></div></div>
 <p class="fp-help" role="status" aria-live="polite">Zoom: <span data-fp-scale>100%</span>. Use + and − to zoom; scroll within the plan to explore.</p>
 ${plan.rooms.length ? `<ul class="fp-rooms" aria-label="Room dimensions">${plan.rooms.map(room => `<li><strong>${escape(room.name)}</strong><span>${escape(room.dimensions)}</span></li>`).join('')}</ul>` : '<p class="fp-help">Room dimensions have not been provided.</p>'}

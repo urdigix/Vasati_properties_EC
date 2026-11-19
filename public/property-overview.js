@@ -31,6 +31,19 @@
     try { return normalize(typeof value === 'string' ? JSON.parse(value) : (value || {})); }
     catch { return normalize({}); }
   }
+  function fromLegacy(value) {
+    let legacy;
+    try { legacy = typeof value === 'string' ? JSON.parse(value) : value; } catch { return {}; }
+    if (!legacy || typeof legacy !== 'object' || Array.isArray(legacy)) return {};
+    const result = {};
+    const units = String(legacy.project_units || '').trim();
+    if (/^\d+$/.test(units) && Number(units) > 0 && Number(units) <= 100000000) result.project_units = units;
+    if (legacy.project_area) result.project_size = String(legacy.project_area).slice(0, 160);
+    if (legacy.rera_id) { result.rera_id = String(legacy.rera_id).slice(0, 160); result.rera_status = 'registered'; }
+    const launch = String(legacy.launch_date || '').trim();
+    if (/^(19\d{2}|20\d{2}|21\d{2})-(0[1-9]|1[0-2])(?:-\d{2})?$/.test(launch)) result.launch_date = launch.slice(0, 7);
+    return result;
+  }
   const paths = {
     units: '<path d="M4 21V4h10v17M14 10h6v11M8 8h2m-2 4h2m-2 4h2m7-2h1m-1 3h1M2 21h20"/>',
     area: '<path d="M4 4h16v16H4zM8 4v4m4-4v3m4-3v4M4 16h4m-4-4h3m-3-4h4"/>',
@@ -64,5 +77,5 @@
 <dl class="project-overview-grid">${values.map(([label, value, symbol]) => `<div class="project-overview-item">${icon(symbol)}<div><dt>${label}</dt><dd>${escape(value)}</dd>${label === 'RERA ID' && o.rera_url ? `<a class="project-rera-link" href="${escape(o.rera_url)}" target="_blank" rel="noopener noreferrer">Know More<span class="sr-only"> about RERA details</span></a>` : ''}</div></div>`).join('')}</dl>
 ${options.interactive === false ? '' : `<div class="project-overview-actions"><button type="button" data-overview-action="share"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m9 10 6-4m-6 8 6 4"/></svg>Share</button><button type="button" data-overview-action="save" aria-pressed="${Boolean(options.saved)}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg><span>${options.saved ? 'Saved' : 'Save'}</span></button><button type="button" data-overview-action="ask">Ask For Details</button></div>`}</section>`;
   }
-  return { fields, normalize, read, render };
+  return { fields, normalize, read, render, fromLegacy };
 });
