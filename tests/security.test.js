@@ -212,18 +212,27 @@ test('admin, image, direct requests, brochure, and MCP authorization controls', 
     });
     assert.equal(propertyResponse.status, 201);
     const property = (await propertyResponse.json()).data;
-    await t.test('publishing and unpublishing a saved project updates the warmed public catalogue and detail page', async () => {
+    await t.test('all admin saves publish immediately even when an older client sends published false', async () => {
       const catalogue = () => request('/api/properties').then(response => response.json());
-      assert.ok(!(await catalogue()).data.some(p => p.id === property.id));
-      const publish = await request(`/api/properties/${property.id}`, {method:'PUT', ...json({published:true}, {cookie})});
-      assert.equal(publish.status, 200);
-      assert.equal((await publish.json()).data.published, true);
+      assert.equal(property.published, true, 'Missing publication flag must not create a hidden admin project');
       assert.ok((await catalogue()).data.some(p => p.id === property.id));
       assert.equal((await request(`/properties/${property.id}`)).status, 200);
-      const unpublish = await request(`/api/properties/${property.id}`, {method:'PUT', ...json({published:false}, {cookie})});
-      assert.equal(unpublish.status, 200);
-      assert.ok(!(await catalogue()).data.some(p => p.id === property.id));
-      assert.equal((await request(`/properties/${property.id}`)).status, 404);
+      const staleClient = await request('/api/properties', {method:'POST', ...json({title:'Stale admin tab',location:'Bengaluru',price:50,bhk:2,area:'1000 sqft',published:false},{cookie})});
+      assert.equal(staleClient.status, 201);
+      const staleProperty = (await staleClient.json()).data;
+      assert.equal(staleProperty.published, true);
+      assert.ok((await catalogue()).data.some(p => p.id === staleProperty.id));
+      const draftId = database.createProperty({title:'Previously saved admin draft',location:'Test',price:50,bhk:2,area:'1000 sqft',published:false});
+      assert.equal((await request(`/api/properties/${draftId}`)).status, 404);
+      await catalogue();
+      const saved = await request(`/api/properties/${draftId}`, {method:'PUT', ...json({published:false,description:'Saved from an older tab'},{cookie})});
+      assert.equal(saved.status, 200);
+      assert.equal((await saved.json()).data.published, true);
+      assert.ok((await catalogue()).data.some(p => p.id === draftId));
+      assert.equal((await request(`/properties/${draftId}`)).status, 200);
+      const audit = database.db.prepare("SELECT action FROM audit_logs WHERE target=? ORDER BY id DESC LIMIT 1").get(draftId);
+      assert.equal(audit.action, 'property.published');
+      for(const id of [staleProperty.id,draftId]) assert.equal((await request(`/api/properties/${id}`,{method:'DELETE',headers:{cookie}})).status,200);
     });
     await t.test('builder name persists on create and partial edits, and can be changed or cleared', async () => {
       assert.equal(property.developer_name, 'Test Builders');
@@ -286,8 +295,8 @@ test('admin, image, direct requests, brochure, and MCP authorization controls', 
       assert.equal((await update({project_overview:overview})).status, 200);
     });
     assert.equal(property.images.length, 4);
-    assert.equal(property.published, false);
-    assert.equal((await request(`/api/properties/${property.id}`)).status, 404);
+    assert.equal(property.published, true);
+    assert.equal((await request(`/api/properties/${property.id}`)).status, 200);
     const updateOverLimit = await request(`/api/properties/${property.id}`, {
       method: 'PUT',
       headers: { cookie, 'Content-Type': 'application/json' },
@@ -422,7 +431,11 @@ test('admin, image, direct requests, brochure, and MCP authorization controls', 
         params: { name: 'property_draft_create', arguments: { title: 'MCP Draft', location: 'Bengaluru', price: 30, bhk: 1, area: '700 sqft', images: invalidImages.slice(0, 4) } }
       }, { Authorization: 'Bearer test-write-token' })
     });
-    assert.equal((await mcpDraft.json()).result.content.length, 1);
+    const mcpDraftResult = await mcpDraft.json();
+    assert.equal(mcpDraftResult.result.content.length, 1);
+    const mcpDraftId = JSON.parse(mcpDraftResult.result.content[0].text).id;
+    assert.equal(database.getPropertyById(mcpDraftId,true).published,false);
+    assert.equal((await request(`/api/properties/${mcpDraftId}`)).status,404);
     const mcpOverLimit = await request('/mcp', {
       method: 'POST',
       ...json({

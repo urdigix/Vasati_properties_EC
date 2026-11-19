@@ -198,7 +198,9 @@ app.post('/api/properties', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Missing required property fields' });
     }
 
-    const newId = await db.createProperty({ ...req.body, published: Boolean(req.body.published) });
+    // Admin saves are always live, including requests from older open tabs.
+    // MCP draft tools use the database layer directly and remain unpublished.
+    const newId = await db.createProperty({ ...req.body, published: true });
     const created = await db.getPropertyById(newId, true);
     db.logAudit(adminAuth.currentAdmin(req).email, 'property.created', newId, { published: created.published });
     res.status(201).json({ success: true, message: 'Property created successfully', data: created });
@@ -217,9 +219,9 @@ app.put('/api/properties/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Property not found' });
     }
 
-    await db.updateProperty(req.params.id, req.body);
+    await db.updateProperty(req.params.id, { ...req.body, published: true });
     const updated = await db.getPropertyById(req.params.id, true);
-    if (req.body.published !== undefined) db.logAudit(adminAuth.currentAdmin(req).email, req.body.published ? 'property.published' : 'property.unpublished', req.params.id);
+    if (!existing.published) db.logAudit(adminAuth.currentAdmin(req).email, 'property.published', req.params.id);
     res.json({ success: true, message: 'Property updated successfully', data: updated });
   } catch (error) {
     console.error('Error updating property:', error);

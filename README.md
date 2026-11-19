@@ -29,7 +29,7 @@ Use `.env.example` as a reference and export settings in your shell or process m
 - Public property listings, search, property details, carousel, responsive layouts, and editable site settings.
 - Optional **Builder Name** in **Admin → Properties CMS → Add/Edit Property** is saved with each property and shown on its detail page. Blank names stay hidden; the generic “Agent listing” label is removed while other listing metadata remains.
 - Session-authenticated admin pages and mutation endpoints, hashed passwords, rate-limited login, first-login password change, and audit entries.
-- Draft/publish controls; unpublished properties are excluded from public listing and detail APIs.
+- Every project saved in the admin panel is automatically published, including edits and saves from older open tabs. The public homepage refreshes listings on focus and every 30 seconds while visible. MCP-created drafts remain private until an administrator saves them; unpublished properties are excluded from public listing and detail APIs.
 - Property image galleries with a maximum of four images enforced by the browser and database layer. Uploads accept JPEG, PNG, and WebP up to 8 MB and are resized/re-encoded to WebP.
 - PDF/media upload, admin-side brochure editing, and one-time, short-lived, browser-session-bound brochure links after contact details and consent. Direct public brochure paths are blocked.
 - Subscriber consent, deduplication, search/filter, unsubscribe tokens, and confirmation-gated CSV export.

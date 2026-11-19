@@ -1346,14 +1346,14 @@
     }
 
     // --- Dynamic API Ingestion ---
-    async function loadProperties() {
+    async function loadProperties({ quiet = false } = {}) {
       const sequence = ++propertyLoadSequence;
       propertyLoadController?.abort();
       propertyLoadController = new AbortController();
       const grid = document.getElementById('propertyGrid');
       grid.setAttribute('aria-busy', 'true');
       try {
-        grid.innerHTML = '<div class="load-message" role="status">Loading properties...</div>';
+        if (!quiet || !allProperties.length) grid.innerHTML = '<div class="load-message" role="status">Loading properties...</div>';
 
         const params = new URLSearchParams();
         if (state.kind !== 'any') params.set('status', state.kind);
@@ -1370,6 +1370,7 @@
         renderProperties();
       } catch (err) {
         if (sequence !== propertyLoadSequence) return;
+        if (quiet && allProperties.length) return;
         document.getElementById('resultsCounter').textContent = 'Properties could not be loaded.';
         grid.innerHTML = '<div class="load-message" role="alert">Unable to load properties. Check your connection.<br><button type="button" class="btn btn-outline" onclick="loadProperties()">Try again</button></div>';
       } finally {
@@ -1382,8 +1383,10 @@
         const res = await fetch('/api/featured-projects');
         const data = await res.json();
         if (data.success && data.data.length) {
-          featuredProjects = data.data;
-          renderSlider();
+          if (JSON.stringify(featuredProjects) !== JSON.stringify(data.data)) {
+            featuredProjects = data.data;
+            renderSlider();
+          }
         }
       } catch (err) {
         console.error('Error loading projects:', err);
@@ -2416,6 +2419,16 @@
       renderProperties();
       document.getElementById('propertiesSection').scrollIntoView({ behavior: 'smooth' });
     });
+
+    function refreshPublicProjects() {
+      if (document.hidden || location.pathname.startsWith('/properties/') || document.getElementById('propertyGrid').getAttribute('aria-busy') === 'true') return;
+      loadProperties({ quiet: true });
+      loadFeaturedProjects();
+    }
+    // Refresh when returning from admin and keep an open homepage up to date.
+    window.addEventListener('focus', refreshPublicProjects);
+    document.addEventListener('visibilitychange', refreshPublicProjects);
+    setInterval(refreshPublicProjects, 30000);
 
     // Startup Initialization
     const initialQuery = new URLSearchParams(location.search);

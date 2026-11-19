@@ -646,13 +646,7 @@
             <label>Property Title *</label>
             <input type="text" id="formTitle" placeholder="E.g. Ultra Luxury 3 BHK in Indiranagar" required>
           </div>
-          <div class="form-group form-full">
-            <label for="formPublished" style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:13px;">
-              <input type="checkbox" id="formPublished" style="width:auto;" checked aria-describedby="publicationHelp">
-              Publish this project on the website
-            </label>
-            <p id="publicationHelp" style="font-size:12px;color:var(--muted);margin:6px 0 0;">Published projects appear in the public listings. Uncheck to save a private draft.</p>
-          </div>
+          <p class="form-full" style="font-size:13px;color:var(--muted);margin:0;">Projects are automatically published on the website when you save.</p>
           <div class="form-group form-full">
             <label for="formDeveloperName">Builder Name</label>
             <input type="text" id="formDeveloperName" placeholder="Enter the builder name">
@@ -1281,7 +1275,6 @@
       renderGalleryGrid();
       document.getElementById('galleryUploadStatus').textContent = 'Upload 3–4 photos from your computer or keep default gallery.';
       document.getElementById('formGalleryFiles').value = '';
-      document.getElementById('formPublished').checked = true;
       document.getElementById('formVideoUrl').value = '';
       document.getElementById('formBrochureUrl').value = '';
       document.getElementById('videoUploadStatus').textContent = '';
@@ -1314,7 +1307,6 @@
       document.getElementById('formArea').value = p.area;
       document.getElementById('formBaths').value = p.baths || 2;
       document.getElementById('formStatus').value = (p.status === 'Ready to Move' || p.status === 'Ready') ? 'Ready' : p.status;
-      document.getElementById('formPublished').checked = Boolean(p.published);
       document.getElementById('formAdminNote').value = p.admin_note || '';
       
       currentGalleryImages = (Array.isArray(p.images) && p.images.length) ? [...p.images] : (p.image ? [p.image] : []);
@@ -1383,7 +1375,7 @@
         brochure_url: document.getElementById('formBrochureUrl').value.trim(),
         description: document.getElementById('formDescription').value.trim(),
         admin_note: document.getElementById('formAdminNote').value.trim(),
-        published: document.getElementById('formPublished').checked
+        published: true
       };
 
       try {
@@ -1397,7 +1389,7 @@
         const result = await res.json();
         if (!res.ok) throw new Error(result.message || 'Could not save property.');
         if (result.success) {
-          showToast(payload.published ? '✅ Project published on the website!' : '✅ Project saved as draft — not visible on the website.');
+          showToast('✅ Project saved and published on the website!');
           propModal.close();
           loadProperties();
           loadStats();
