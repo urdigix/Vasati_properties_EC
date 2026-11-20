@@ -832,6 +832,7 @@
       </div>
       <div class="modal-foot">
         <button type="button" class="btn btn-outline" id="cancelModalBtn">Cancel</button>
+        <p id="propertySaveStatus" role="alert" style="color:#fca5a5;font-size:13px;flex:1;" hidden></p>
         <button type="submit" class="btn btn-primary" id="savePropertyBtn">Save Property</button>
       </div>
     </form>
@@ -912,6 +913,7 @@
   <script src="/property-overview.js"></script>
   <script src="/floor-plans.js"></script>
   <script src="/floor-plans-admin.js"></script>
+  <script src="/admin-save.js"></script>
   <script>
     let properties = [];
     let adminPropertyPage = 1, adminPropertyPages = 1, adminPropertyTotal = 0, adminPropertySequence = 0, adminSearchTimer;
@@ -1354,19 +1356,17 @@
 
     propForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      let projectOverview, floorPlans;
-      try { projectOverview = readProjectOverview(); floorPlans = FloorPlansAdmin.get(); }
-      catch (error) { showToast(error.message); return; }
       const saveBtn = document.getElementById('savePropertyBtn');
+      if (saveBtn.disabled) return;
+      const saveStatus = document.getElementById('propertySaveStatus');
+      saveStatus.hidden = true;
       saveBtn.disabled = true;
       saveBtn.textContent = 'Saving...';
-
-      if (!currentGalleryImages.length) {
-        showToast('Please upload at least 1 photo for this property');
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Save Property';
-        return;
-      }
+      propForm.setAttribute('aria-busy', 'true');
+      try {
+      const projectOverview = readProjectOverview();
+      const floorPlans = FloorPlansAdmin.get();
+      if (!currentGalleryImages.length) throw new Error('Please upload at least 1 photo for this property.');
 
       const id = document.getElementById('editPropId').value;
 
@@ -1402,16 +1402,13 @@
         published: true
       };
 
-      try {
         const url = id ? `/api/properties/${id}` : '/api/properties';
         const method = id ? 'PUT' : 'POST';
-        const res = await fetch(url, {
+        const result = await AdminSave.request(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.message || 'Could not save property.');
         if (result.success) {
           showToast('✅ Project saved and published on the website!');
           propModal.close();
@@ -1419,10 +1416,13 @@
           loadStats();
         }
       } catch (err) {
-        showToast(err.message || 'Error saving property');
+        saveStatus.textContent = err.message || 'Error saving property. Your entries are still here.';
+        saveStatus.hidden = false;
+        showToast(saveStatus.textContent);
       } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = 'Save Property';
+        propForm.setAttribute('aria-busy', 'false');
       }
     });
 
