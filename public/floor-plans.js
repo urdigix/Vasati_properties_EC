@@ -79,6 +79,14 @@
     try { return normalize(typeof value === 'string' ? JSON.parse(value) : (value ?? [])); }
     catch { return []; }
   }
+  function propertyPlans(property) {
+    const plans = read(property.floor_plans);
+    let overview = property.project_overview || {};
+    if (typeof overview === 'string') { try { overview = JSON.parse(overview); } catch { overview = {}; } }
+    const unit = String(overview.area_unit || '').trim() || String(property.area || '').match(/(sq\.?\s*ft\.?|sqft|sq\.?\s*m\.?|sqm|m²)\s*$/i)?.[1] || '';
+    if (!/^(sq\.?\s*ft\.?|sqft|sq\.?\s*m\.?|sqm|m²)$/i.test(unit)) return plans;
+    return plans.map(plan => /^[\d,.]+(?:\s*[–-]\s*[\d,.]+)?$/.test(plan.area) ? {...plan,area:`${plan.area} ${unit}`} : plan);
+  }
   function groups(plans) {
     const result = [];
     plans.forEach(plan => {
@@ -115,12 +123,12 @@ ${plan.rooms.length ? `<ul class="fp-rooms" aria-label="Room dimensions">${plan.
     <details class="fp-detail" ${groupIndex >= 0 ? 'open' : ''}><summary>Explore plan images, sizes and room dimensions</summary>${detailMarkup(groupList,Math.max(0,groupIndex),planIndex)}</details>`;
   }
   function render(property) {
-    const plans = read(property.floor_plans);
+    const plans = propertyPlans(property);
     return `<section id="detail-floor-plans" class="floor-plans detail-section" aria-labelledby="floorPlansTitle"><header><h3 id="floorPlansTitle">${escape(property.title)} Floor Plans and Pricing</h3></header><div class="fp-body">${plans.length ? bodyMarkup(groups(plans)) : '<div class="fp-empty"><p>2D floor plans have not been added for this property yet.</p><button type="button" class="btn btn-outline" data-fp-enquire>Ask seller for a 2D floor plan</button></div>'}</div></section>`;
   }
   function mount(section, property, onEnquire) {
     if (!section) return;
-    const groupList = groups(read(property.floor_plans));
+    const groupList = groups(propertyPlans(property));
     let groupIndex = -1, planIndex = 0, zoom = 1, unit = 'sqft';
     const body = section.querySelector('.fp-body');
     function bindImage() {

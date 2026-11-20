@@ -43,3 +43,13 @@ test('calculated pricing uses INR per square foot, exact metric conversion and v
   const html = plans.render({title:'Example',floor_plans:[two,three]});
   for (const text of ['fp-option-card','Area unit','sq.m','₹44.55 L','₹59.4 L','Contact','View floor plan']) assert.ok(html.includes(text));
 });
+
+test('legacy numeric plan areas inherit only an explicitly saved property area unit', () => {
+  const legacy = {...plan,area:'1320',price:'62'};
+  const html = plans.render({title:'Existing project',floor_plans:[legacy],project_overview:{area_unit:'sq.ft'}});
+  assert.ok(html.includes('122.63 sq.m'));
+  assert.ok(html.includes('1,320 sq.ft.'));
+  assert.equal(legacy.area,'1320','Display conversion does not rewrite saved data');
+  const noUnit = plans.render({title:'Unknown unit',floor_plans:[legacy]});
+  assert.ok(!noUnit.includes('122.63 sq.m'),'Never guess a missing unit');
+});
