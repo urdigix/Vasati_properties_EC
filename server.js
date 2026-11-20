@@ -389,6 +389,23 @@ app.get('/api/media/:id', async (req, res) => {
       return;
     }
     res.set({ 'Content-Type': media.content_type, 'Content-Length': media.size_bytes, 'Content-Disposition': `inline; filename="${media.filename.replace(/[\r\n"]/g, '_')}"` });
+    // Mobile players request byte ranges to start playback and seek through uploads.
+    if (media.content_type.startsWith('video/')) {
+      res.set('Accept-Ranges', 'bytes');
+      if (req.headers.range) {
+        const ranges = req.range(media.size_bytes);
+        if (ranges === -1) {
+          return res.status(416).set({ 'Content-Range': `bytes */${media.size_bytes}`, 'Content-Length': '0' }).end();
+        }
+        if (Array.isArray(ranges) && ranges.type === 'bytes' && ranges.length === 1) {
+          const { start, end } = ranges[0];
+          return res.status(206).set({
+            'Content-Range': `bytes ${start}-${end}/${media.size_bytes}`,
+            'Content-Length': end - start + 1
+          }).send(media.data.subarray(start, end + 1));
+        }
+      }
+    }
     res.send(media.data);
   } catch (error) {
     console.error('Error reading media:', error);

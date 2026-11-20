@@ -317,6 +317,36 @@ test('admin, image, direct requests, brochure, and MCP authorization controls', 
     const optimizedImage = Buffer.from(await (await request(imageResult.url)).arrayBuffer());
     assert.equal((await sharp(optimizedImage).metadata()).format, 'webp');
 
+    await t.test('uploaded videos remain public and support playback byte ranges', async () => {
+      const bytes = Buffer.from('0123456789abcdef');
+      const upload = await request('/api/media', {
+        method: 'POST',
+        ...json({ filename: 'tour.mp4', contentType: 'video/mp4', fileData: bytes.toString('base64') }, { cookie })
+      });
+      assert.equal(upload.status, 201);
+      const { url } = await upload.json();
+      const full = await request(url);
+      assert.equal(full.status, 200);
+      assert.equal(full.headers.get('content-type'), 'video/mp4');
+      assert.equal(full.headers.get('accept-ranges'), 'bytes');
+      assert.deepEqual(Buffer.from(await full.arrayBuffer()), bytes);
+      for (const [range, expected, contentRange] of [
+        ['bytes=0-3', '0123', 'bytes 0-3/16'],
+        ['bytes=12-', 'cdef', 'bytes 12-15/16'],
+        ['bytes=-4', 'cdef', 'bytes 12-15/16']
+      ]) {
+        const part = await request(url, { headers: { Range: range } });
+        assert.equal(part.status, 206);
+        assert.equal(part.headers.get('content-range'), contentRange);
+        assert.equal(part.headers.get('content-length'), '4');
+        assert.equal(await part.text(), expected);
+      }
+      const unsatisfiable = await request(url, { headers: { Range: 'bytes=99-' } });
+      assert.equal(unsatisfiable.status, 416);
+      assert.equal(unsatisfiable.headers.get('content-range'), 'bytes */16');
+      assert.equal(await unsatisfiable.text(), '');
+    });
+
     const pdf = Buffer.from('%PDF-1.4\n%%EOF', 'ascii');
     const mediaResponse = await request('/api/media', {
       method: 'POST',
