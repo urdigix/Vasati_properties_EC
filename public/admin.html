@@ -413,6 +413,9 @@
             </tbody>
           </table>
         </div>
+        <nav aria-label="Admin property pages" style="display:flex;justify-content:center;align-items:center;gap:14px;padding:18px;">
+          <button type="button" class="btn btn-outline" id="adminPropertiesPrev">Previous</button><span id="adminPropertiesPage" role="status"></span><button type="button" class="btn btn-outline" id="adminPropertiesNext">Next</button>
+        </nav>
       </div>
     </section>
 
@@ -662,7 +665,7 @@
           </div>
           <div class="form-group">
             <label>Price in Lakhs (₹) *</label>
-            <input type="number" id="formPrice" step="0.5" placeholder="E.g. 95 or 240" required>
+            <input type="number" id="formPrice" step="any" min="0.01" placeholder="E.g. 95 or 240" required>
           </div>
           <div class="form-group">
             <label>Price Display Label</label>
@@ -771,7 +774,7 @@
 
           <section class="form-full" aria-labelledby="floorPlansEditorTitle">
             <h3 id="floorPlansEditorTitle" style="font-size:15px;">2D floor plans and pricing</h3>
-            <p class="fp-admin-help">Add one option per configuration and area. Upload a 2D drawing, set its price and optional room dimensions, then save the property. Plans are separate from the four gallery photos. Only upload drawings you have permission to publish.</p>
+            <p class="fp-admin-help">Enter area in sq.ft. or sq.m and a price per sq.ft. in rupees to calculate base prices automatically. Add minimum and maximum areas for a range. The main property price updates from the plans. Upload a 2D drawing and save to publish. Plans are separate from gallery photos.</p>
             <div id="floorPlansEditorList"></div>
             <button type="button" class="btn btn-outline" id="addFloorPlanBtn">Add 2D floor plan</button>
             <p id="floorPlansEditorStatus" class="fp-admin-help" role="status" aria-live="polite">No 2D plans yet.</p>
@@ -911,6 +914,7 @@
   <script src="/floor-plans-admin.js"></script>
   <script>
     let properties = [];
+    let adminPropertyPage = 1, adminPropertyPages = 1, adminPropertyTotal = 0, adminPropertySequence = 0, adminSearchTimer;
     let slides = [];
     let enquiries = [];
     let siteSettings = {};
@@ -1028,13 +1032,20 @@
     }
 
     // --- Properties CMS ---
-    async function loadProperties() {
+    async function loadProperties(page = 1) {
+      const sequence = ++adminPropertySequence;
       try {
-        const res = await fetch('/api/admin/properties');
+        const params = new URLSearchParams({page:String(page),pageSize:'25',search:document.getElementById('propSearchInput').value.trim(),status:document.getElementById('propCategoryFilter').value});
+        const res = await fetch('/api/admin/properties?' + params);
         const data = await res.json();
+        if (sequence !== adminPropertySequence) return;
         if (!res.ok) throw new Error(data.message || 'Access denied.');
         if (data.success) {
           properties = data.data;
+          adminPropertyPage = data.page || 1; adminPropertyPages = data.pages || 1; adminPropertyTotal = data.total ?? properties.length;
+          document.getElementById('adminPropertiesPage').textContent = `Page ${adminPropertyPage} of ${adminPropertyPages}`;
+          document.getElementById('adminPropertiesPrev').disabled = adminPropertyPage <= 1;
+          document.getElementById('adminPropertiesNext').disabled = adminPropertyPage >= adminPropertyPages;
           renderPropertiesTable();
         }
       } catch (error) {
@@ -1046,13 +1057,9 @@
       const tbody = document.getElementById('propertiesTableBody');
       const search = document.getElementById('propSearchInput').value.toLowerCase().trim();
       const catFilter = document.getElementById('propCategoryFilter')?.value || '';
-      const filtered = properties.filter(p => {
-        const matchesSearch = !search || p.title.toLowerCase().includes(search) || p.location.toLowerCase().includes(search);
-        const matchesCat = !catFilter || (catFilter === 'Ready' ? (p.status === 'Ready' || p.status === 'Ready to Move') : p.status === catFilter);
-        return matchesSearch && matchesCat;
-      });
+      const filtered = properties;
 
-      document.getElementById('propCount').textContent = filtered.length;
+      document.getElementById('propCount').textContent = adminPropertyTotal.toLocaleString('en-IN');
 
       if (!filtered.length) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">No properties found.</td></tr>';
@@ -1095,8 +1102,10 @@
       `).join('');
     }
 
-    document.getElementById('propSearchInput').addEventListener('input', renderPropertiesTable);
-    document.getElementById('propCategoryFilter')?.addEventListener('change', renderPropertiesTable);
+    document.getElementById('propSearchInput').addEventListener('input', () => { clearTimeout(adminSearchTimer); adminSearchTimer = setTimeout(() => loadProperties(), 250); });
+    document.getElementById('propCategoryFilter')?.addEventListener('change', () => loadProperties());
+    document.getElementById('adminPropertiesPrev').addEventListener('click', () => loadProperties(adminPropertyPage - 1));
+    document.getElementById('adminPropertiesNext').addEventListener('click', () => loadProperties(adminPropertyPage + 1));
 
     const propModal = document.getElementById('propertyModal');
     const propForm = document.getElementById('propertyForm');
@@ -1108,6 +1117,15 @@
     function readProjectOverview() {
       return PropertyOverview.normalize(Object.fromEntries(PropertyOverview.fields.map(key => [key, document.getElementById(`overview_${key}`).value])));
     }
+    document.addEventListener('floorplanschange', () => {
+      try {
+        const totals = FloorPlans.summary(FloorPlansAdmin.get({preview:true}));
+        if (!totals) return;
+        document.getElementById('formPrice').value = totals.price;
+        document.getElementById('formPriceLabel').value = totals.label;
+        document.getElementById('formArea').value = totals.area;
+      } catch { /* Incomplete options are validated when the property is saved. */ }
+    });
 
     let currentGalleryImages = [];
 
@@ -1290,8 +1308,14 @@
     document.getElementById('closeModalBtn').addEventListener('click', () => propModal.close());
     document.getElementById('cancelModalBtn').addEventListener('click', () => propModal.close());
 
-    function editProperty(id) {
-      const p = properties.find(item => item.id === id);
+    async function editProperty(id) {
+      let p;
+      try {
+        const response = await fetch(`/api/admin/properties/${encodeURIComponent(id)}`);
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.message || 'Unable to open property');
+        p = result.data;
+      } catch (error) { showToast(error.message); return; }
       if (!p) return;
       document.getElementById('editPropId').value = p.id;
       document.getElementById('modalTitle').textContent = 'Edit Property';

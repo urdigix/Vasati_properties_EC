@@ -5,6 +5,7 @@ const crypto = require('node:crypto');
 const compression = require('compression');
 const { publicCache } = require('./server/public-cache');
 const db = require('./db/database');
+const floorPlans = require('./public/floor-plans');
 const adminAuth = require('./server/admin-auth');
 const { installSeo, notFound } = require('./server/seo');
 const { validateSearchLocalities } = require('./server/search-localities');
@@ -148,29 +149,37 @@ app.put('/api/settings', async (req, res) => {
 
 // 1. GET /api/properties (Filter, Search, Sort)
 app.get('/api/admin/properties', adminAuth.requireAdmin, (req, res) => {
-  const properties = db.getAllProperties({}, true);
-  res.json({ success: true, count: properties.length, data: properties });
+  try { res.json({ success: true, ...db.getAllProperties(catalogueFilters(req.query), true, cataloguePage(req.query)) }); }
+  catch (error) { res.status(400).json({success:false,message:error.message}); }
 });
+app.get('/api/admin/properties/:id', adminAuth.requireAdmin, (req, res) => {
+  const property = db.getPropertyById(req.params.id, true);
+  if (!property) return res.status(404).json({success:false,message:'Property not found'});
+  res.json({success:true,data:property});
+});
+function cataloguePage(query) {
+  const page = Number(query.page ?? 1), pageSize = Number(query.pageSize ?? 24);
+  if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(pageSize) || pageSize < 1) throw new Error('Page and page size must be positive integers.');
+  return {page,pageSize:Math.min(pageSize,100)};
+}
+function catalogueFilters(query) {
+  const filters = {};
+  for (const key of ['locality','bhk','status','kind','minPrice','maxPrice','budget','search','sort','ids']) {
+    if (query[key] === undefined) continue;
+    if (typeof query[key] !== 'string' || query[key].length > (key === 'ids' ? 16000 : 200)) throw new Error('Invalid search filter.');
+    filters[key] = query[key];
+  }
+  for (const key of ['minPrice','maxPrice','budget','bhk']) if (filters[key] && filters[key] !== 'any' && (!Number.isFinite(Number(filters[key])) || Number(filters[key]) < 0)) throw new Error('Invalid numeric filter.');
+  return filters;
+}
 
 app.get('/api/properties', async (req, res) => {
   try {
-    const { locality, bhk, status, kind, minPrice, maxPrice, budget, search, sort } = req.query;
-    const properties = await db.getAllProperties({
-      locality,
-      bhk,
-      status,
-      kind,
-      minPrice,
-      maxPrice,
-      budget,
-      search,
-      sort
-    });
-
-    res.json({ success: true, count: properties.length, data: properties.map(({ admin_note, ...property }) => property) });
+    const result = db.getAllProperties(catalogueFilters(req.query), false, cataloguePage(req.query));
+    res.json({ success: true, ...result, data: result.data.map(({ admin_note, ...property }) => property) });
   } catch (error) {
     console.error('Error fetching properties:', error);
-    res.status(500).json({ success: false, message: 'Server error fetching properties' });
+    res.status(400).json({ success: false, message: 'Invalid property search or pagination' });
   }
 });
 
@@ -193,14 +202,17 @@ app.get('/api/properties/:id', async (req, res) => {
 app.post('/api/properties', async (req, res) => {
   if (!adminAuth.activeAdmin(req, res)) return;
   try {
-    const { title, location, price, bhk, area } = req.body;
+    const plans = req.body.floor_plans === undefined ? null : floorPlans.normalize(req.body.floor_plans);
+    const totals = plans ? floorPlans.summary(plans) : null;
+    const input = totals ? {...req.body, price:totals.price, priceLabel:totals.label, area:totals.area} : req.body;
+    const { title, location, price, bhk, area } = input;
     if (!title || !location || !price || !bhk || !area) {
       return res.status(400).json({ success: false, message: 'Missing required property fields' });
     }
 
     // Admin saves are always live, including requests from older open tabs.
     // MCP draft tools use the database layer directly and remain unpublished.
-    const newId = await db.createProperty({ ...req.body, published: true });
+    const newId = await db.createProperty({ ...input, published: true });
     const created = await db.getPropertyById(newId, true);
     db.logAudit(adminAuth.currentAdmin(req).email, 'property.created', newId, { published: created.published });
     res.status(201).json({ success: true, message: 'Property created successfully', data: created });

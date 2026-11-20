@@ -21,3 +21,25 @@ test('floor-plan data rejects unsafe URLs, incomplete records, duplicates and ex
   assert.equal(plans.normalize([{...plan,image_url:'/uploads/properties/123_plan.webp'}])[0].image_url, '/uploads/properties/123_plan.webp');
   assert.ok(plans.render({title:'<script>unsafe</script>',floor_plans:[{...plan,rooms:[{name:'<img src=x onerror=alert(1)>',dimensions:'12 × 10'}]}]}).includes('&lt;img'));
 });
+
+test('calculated pricing uses INR per square foot, exact metric conversion and validates ranges', () => {
+  const input = {...plan, area_sqft:990, rate_per_sqft:4500, price:'tampered', area:'tampered'};
+  const [two] = plans.normalize([input]);
+  const [three] = plans.normalize([{...input,configuration:'3 BHK',area_sqft:1280,area_max_sqft:1320}]);
+  assert.equal(two.price, '₹44.55 L');
+  assert.equal(two.area, '990 sq.ft.');
+  assert.equal(three.price, '₹57.6 L – ₹59.4 L');
+  assert.equal(plans.areaLabel(990,990,'sqm'), '91.97 sq.m');
+  assert.equal(plans.areaLabel(1280,1320,'sqm'), '118.92 – 122.63 sq.m');
+  const totals = plans.summary([two,three]);
+  assert.equal(totals.price,44.55);
+  assert.equal(totals.label,'₹44.55 L – ₹59.4 L');
+  assert.equal(totals.rate,'₹4,500 / sq.ft.');
+  assert.deepEqual(plans.normalize([two,three]),[two,three], 'Save/reload does not drift');
+  assert.equal(plans.summary([two,plan]),null,'Do not invent a combined price for manual plans');
+  for (const change of [{area_sqft:0},{area_sqft:-1},{rate_per_sqft:0},{rate_per_sqft:Infinity},{area_max_sqft:989},{area_sqft:true},{area_type:'Unknown'},{area_sqft:10000001}]) {
+    assert.throws(()=>plans.normalize([{...input,...change}]),e=>e.code==='INVALID_FLOOR_PLANS');
+  }
+  const html = plans.render({title:'Example',floor_plans:[two,three]});
+  for (const text of ['fp-option-card','Area unit','sq.m','₹44.55 L','₹59.4 L','Contact','View floor plan']) assert.ok(html.includes(text));
+});

@@ -81,6 +81,16 @@ test('admin, image, direct requests, brochure, and MCP authorization controls', 
       headers: { 'Content-Type': 'application/json', ...headers },
       body: JSON.stringify(body)
     });
+    await t.test('catalogue pagination rejects invalid input, caps page sizes and protects admin detail', async () => {
+      for (const query of ['page=-1','page=1.5','page=Infinity','pageSize=0','budget=NaN','search=a&search=b']) {
+        assert.equal((await request('/api/properties?'+query)).status,400,query);
+      }
+      const page=await (await request('/api/properties?pageSize=99999')).json();
+      assert.equal(page.pageSize,100);
+      assert.ok(page.data.length<=100);
+      assert.ok(Number.isInteger(page.total));
+      assert.equal((await request('/api/admin/properties/anything')).status,401);
+    });
     await t.test('deployment health and persisted uploads use the configured storage', async () => {
       const health = await request('/api/health');
       assert.equal(health.status, 200);
@@ -260,6 +270,16 @@ test('admin, image, direct requests, brochure, and MCP authorization controls', 
       const created = (await createdResponse.json()).data;
       assert.deepEqual(created.floor_plans,plans);
       database.deleteProperty(created.id);
+      const calculatedResponse=await request('/api/properties',{method:'POST',...json({title:'Automatic pricing API',location:'Bengaluru',bhk:2,floor_plans:[{configuration:'2 BHK',area_sqft:990,rate_per_sqft:4500,image_url:'/images/logo.png'}]},{cookie})});
+      assert.equal(calculatedResponse.status,201);
+      const calculated=(await calculatedResponse.json()).data;
+      assert.equal(calculated.price,44.55);
+      assert.equal(calculated.area,'990 sq.ft.');
+      const detail=await(await request(`/api/admin/properties/${calculated.id}`,{headers:{cookie}})).json();
+      assert.equal(detail.data.floor_plans[0].rate_per_sqft,4500);
+      const tampered=await request(`/api/properties/${calculated.id}`,{method:'PUT',...json({price:1,priceLabel:'Wrong'},{cookie})});
+      assert.equal((await tampered.json()).data.price,44.55);
+      database.deleteProperty(calculated.id);
       assert.equal((await update({floor_plans:[]})).status,200);
       assert.deepEqual(database.getPropertyById(property.id,true).floor_plans,[]);
     });

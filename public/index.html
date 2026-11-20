@@ -998,6 +998,9 @@
       <div class="property-grid" id="propertyGrid">
         <!-- Dynamically rendered property cards -->
       </div>
+      <nav id="propertyPagination" aria-label="Property pages" style="display:flex;justify-content:center;gap:14px;align-items:center;margin:24px 0;" hidden>
+        <button type="button" class="btn btn-outline" id="propertiesPrev">Previous</button><span id="propertiesPage" role="status"></span><button type="button" class="btn btn-outline" id="propertiesNext">Next</button>
+      </nav>
 
     </main>
 
@@ -1222,6 +1225,7 @@
     };
 
     let allProperties = [];
+    let propertyPage = 1, propertyPages = 1, propertyTotal = 0;
     let featuredProjects = [];
     let currentSlide = 0;
     let slideTimer;
@@ -1368,7 +1372,7 @@
     }
 
     // --- Dynamic API Ingestion ---
-    async function loadProperties({ quiet = false } = {}) {
+    async function loadProperties({ quiet = false, page } = {}) {
       const sequence = ++propertyLoadSequence;
       propertyLoadController?.abort();
       propertyLoadController = new AbortController();
@@ -1378,6 +1382,9 @@
         if (!quiet || !allProperties.length) grid.innerHTML = '<div class="load-message" role="status">Loading properties...</div>';
 
         const params = new URLSearchParams();
+        params.set('page', page ?? (quiet ? propertyPage : 1));
+        params.set('pageSize', '24');
+        if (state.showingSavedOnly) params.set('ids', [...state.saved].slice(0,200).join(','));
         if (state.kind !== 'any') params.set('status', state.kind);
         if (state.locality) params.set('search', state.locality);
         if (state.bhk !== 'any') params.set('bhk', state.bhk);
@@ -1389,6 +1396,7 @@
         if (sequence !== propertyLoadSequence) return;
         if (!res.ok || !data.success || !Array.isArray(data.data)) throw new Error('Property request failed');
         allProperties = data.data;
+        propertyPage = data.page || 1; propertyPages = data.pages || 1; propertyTotal = data.total ?? data.data.length;
         renderProperties();
       } catch (err) {
         if (sequence !== propertyLoadSequence) return;
@@ -1399,6 +1407,8 @@
         if (sequence === propertyLoadSequence) grid.setAttribute('aria-busy', 'false');
       }
     }
+    document.getElementById('propertiesPrev').addEventListener('click', () => loadProperties({page:propertyPage - 1}));
+    document.getElementById('propertiesNext').addEventListener('click', () => loadProperties({page:propertyPage + 1}));
 
     async function loadFeaturedProjects() {
       try {
@@ -1535,7 +1545,13 @@
         list = list.filter(p => state.saved.has(p.id));
       }
 
-      const countText = list.length === 1 ? '1 luxury home' : `${list.length} luxury homes`;
+      const countText = propertyTotal === 1 ? '1 luxury home' : `${propertyTotal.toLocaleString('en-IN')} luxury homes`;
+      const pagination = document.getElementById('propertyPagination');
+      pagination.hidden = propertyPages <= 1;
+      pagination.style.display = propertyPages <= 1 ? 'none' : 'flex';
+      document.getElementById('propertiesPage').textContent = `Page ${propertyPage} of ${propertyPages}`;
+      document.getElementById('propertiesPrev').disabled = propertyPage <= 1;
+      document.getElementById('propertiesNext').disabled = propertyPage >= propertyPages;
       const locationText = state.locality ? `in ${state.locality}` : 'across Bengaluru';
       const count = document.createElement('strong');
       count.textContent = countText;
@@ -1557,8 +1573,8 @@
 
       grid.innerHTML = list.map(p => {
         const isSaved = state.saved.has(p.id);
-        const areaNum = Number(p.area.split(' ')[0].replaceAll(',', '')) || 1200;
-        const pricePerSqft = Math.round((p.price * 100000) / areaNum);
+        const areaNum = /^([\d,.]+)\s*(?:sq\.?\s*ft\.?|sqft)$/i.exec(p.area || '');
+        const pricePerSqft = areaNum ? Math.round((p.price * 100000) / Number(areaNum[1].replaceAll(',', ''))) : 0;
 
         return `
           <article class="property-card" onclick="openDetail('${p.id}')">
@@ -1576,7 +1592,7 @@
             <div class="card-body">
               <div class="card-price-row">
                 <div class="card-price">${escapeDetailHtml(p.price_label || p.priceLabel || 'Contact for price')}</div>
-                <div class="card-price-sqft">₹${pricePerSqft.toLocaleString('en-IN')}/sqft</div>
+                ${pricePerSqft > 0 ? `<div class="card-price-sqft">₹${pricePerSqft.toLocaleString('en-IN')}/sq.ft.</div>` : ''}
               </div>
               <h3 class="card-title"><a href="${propertyUrl(p)}" onclick="event.stopPropagation()">${escapeDetailHtml(p.title)}</a></h3>
               <div class="card-loc">
@@ -1612,7 +1628,7 @@
         showToast('❤️ Property saved to your favorites');
       }
       updateFavCounter();
-      renderProperties();
+      if (state.showingSavedOnly) loadProperties({page:propertyPage}); else renderProperties();
     }
 
     function resetAllFilters() {
@@ -1712,7 +1728,7 @@
 
     document.getElementById('favTrigger').addEventListener('click', () => {
       state.showingSavedOnly = !state.showingSavedOnly;
-      renderProperties();
+      loadProperties();
       if (state.showingSavedOnly && !state.saved.size) {
         showToast('Tap the heart icon on any home to save it!');
       }
@@ -1879,7 +1895,7 @@
     }
 
     async function renderPropertyDetail(id) {
-      let p = allProperties.find(item => item.id === id);
+      let p;
       if (!p) {
         try {
           const res = await fetch(`/api/properties/${id}`);
@@ -1888,7 +1904,8 @@
             p = data.data;
             // Detail pages skip the homepage catalogue; keep the fetched record
             // available to brochure actions that use the shared property list.
-            allProperties.push(p);
+            const index = allProperties.findIndex(item => item.id === id);
+            if (index < 0) allProperties.push(p); else allProperties[index] = p;
           }
         } catch(e) {}
       }
@@ -1904,21 +1921,25 @@
       const detailView = document.getElementById('propertyDetailView');
       detailView.classList.add('active');
 
-      const areaNum = Number(String(p.area || '').replace(/[^0-9.]/g, ''));
+      const planTotals = FloorPlans.summary(FloorPlans.read(p.floor_plans));
+      const areaMatch = /^([\d,.]+)\s*(?:sq\.?\s*ft\.?|sqft)$/i.exec(p.area || '');
+      const areaNum = areaMatch ? Number(areaMatch[1].replaceAll(',', '')) : 0;
       const priceLabel = escapeDetailHtml(p.price_label || p.priceLabel || 'Contact for price');
       const isRent = /\/\s*month|monthly|rent/i.test(`${priceLabel} ${p.status || ''}`);
       const pricePerSqft = areaNum > 0 ? Math.round((Number(p.price) * 100000) / areaNum) : null;
-      const pricePerSqftLabel = pricePerSqft === null
+      const pricePerSqftLabel = planTotals ? escapeDetailHtml(planTotals.rate) : pricePerSqft === null
         ? 'Ask for price'
         : `≈ ₹${pricePerSqft.toLocaleString('en-IN')}/sqft${isRent ? '/month' : ''}`;
       const overview = PropertyOverview.read(p.project_overview);
-      const configuration = overview.configurations ? escapeDetailHtml(overview.configurations) : Number(p.bhk) > 0 ? `${Number(p.bhk)} BHK` : escapeDetailHtml(p.kind || 'Property');
+      const planConfigurations = [...new Set(FloorPlans.read(p.floor_plans).map(plan => plan.configuration))].join(', ');
+      const configuration = overview.configurations || planConfigurations ? escapeDetailHtml(overview.configurations || planConfigurations) : Number(p.bhk) > 0 ? `${Number(p.bhk)} BHK` : escapeDetailHtml(p.kind || 'Property');
       const safeTitle = escapeDetailHtml(p.title);
       const safeStatus = escapeDetailHtml(p.status || 'Property');
       const safeKind = escapeDetailHtml(p.kind || 'Property');
       const safeLocation = escapeDetailHtml(p.location || p.locality || 'Bengaluru');
       const safeListed = escapeDetailHtml(p.listed || '');
-      const safeArea = escapeDetailHtml(p.area || 'Not listed');
+      const metricArea = planTotals ? FloorPlans.areaLabel(planTotals.areaMin,planTotals.areaMax,'sqm') : areaNum > 0 ? FloorPlans.areaLabel(areaNum,areaNum,'sqm') : '';
+      const safeArea = escapeDetailHtml((p.area || 'Not listed') + (metricArea ? ` (${metricArea})` : ''));
       const safePossession = escapeDetailHtml(overview.possession_status || p.possession || 'Not listed');
       const propertyKind = escapeDetailHtml(p.kind || 'Property');
       const propertyStatus = escapeDetailHtml(p.status || 'Current listing');
@@ -2431,7 +2452,7 @@
       if (location.pathname !== '/') return location.assign('/?saved=1#propertiesSection');
       location.hash = "";
       state.showingSavedOnly = true;
-      renderProperties();
+      loadProperties();
       document.getElementById('propertiesSection').scrollIntoView({ behavior: 'smooth' });
     });
 

@@ -13,7 +13,8 @@ const property = {
 };
 const database = {
   getSiteSettings: () => ({ seo_title: 'Bengaluru homes | Vasati', seo_description: 'Find your Bengaluru home.' }),
-  getAllProperties: () => [property],
+  getAllProperties: (_filters, _includeUnpublished, paging) => paging ? {data:[property]} : [property],
+  getPublishedPropertyLinks: () => [property],
   getPropertyById: id => id === property.id ? property : null
 };
 
@@ -90,7 +91,7 @@ test('staging, defaults, and localhost stay noindex with crawlable directives an
 test('CMS text cannot escape HTML attributes or JSON-LD scripts', async t => {
   const unsafe = { ...property, title: '</script><script>alert("x")</script> & $&', description: '"><img src=x onerror=alert(1)>' };
   const request = await serve(t, { SITE_URL: 'https://vasati.example', SEO_INDEXABLE: 'true' }, {
-    ...database, getPropertyById: () => unsafe, getAllProperties: () => [unsafe]
+    ...database, getPropertyById: () => unsafe, getAllProperties: () => ({data:[unsafe]})
   });
   const html = await (await request(propertyPath(unsafe))).text();
   assert.ok(!html.includes('<script>alert("x")</script>'));

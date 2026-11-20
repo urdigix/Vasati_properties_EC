@@ -42,6 +42,10 @@ These are HTTP read-capacity measurements, not 10,000 simultaneous people or end
 
 ## Production acceptance and further growth
 
+Catalogue lists use bounded, indexed pagination rather than returning every property's full details. Server-rendered homepage HTML includes the first 24 listings. The sitemap includes every published property using a lightweight ID/title query.
+
+Run `npm run test:catalogue` for an isolated temporary catalogue check; it does not write to the project database. On 20 November 2026, the 10,007-property fixture served 1,000 requests at concurrency 25 in 5.44 seconds, with p95 latency 176.02 ms, maximum response size 18,024 bytes and zero errors. Full-catalogue search also passed. These local API measurements do not establish simultaneous visitor capacity.
+
 Deploy through the normal reviewed release process with database/media backups. Test a staging deployment on equivalent infrastructure using realistic catalogue size and images, browsing sessions with think time, consented analytics, form submissions and brochure downloads. Measure p95 page/API latency, errors, CPU, memory, disk latency and database write waits as traffic increases. Record the highest sustained traffic meeting agreed targets before claiming visitor capacity.
 
 For larger spikes, public assets can move behind a CDN with versioned URLs or explicit invalidation. Bypass shared edge caching for admin, personal data, forms, session configuration and downloads. Keep catalogue HTML revalidating until edge invalidation exists. If sustained writes or backend replicas become necessary, first migrate data/sessions to a shared database, uploads to object storage, and rate limits/cache invalidation to shared infrastructure. That migration needs production-sized tests; increasing replica count alone is insufficient.

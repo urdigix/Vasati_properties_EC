@@ -31,3 +31,14 @@ test('homepage refreshes projects quietly while visible without interrupting sea
     assert.equal(calls.length,0,mode+' must not request another catalogue');
   }
 });
+
+test('removing a favorite reloads the current saved page so pagination can clamp to remaining records', () => {
+  const html=fs.readFileSync(path.join(__dirname,'../public/index.html'),'utf8');
+  const source=html.match(/function toggleSave\(e, id\) \{[\s\S]*?\n    \}/)[0];
+  const saved=new Set(['last-on-page-two']);
+  const calls=[];
+  const context={state:{saved,showingSavedOnly:true},propertyPage:2,showToast:()=>{},updateFavCounter:()=>{},renderProperties:()=>calls.push('render'),loadProperties:options=>calls.push(options.page)};
+  runInNewContext(source+'; toggleSave({stopPropagation(){}},"last-on-page-two")',context);
+  assert.equal(saved.size,0);
+  assert.deepEqual(calls,[2]);
+});

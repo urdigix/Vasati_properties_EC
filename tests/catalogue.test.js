@@ -1,0 +1,42 @@
+const {test} = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs'), os = require('node:os'), path = require('node:path');
+process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(),'vasati-catalogue-'));
+const db = require('../db/database');
+db.initializeDatabase();
+test('10,000 properties have bounded pages, deterministic ordering, complete search and calculated persisted prices', () => {
+  const plan = {configuration:'2 BHK',area_sqft:990,rate_per_sqft:4500,image_url:'/images/logo.png'};
+  const base = db.createProperty({title:'Calculated property',location:'Electronic City',price:1,priceLabel:'Wrong price',bhk:2,area:'wrong',published:true,floor_plans:[plan]});
+  const saved = db.getPropertyById(base);
+  assert.equal(saved.price,44.55);
+  assert.equal(saved.price_label,'₹44.55 L');
+  assert.equal(saved.area,'990 sq.ft.');
+  db.updateProperty(base,{price:999,priceLabel:'Wrong',floor_plans:[{...plan,rate_per_sqft:5000}]});
+  assert.equal(db.getPropertyById(base).price,49.5);
+  db.db.exec('BEGIN');
+  try {
+    const insert=db.db.prepare(`INSERT INTO properties (id,title,location,price,price_label,bhk,area,published,featured,created_at) VALUES (?,?,?,?,'₹50 L',2,'990 sq.ft.',1,0,'2026-01-01')`);
+    for(let i=0;i<10000;i++) insert.run('capacity-'+String(i).padStart(5,'0'),'Capacity property '+i,'Capacity City',i/100+1);
+    db.db.exec('COMMIT');
+  } catch(error) { db.db.exec('ROLLBACK'); throw error; }
+  const first=db.getAllProperties({search:'Capacity City'},false,{page:1,pageSize:24});
+  const second=db.getAllProperties({search:'Capacity City'},false,{page:2,pageSize:24});
+  const last=db.getAllProperties({search:'Capacity City'},false,{page:999999,pageSize:24});
+  assert.equal(first.total,10000);
+  assert.equal(first.pages,417);
+  assert.equal(first.data.length,24);
+  assert.equal(new Set([...first.data,...second.data].map(p=>p.id)).size,48);
+  assert.equal(last.page,417);
+  assert.equal(last.data.length,16);
+  assert.ok(Buffer.byteLength(JSON.stringify(first))<40000);
+  assert.ok(first.data.every(p=>p.floor_plans.length===0),'List results omit heavy detail payloads');
+  assert.equal(db.getAllProperties({search:'Capacity property 9999'},true,{page:1,pageSize:25}).total,1);
+  const sorted=db.getAllProperties({search:'Capacity City',sort:'price-desc'},false,{page:1,pageSize:24});
+  assert.equal(sorted.data[0].id,'capacity-09999');
+  assert.equal(db.getAllProperties({ids:'capacity-09999'},false,{page:1,pageSize:24}).data[0].id,'capacity-09999');
+  assert.equal(db.getAllProperties({ids:''},false,{page:1,pageSize:24}).total,0);
+  const draft=db.createProperty({title:'Hidden',published:false});
+  assert.equal(db.getAllProperties({ids:draft},false,{page:1,pageSize:24}).total,0);
+  assert.equal(db.getAllProperties({ids:draft},true,{page:1,pageSize:24}).total,1);
+  db.db.close();
+});

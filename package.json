@@ -14,6 +14,7 @@
     "lint": "npm run check",
     "test": "node --test",
     "test:load": "node scripts/load-check.cjs",
+    "test:catalogue": "node scripts/catalogue-capacity.cjs",
     "dev:server": "node --watch server.js",
     "reset-admin:local": "node scripts/reset-local-admin.cjs"
   },

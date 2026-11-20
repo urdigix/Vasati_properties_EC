@@ -32,6 +32,7 @@ function formatProperty(property) {
 
   return {
     ...property,
+    priceLabel: property.price_label,
     listed: String(property.listed || '').replace(/\bagent\s+listing\b\s*(?:[·|,\-]\s*)?/gi, '').trim(),
     project_overview: propertyOverview.read(property.project_overview),
     floor_plans: floorPlans.read(property.floor_plans),
@@ -351,6 +352,8 @@ function initializeDatabase() {
   db.exec('CREATE INDEX IF NOT EXISTS audit_logs_created_at_idx ON audit_logs (created_at DESC);');
   db.exec('CREATE INDEX IF NOT EXISTS properties_public_order_idx ON properties (published, featured DESC, created_at DESC);');
   db.exec('CREATE INDEX IF NOT EXISTS properties_public_price_idx ON properties (published, price);');
+  db.exec('CREATE INDEX IF NOT EXISTS properties_public_paged_idx ON properties (published, featured DESC, created_at DESC, id ASC);');
+  db.exec('CREATE INDEX IF NOT EXISTS properties_public_price_paged_idx ON properties (published, price, id);');
   db.exec('CREATE INDEX IF NOT EXISTS analytics_events_name_date_idx ON analytics_events (event_name, created_at DESC);');
 
   try {
@@ -412,10 +415,16 @@ function initializeDatabase() {
   db.prepare('INSERT OR IGNORE INTO schema_migrations (name) VALUES (?)').run(migrationName);
 }
 
-function getAllProperties(filters = {}, includeUnpublished = false) {
-  let sql = 'SELECT * FROM properties WHERE 1 = 1';
+function getAllProperties(filters = {}, includeUnpublished = false, paging = null) {
+  const columns = paging ? 'id,title,location,locality,price,price_label,bhk,area,baths,status,image,images,video_url,brochure_url,alt,listed,kind,possession,featured,published,developer_name,created_at,admin_note' : '*';
+  let sql = `SELECT ${columns} FROM properties WHERE 1 = 1`;
   const params = [];
   if (!includeUnpublished) sql += ' AND published = 1';
+  if (filters.ids !== undefined) {
+    const ids = String(filters.ids).split(',').filter(Boolean).slice(0, 200);
+    sql += ids.length ? ` AND id IN (${ids.map(() => '?').join(',')})` : ' AND 0';
+    params.push(...ids);
+  }
 
   if (filters.locality && filters.locality !== 'all' && filters.locality !== 'Bengaluru' && filters.locality !== 'Bangalore') {
     sql += ' AND (location LIKE ? OR locality LIKE ?)';
@@ -458,7 +467,7 @@ function getAllProperties(filters = {}, includeUnpublished = false) {
     params.push(Number(filters.minPrice));
   }
 
-  if (filters.maxPrice && Number(filters.maxPrice) < 500) {
+  if (filters.maxPrice) {
     sql += ' AND price <= ?';
     params.push(Number(filters.maxPrice));
   }
@@ -474,12 +483,22 @@ function getAllProperties(filters = {}, includeUnpublished = false) {
     params.push(searchTerm, searchTerm, searchTerm, searchTerm);
   }
 
+  let total;
+  if (paging) total = db.prepare(sql.replace(`SELECT ${columns}`, 'SELECT COUNT(*) AS count')).get(...params).count;
   if (filters.sort === 'price') {
-    sql += ' ORDER BY price ASC';
+    sql += ' ORDER BY price ASC, id ASC';
   } else if (filters.sort === 'price-desc') {
-    sql += ' ORDER BY price DESC';
+    sql += ' ORDER BY price DESC, id DESC';
   } else {
-    sql += ' ORDER BY featured DESC, created_at DESC';
+    sql += ' ORDER BY featured DESC, created_at DESC, id ASC';
+  }
+  if (paging) {
+    const pageSize = Math.min(100, Math.max(1, Number(paging.pageSize) || 24));
+    const pages = Math.max(1, Math.ceil(total / pageSize));
+    const page = Math.min(pages, Math.max(1, Number(paging.page) || 1));
+    sql += ' LIMIT ? OFFSET ?'; params.push(pageSize, (page - 1) * pageSize);
+    const data = db.prepare(sql).all(...params).map(formatProperty);
+    return { data, count: data.length, total, page, pageSize, pages };
   }
 
   const rows = db.prepare(sql).all(...params);
@@ -490,12 +509,16 @@ function getPropertyById(id, includeUnpublished = false) {
   const row = db.prepare(`SELECT * FROM properties WHERE id = ?${includeUnpublished ? '' : ' AND published = 1'}`).get(id);
   return formatProperty(row);
 }
+function getPublishedPropertyLinks() {
+  return db.prepare('SELECT id,title FROM properties WHERE published = 1 ORDER BY id').all();
+}
 
 function createProperty(prop) {
   const overview = propertyOverview.normalize(prop.project_overview === undefined ? {} : prop.project_overview);
   const plans = floorPlans.normalize(prop.floor_plans === undefined ? [] : prop.floor_plans);
   const id = prop.id || `prop_${Date.now().toString(36)}_${crypto.randomUUID()}`;
-  const price = Number(prop.price ?? 0);
+  const totals = floorPlans.summary(plans);
+  const price = totals?.price ?? Number(prop.price ?? 0);
   const title = String(prop.title || 'Untitled Property');
   const location = String(prop.location || '');
   const locality = String(prop.locality || location.split(',')[0]?.trim() || 'Bengaluru');
@@ -519,9 +542,9 @@ function createProperty(prop) {
     location,
     locality,
     price,
-    String(prop.priceLabel || (price >= 100 ? `₹${(price / 100).toFixed(2)} Cr` : `₹${price} L`)),
+    String(totals?.label || prop.priceLabel || (price >= 100 ? `₹${(price / 100).toFixed(2)} Cr` : `₹${price} L`)),
     Number(prop.bhk || 2),
-    String(prop.area || '0 sqft'),
+    String(totals?.area || prop.area || '0 sqft'),
     Number(prop.baths || 2),
     String(prop.status || 'New'),
     discountImage,
@@ -549,11 +572,12 @@ function updateProperty(id, prop) {
   if (!current) return false;
   const overview = propertyOverview.normalize(prop.project_overview === undefined ? current.project_overview : prop.project_overview);
   const plans = floorPlans.normalize(prop.floor_plans === undefined ? current.floor_plans : prop.floor_plans);
+  const totals = floorPlans.summary(plans);
 
   const next = {
     ...current,
     ...prop,
-    price: Number(prop.price ?? current.price ?? 0),
+    price: totals?.price ?? Number(prop.price ?? current.price ?? 0),
     bhk: Number(prop.bhk ?? current.bhk ?? 2),
     baths: Number(prop.baths ?? current.baths ?? 2),
     featured: prop.featured !== undefined ? Number(Boolean(prop.featured)) : Number(Boolean(current.featured))
@@ -598,9 +622,9 @@ function updateProperty(id, prop) {
     String(next.location || current.location),
     String(next.locality || current.locality || (next.location || current.location).split(',')[0]?.trim() || 'Bengaluru'),
     Number(next.price),
-    String(next.priceLabel || current.price_label || (Number(next.price) >= 100 ? `₹${(Number(next.price) / 100).toFixed(2)} Cr` : `₹${Number(next.price)} L`)),
+    String(totals?.label || next.priceLabel || current.price_label || (Number(next.price) >= 100 ? `₹${(Number(next.price) / 100).toFixed(2)} Cr` : `₹${Number(next.price)} L`)),
     Number(next.bhk),
-    String(next.area || current.area || '0 sqft'),
+    String(totals?.area || next.area || current.area || '0 sqft'),
     Number(next.baths),
     String(next.status || current.status || 'New'),
     image,
@@ -809,6 +833,7 @@ module.exports = {
   db,
   initializeDatabase,
   getAllProperties,
+  getPublishedPropertyLinks,
   getPropertyById,
   createProperty,
   updateProperty,

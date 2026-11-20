@@ -3,6 +3,7 @@
   const list = document.getElementById('floorPlansEditorList');
   const status = document.getElementById('floorPlansEditorStatus');
   const message = text => { status.textContent = text; };
+  function notify() { document.dispatchEvent(new CustomEvent('floorplanschange')); }
   function inputField(labelText, key, value, maxLength = 160) {
     const group = document.createElement('div'); group.className = 'form-group';
     const label = document.createElement('label');
@@ -33,8 +34,38 @@
     const config = inputField('Configuration', 'configuration', plan.configuration, 80); config.input.placeholder = 'e.g. 2 BHK Apartment';
     const area = inputField('Area (include unit)', 'area', plan.area, 80); area.input.placeholder = 'e.g. 1332 sq.ft.';
     const price = inputField('Price / price label', 'price', plan.price); price.input.placeholder = 'e.g. ₹1.5 Cr';
+    const minArea = inputField('Minimum area', 'area_sqft', plan.area_sqft);
+    const maxArea = inputField('Maximum area (optional)', 'area_max_sqft', plan.area_max_sqft);
+    const rate = inputField('Price per sq.ft. (₹)', 'rate_per_sqft', plan.rate_per_sqft);
+    [minArea, maxArea, rate].forEach(field => { field.input.type = 'number'; field.input.min = '0.01'; field.input.step = 'any'; field.input.inputMode = 'decimal'; });
+    const units = document.createElement('label'); units.className = 'form-group'; units.textContent = 'Area input unit';
+    const unit = document.createElement('select'); unit.dataset.fpUnitInput = ''; unit.innerHTML = '<option value="sqft">sq.ft.</option><option value="sqm">sq.m</option>'; units.append(unit);
+    const typeGroup = document.createElement('label'); typeGroup.className = 'form-group'; typeGroup.textContent = 'Area type';
+    const areaType = document.createElement('select'); areaType.dataset.fpAreaType = '';
+    ['Super Built-up Area', 'Built-up Area', 'Carpet Area', 'Plot Area'].forEach(value => areaType.add(new Option(value, value)));
+    areaType.value = plan.area_type || 'Super Built-up Area'; typeGroup.append(areaType);
+    const calculated = document.createElement('p'); calculated.className = 'fp-admin-help'; calculated.setAttribute('role', 'status'); calculated.setAttribute('aria-live', 'polite');
+    let previousUnit = 'sqft';
+    unit.addEventListener('change', () => {
+      const factor = unit.value === 'sqm' ? FloorPlans.SQFT_TO_SQM : 1 / FloorPlans.SQFT_TO_SQM;
+      if (previousUnit !== unit.value) [minArea, maxArea].forEach(field => { if (field.input.value) field.input.value = String(Number(field.input.value) * factor); });
+      previousUnit = unit.value; updateCalculation();
+    });
+    function updateCalculation() {
+      const active = [minArea, maxArea, rate].some(field => field.input.value !== '');
+      area.input.readOnly = price.input.readOnly = active;
+      if (!active) { calculated.textContent = 'For automatic pricing, enter area and price per sq.ft. Otherwise keep the manual area and price labels.'; notify(); return; }
+      try {
+        const factor = unit.value === 'sqm' ? 1 / FloorPlans.SQFT_TO_SQM : 1;
+        const result = FloorPlans.normalize([{configuration:'Preview',area:'',image_url:'/images/logo.png',area_sqft:Number(minArea.input.value)*factor,area_max_sqft:maxArea.input.value ? Number(maxArea.input.value)*factor : Number(minArea.input.value)*factor,rate_per_sqft:rate.input.value,area_type:areaType.value}])[0];
+        area.input.value = result.area; price.input.value = result.price;
+        calculated.textContent = `${result.price} · ${FloorPlans.areaLabel(result.area_sqft,result.area_max_sqft,'sqm')} · Base price before additional charges.`;
+      } catch (error) { calculated.textContent = error.message; }
+      notify();
+    }
+    [minArea.input,maxArea.input,rate.input,areaType].forEach(input => input.addEventListener('input', updateCalculation));
     const image = inputField('2D plan image URL', 'image_url', plan.image_url, 2048); image.input.placeholder = 'Upload below or enter an image URL';
-    grid.append(config.group, area.group, price.group, image.group);
+    grid.append(config.group, units, minArea.group, maxArea.group, rate.group, typeGroup, area.group, price.group, image.group, calculated);
     const uploadGroup = document.createElement('div'); uploadGroup.className = 'form-group';
     const uploadLabel = document.createElement('label'); uploadLabel.textContent = 'Upload a 2D plan (JPEG, PNG or WebP; up to 8 MB)';
     const upload = document.createElement('input'); upload.type = 'file'; upload.accept = 'image/jpeg,image/png,image/webp'; upload.id = `floor-plan-upload-${++sequence}`; uploadLabel.htmlFor = upload.id;
@@ -59,28 +90,33 @@
         if (!response.ok || !result.success) throw new Error(result.message || 'Upload failed.');
         if (card.isConnected) { image.input.value = result.url; updatePreview(); uploadStatus.textContent = '2D plan uploaded. Save the property to publish it.'; }
       } catch (error) { uploadStatus.textContent = error.message || 'Upload failed. Try again.'; }
-      finally { pendingUploads--; upload.disabled = false; image.input.disabled = false; remove.disabled = false; upload.value = ''; }
+      finally { pendingUploads--; upload.disabled = false; image.input.disabled = false; remove.disabled = false; upload.value = ''; notify(); }
     });
     uploadGroup.append(uploadLabel, upload, uploadStatus, preview);
     const roomsHeading = document.createElement('h4'); roomsHeading.textContent = 'Room dimensions (optional)';
     const rooms = document.createElement('div'); rooms.className = 'fp-admin-rooms';
     (plan.rooms || []).forEach(room => addRoom(rooms, room));
     const addRoomButton = button('Add room', () => { addRoom(rooms); rooms.lastElementChild?.querySelector('input').focus(); }); addRoomButton.dataset.addRoom = '';
-    const remove = button('Remove floor plan', () => { card.remove(); message('Plan removed. Save the property to publish.'); document.getElementById('addFloorPlanBtn').focus(); });
+    const remove = button('Remove floor plan', () => { card.remove(); notify(); message('Plan removed. Save the property to publish.'); document.getElementById('addFloorPlanBtn').focus(); });
     const actions = document.createElement('div'); actions.className = 'fp-admin-actions'; actions.append(addRoomButton, remove);
     card.append(legend, grid, uploadGroup, roomsHeading, rooms, actions); list.append(card); updatePreview();
+    updateCalculation();
     if (focus) config.input.focus();
     message(`${list.children.length} plan option(s). Save the property to publish changes.`);
   }
   document.getElementById('addFloorPlanBtn').addEventListener('click', () => addPlan({}, true));
   window.FloorPlansAdmin = {
     set(value) { list.replaceChildren(); FloorPlans.read(value).forEach(plan => addPlan(plan)); message(list.children.length ? 'Edit the plans, then save the property.' : 'No 2D plans yet. Add a plan option to get started.'); },
-    get() {
-      if (pendingUploads) throw new Error('Wait for the 2D plan uploads to finish before saving.');
+    get({preview = false} = {}) {
+      if (pendingUploads && !preview) throw new Error('Wait for the 2D plan uploads to finish before saving.');
       return FloorPlans.normalize([...list.children].map(card => {
         const result = {};
         if (card.dataset.legacyPartial === 'true') result.legacy_partial = true;
         card.querySelectorAll('.form-grid input[data-fp-field]').forEach(input => { result[input.dataset.fpField] = input.value; });
+        const factor = card.querySelector('[data-fp-unit-input]').value === 'sqm' ? 1 / FloorPlans.SQFT_TO_SQM : 1;
+        for (const key of ['area_sqft','area_max_sqft']) if (result[key] !== '') result[key] = Number(result[key]) * factor;
+        result.area_type = card.querySelector('[data-fp-area-type]').value;
+        if (preview) { result.configuration ||= 'Preview'; result.image_url ||= '/images/logo.png'; }
         result.rooms = [...card.querySelector('.fp-admin-rooms').children].map(row => Object.fromEntries([...row.querySelectorAll('input')].map(input => [input.dataset.fpField, input.value])));
         return result;
       }));

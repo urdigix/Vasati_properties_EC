@@ -75,7 +75,7 @@ function installSeo(app, db, env = process.env) {
         .replace('<div id="propertyDetailContent"></div>', () => `<div id="propertyDetailContent">${content}${propertyOverview.render(property, { interactive: false })}${floorPlans.render(property)}</div>`)
         .replace(/href="#/g, 'href="/#');
     } else {
-      const cards = db.getAllProperties().map(p => {
+      const cards = db.getAllProperties({}, false, {page:1,pageSize:24}).data.map(p => {
         const image = absolute(p.image || '');
         const photo = p.image && image ? `<div class="card-photo-wrap"><img src="${escapeHtml(image)}" alt="${escapeHtml(p.title)}" loading="lazy"></div>` : '';
         return `<article class="property-card">${photo}<div class="card-body"><h3 class="card-title"><a href="${escapeHtml(propertyPath(p))}">${escapeHtml(p.title)}</a></h3><p>${escapeHtml(p.location)}</p><p>${escapeHtml(p.price_label || 'Contact for price')} · ${escapeHtml(p.bhk)} BHK · ${escapeHtml(p.area)}</p></div></article>`;
@@ -89,7 +89,7 @@ function installSeo(app, db, env = process.env) {
     ? `User-agent: *\nAllow: /\nSitemap: ${origin}/sitemap.xml\n`
     : 'User-agent: *\nAllow: /\n# Indexing is disabled with X-Robots-Tag and HTML robots metadata.\n'));
   app.get('/sitemap.xml', (_req, res) => {
-    const urls = indexable ? ['/', ...db.getAllProperties().map(propertyPath)] : [];
+    const urls = indexable ? ['/', ...db.getPublishedPropertyLinks().map(propertyPath)] : [];
     res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map(url => `<url><loc>${escapeHtml(origin + url)}</loc></url>`).join('')}</urlset>`);
   });
   app.get('/index.html', (_req, res) => res.redirect(301, '/'));
